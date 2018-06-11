@@ -1,0 +1,6 @@
+[package]
+name = "libRiti"
+version = "0.1.0"
+authors = ["Muhammad Mominul Huque <mominul2082@gmail.com>"]
+
+[dependencies]
