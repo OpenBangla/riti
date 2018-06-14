@@ -1,7 +1,7 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+#![allow(dead_code)]
+#![allow(non_snake_case)]
+extern crate serde_json;
+extern crate regex;
+
+mod regexparser;
+mod database;
