@@ -1,7 +1,7 @@
 #![allow(unused_assignments)]
-use serde_json::{self, Value};
-use std;
 use std::cmp::Ordering;
+use serde_json::{self, Value};
+use stringplus::StringPlus;
 
 pub struct RegexParser {
     patterns: Vec<Value>,
@@ -187,31 +187,6 @@ impl RegexParser {
 
     fn is_punctuation(&self, character: &str) -> bool {
         !(self.is_vowel(character) || self.is_consonant(character))
-    }
-}
-
-trait Substring {
-    fn substring(&self, start: usize, length: usize) -> &str;
-    fn at(&self, pos: usize) -> &str;
-}
-
-impl Substring for std::string::String {
-    fn substring(&self, start: usize, length: usize) -> &str {
-        &self[start..(start + length)]
-    }
-
-    fn at(&self, pos: usize) -> &str {
-        &self[pos..pos + 1]
-    }
-}
-
-impl Substring for str {
-    fn substring(&self, start: usize, length: usize) -> &str {
-        &self[start..(start + length)]
-    }
-
-    fn at(&self, pos: usize) -> &str {
-        &self[pos..pos + 1]
     }
 }
 
