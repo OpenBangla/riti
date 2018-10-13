@@ -1,13 +1,13 @@
 use regex::Regex;
 use serde_json;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use regexparser::RegexParser;
 
 pub struct Database {
     parser: RegexParser,
-    table: HashMap<String, Vec<String>>,
-    suffix: HashMap<String, String>,
+    table: FxHashMap<String, Vec<String>>,
+    suffix: FxHashMap<String, String>,
 }
 
 impl Database {
@@ -67,11 +67,7 @@ impl Database {
     }
 
     fn find_suffix(&self, string: &str) -> String {
-        if self.suffix.contains_key(string) {
-            self.suffix[string].to_string()
-        } else {
-            String::new()
-        }
+        self.suffix.get(string).unwrap_or(&String::new()).to_string()
     }
 }
 
