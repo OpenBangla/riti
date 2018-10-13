@@ -7,6 +7,7 @@ use regexparser::RegexParser;
 pub struct Database {
     parser: RegexParser,
     table: HashMap<String, Vec<String>>,
+    suffix: HashMap<String, String>,
 }
 
 impl Database {
@@ -14,6 +15,7 @@ impl Database {
         Database {
             parser: RegexParser::new(),
             table: serde_json::from_str(include_str!("dictionary.json")).unwrap(),
+            suffix: serde_json::from_str(include_str!("suffix.json")).unwrap(),
         }
     }
 
@@ -63,6 +65,14 @@ impl Database {
             })
             .collect()
     }
+
+    fn find_suffix(&self, string: &str) -> String {
+        if self.suffix.contains_key(string) {
+            self.suffix[string].to_string()
+        } else {
+            String::new()
+        }
+    }
 }
 
 #[cfg(test)]
@@ -82,5 +92,13 @@ mod tests {
                 "এ",
             ]
         );
+    }
+
+    #[test]
+    fn test_suffix() {
+        let db = Database::new();
+        assert_eq!(db.find_suffix("gulo"), "গুলো");
+        assert_eq!(db.find_suffix("er"), "ের");
+        assert_eq!(db.find_suffix("h"), "");
     }
 }
