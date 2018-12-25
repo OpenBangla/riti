@@ -7,3 +7,4 @@ extern crate rustc_hash;
 
 mod regexparser;
 mod database;
+mod context;
