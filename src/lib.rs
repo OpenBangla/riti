@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![allow(non_snake_case)]
 
-mod regexparser;
+mod phonetic_regex;
 mod database;
 mod context;

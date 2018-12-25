@@ -2,10 +2,7 @@ use regex::Regex;
 use serde_json;
 use rustc_hash::FxHashMap;
 
-use crate::regexparser::RegexParser;
-
 pub struct Database {
-    parser: RegexParser,
     table: FxHashMap<String, Vec<String>>,
     suffix: FxHashMap<String, String>,
 }
@@ -13,16 +10,16 @@ pub struct Database {
 impl Database {
     pub fn new() -> Database {
         Database {
-            parser: RegexParser::new(),
             table: serde_json::from_str(include_str!("dictionary.json")).unwrap(),
             suffix: serde_json::from_str(include_str!("suffix.json")).unwrap(),
         }
     }
 
-    pub fn find(&self, word: &str) -> Vec<String> {
-        let regex = Regex::new(&self.parser.parse(word)).unwrap();
+    /// Find words from the dictionary with given hint and a Regex
+    pub fn find(&self, hint: &str, regex: &str) -> Vec<String> {
+        let rgx = Regex::new(regex).unwrap();
 
-        let table = match &word[0..1] {
+        let table = match &hint[0..1] {
             "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
             "b" => vec!["b", "bh"],
             "c" => vec!["c", "ch", "k"],
@@ -56,7 +53,7 @@ impl Database {
             .iter()
             .flat_map(|&item| {
                 self.table[item].iter().filter_map(|i| {
-                    if regex.is_match(i) {
+                    if rgx.is_match(i) {
                         Some(i.to_owned())
                     } else {
                         None
@@ -73,12 +70,14 @@ impl Database {
 
 #[cfg(test)]
 mod tests {
-    use super::Database;
+    use crate::phonetic_regex::PhoneticRegex;
+    use crate::database::Database;
     #[test]
     fn test_database() {
         let db = Database::new();
+        let regex = PhoneticRegex::new().parse("a");
         assert_eq!(
-            db.find("a"),
+            db.find("a", &regex),
             [
                 "অ্যা",
                 "অ্যাঁ",

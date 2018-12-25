@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use serde_json::{self, Value};
 use stringplus::StringPlus;
 
-pub struct RegexParser {
+pub struct PhoneticRegex {
     patterns: Vec<Value>,
     vowel: String,
     consonant: String,
@@ -11,11 +11,11 @@ pub struct RegexParser {
     max_pattern_len: usize,
 }
 
-impl RegexParser {
-    /// Creates a new `RegexParser` instance.
-    pub fn new() -> RegexParser {
+impl PhoneticRegex {
+    /// Creates a new `PhoneticRegex` instance.
+    pub fn new() -> PhoneticRegex {
         let file: Value = serde_json::from_str(include_str!("regex.json")).unwrap();
-        RegexParser {
+        PhoneticRegex {
             patterns: file["patterns"].as_array().unwrap().clone(),
             vowel: file["vowel"].as_str().unwrap().to_string(),
             consonant: file["consonant"].as_str().unwrap().to_string(),
@@ -192,10 +192,10 @@ impl RegexParser {
 
 #[cfg(test)]
 mod tests {
-    use super::RegexParser;
+    use super::PhoneticRegex;
     #[test]
     fn regex_test() {
-        let regex = RegexParser::new();
+        let regex = PhoneticRegex::new();
         assert_eq!(regex.parse("osthir"), "^([ওোঅ]|(অ্য)|(য়ো?))(্[যবম])?(্?)([ঃঁ]?)([সশষ])(্[যবম])?(্?)([ঃঁ]?)(থ|ঠ|([তটৎ]্?(হ|ঃ|(হ্\u{200C}?))))(্[যবম])?(্?)([ঃঁ]?)([ইঈিী]|(য়[িী]))(্[যবম])?(্?)([ঃঁ]?)([রড়ঢ়]|(হ্র))(্[যবম])?(্?)([ঃঁ]?)$");
         assert_eq!(regex.parse("OSTHIR"), "^([ওোঅ]|(অ্য)|(য়ো?))(্[যবম])?(্?)([ঃঁ]?)([সশষ])(্[যবম])?(্?)([ঃঁ]?)(থ|ঠ|([তটৎ]্?(হ|ঃ|(হ্\u{200C}?))))(্[যবম])?(্?)([ঃঁ]?)([ইঈিী]|(য়[িী]))(্[যবম])?(্?)([ঃঁ]?)([রড়ঢ়]|(হ্র))(্[যবম])?(্?)([ঃঁ]?)$");
     }
