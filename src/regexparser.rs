@@ -58,8 +58,8 @@ impl RegexParser {
                                     for _match in matches {
                                         let value = _match["value"].as_str().unwrap_or("");
                                         let _type = _match["type"].as_str().unwrap();
-                                        let mut scope = _match["scope"].as_str().unwrap();
-                                        let mut is_negative = _match["negative"].as_bool().unwrap();
+                                        let scope = _match["scope"].as_str().unwrap();
+                                        let is_negative = _match["negative"].as_bool().unwrap();
 
                                         if _type == "suffix" {
                                             chk = end;

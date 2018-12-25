@@ -2,7 +2,7 @@ use regex::Regex;
 use serde_json;
 use rustc_hash::FxHashMap;
 
-use regexparser::RegexParser;
+use crate::regexparser::RegexParser;
 
 pub struct Database {
     parser: RegexParser,
