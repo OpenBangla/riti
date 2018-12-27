@@ -1,8 +1,11 @@
-struct RitiContext {
-    data: String,
-    method: Box<Method>,
+use std::cell::RefCell;
+use crate::settings::Settings;
+
+pub struct RitiContext {
+    method: RefCell<Box<dyn Method>>,
+    settings: Settings,
 }
 
-trait Method {
+pub(crate) trait Method {
     fn setLayout(&self, path: &str);
 }
