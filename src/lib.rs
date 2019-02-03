@@ -5,3 +5,4 @@ mod phonetic_regex;
 mod database;
 mod context;
 mod settings;
+mod keycodes;
