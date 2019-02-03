@@ -6,3 +6,4 @@ mod database;
 mod context;
 mod settings;
 mod keycodes;
+mod suggestion;
