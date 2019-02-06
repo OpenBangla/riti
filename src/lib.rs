@@ -3,7 +3,7 @@
 
 mod phonetic_regex;
 mod database;
-mod context;
+pub mod context;
 mod settings;
 mod keycodes;
-mod suggestion;
+pub mod suggestion;
