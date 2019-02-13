@@ -1,3 +1,3 @@
-pub(crate) mod regex;
+mod regex;
 mod suggestion;
-pub(crate) mod database;
+mod database;

@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use serde_json::{self, Value};
 use stringplus::StringPlus;
 
-pub struct PhoneticRegex {
+pub(crate) struct PhoneticRegex {
     patterns: Vec<Value>,
     vowel: String,
     consonant: String,
@@ -13,7 +13,7 @@ pub struct PhoneticRegex {
 
 impl PhoneticRegex {
     /// Creates a new `PhoneticRegex` instance.
-    pub fn new() -> PhoneticRegex {
+    pub(crate) fn new() -> PhoneticRegex {
         let file: Value = serde_json::from_str(include_str!("regex.json")).unwrap();
         PhoneticRegex {
             patterns: file["patterns"].as_array().unwrap().clone(),
@@ -24,7 +24,8 @@ impl PhoneticRegex {
         }
     }
 
-    pub fn parse(&self, input: &str) -> String {
+    /// Parse `input` string containing phonetic text and return a regex string.
+    pub(crate) fn parse(&self, input: &str) -> String {
         let fixed = self.clean_string(input);
         let mut output = String::new();
 

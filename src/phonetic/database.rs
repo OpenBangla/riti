@@ -3,14 +3,14 @@ use serde_json;
 use rustc_hash::FxHashMap;
 use crate::phonetic::regex::PhoneticRegex;
 
-pub struct Database {
+pub(crate) struct Database {
     regex: PhoneticRegex,
     table: FxHashMap<String, Vec<String>>,
     suffix: FxHashMap<String, String>,
 }
 
 impl Database {
-    pub fn new() -> Database {
+    pub(crate) fn new() -> Database {
         Database {
             regex: PhoneticRegex::new(),
             table: serde_json::from_str(include_str!("dictionary.json")).unwrap(),
@@ -19,7 +19,7 @@ impl Database {
     }
 
     /// Find words from the dictionary with given hint and a Regex
-    pub fn find(&self, word: &str) -> Vec<String> {
+    pub(crate) fn find(&self, word: &str) -> Vec<String> {
         let rgx = Regex::new(&self.regex.parse(word)).unwrap();
 
         let table = match &word[0..1] {
@@ -66,14 +66,14 @@ impl Database {
             .collect()
     }
 
-    fn find_suffix(&self, string: &str) -> String {
+    pub(crate) fn find_suffix(&self, string: &str) -> String {
         self.suffix.get(string).unwrap_or(&String::new()).to_string()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::phonetic::database::Database;
+    use super::Database;
     #[test]
     fn test_database() {
         let db = Database::new();
