@@ -20,7 +20,7 @@ impl Database {
         }
     }
 
-    /// Find words from the dictionary with given hint and a Regex
+    /// Find words from the dictionary with given word.
     pub(crate) fn find(&self, word: &str) -> Vec<String> {
         let rgx = Regex::new(&self.regex.parse(word)).unwrap();
 
