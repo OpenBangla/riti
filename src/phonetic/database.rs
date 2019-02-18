@@ -69,12 +69,12 @@ impl Database {
     }
 
     pub(crate) fn find_suffix(&self, string: &str) -> String {
-        self.suffix.get(string).unwrap_or(&String::new()).to_string()
+        self.suffix.get(string).unwrap_or(&String::new()).to_owned()
     }
 
     /// Get the phonetically corrected string from auto-correct dictionary. 
     pub(crate) fn get_corrected(&self, string: &str) -> String {
-        self.autocorrect.get(string).unwrap_or(&String::new()).to_string()
+        self.autocorrect.get(string).unwrap_or(&String::new()).to_owned()
     }
 }
 
