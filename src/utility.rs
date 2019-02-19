@@ -14,6 +14,9 @@ pub(crate) trait Utility {
     fn is_kar(&self) -> bool;
     /// Checks the str for a pure consonant character.
     fn is_pure_consonant(&self) -> bool;
+    /// Split the string into three parts.
+    /// This function splits preceding and trailing meta characters.
+    fn split_string(&self) -> (String, String, String);
 }
 
 impl Utility for str {
@@ -31,17 +34,65 @@ impl Utility for str {
     fn is_pure_consonant(&self) -> bool {
         CONSONANT.is_match(self)
     }
+
+    fn split_string(&self) -> (String, String, String) {
+        let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,";
+        let mut first_part = String::new();
+        let mut first_index = 0;
+        let mut last_part = String::new();
+        let mut last_index = 0;
+        let mut encountered_alpha = false;
+
+        for (index, c) in self.chars().enumerate() {
+            if meta.contains(c) {
+                first_part.push(c);
+            } else {
+                first_index = index;
+                encountered_alpha = true;
+                break;
+            }
+        }
+
+        // Corner case: If we haven't yet encountered an alpha or
+        // a numeric character, then the string has no middle part
+        // or last part we need. So return "" for them ;)
+        if !encountered_alpha {
+            return (first_part, "".to_owned(), "".to_owned());
+        }
+
+        for (index, c) in self.chars().rev().enumerate() {
+            if meta.contains(c) {
+                // Insert it in reverse.
+                last_part.insert(0, c);
+            } else {
+                last_index = self.len() - index - 1;
+                break;
+            }
+        }
+
+        let middle_part = self[first_index..=last_index].to_owned();
+
+        (first_part, middle_part, last_part)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::Utility;
     #[test]
-    fn utilities() {
+    fn test_utilities() {
         assert!("আ".is_vowel());
         assert!(!"ক".is_vowel());
         assert!("া".is_kar());
         assert!(!"আ".is_kar());
         assert!("ক".is_pure_consonant());
+    }
+
+    #[test]
+    fn test_split_string() {
+        assert_eq!("[][][][]".split_string(), ("[][][][]".to_owned(), "".to_owned(), "".to_owned()));
+        assert_eq!("t*".split_string(), ("".to_owned(), "t".to_owned(), "*".to_owned()));
+        assert_eq!("1".split_string(), ("".to_owned(), "1".to_owned(), "".to_owned()));
+        assert_eq!("#\"percent%sign\"#".split_string(), ("#\"".to_owned(), "percent%sign".to_owned(), "\"#".to_owned()));
     }
 }
