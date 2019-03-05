@@ -38,17 +38,19 @@ impl PhoneticSuggestion {
                                 temp.push(word);
                             } else {
                                 if item_rmc == '\u{09CE}' {
+                                    // Khandatta
                                     let word = format!(
                                         "{}{}{}",
-                                        &item[0..item.len() - 1],
+                                        item.trim_end_matches('\u{09CE}'),
                                         "\u{09A4}",
                                         suffix
                                     );
                                     temp.push(word);
                                 } else if item_rmc == '\u{0982}' {
+                                    // Anushar
                                     let word = format!(
                                         "{}{}{}",
-                                        &item[0..item.len() - 1],
+                                        item.trim_end_matches('\u{0982}'),
                                         "\u{0999}",
                                         suffix
                                     );
@@ -124,6 +126,8 @@ mod tests {
             "computer".to_string(),
             vec!["কম্পিউটার".to_string()],
         );
+        cache.insert("ebong".to_string(), vec!["এবং".to_string()]);
+
         let suggestion = PhoneticSuggestion {
             suggestions: Vec::new(),
             database: Database::new(),
@@ -142,6 +146,13 @@ mod tests {
                 &("".to_string(), "computergulo".to_string(), "".to_string())
             ),
             vec!["কম্পিউটারগুলো"]
+        );
+        assert_eq!(
+            suggestion.add_suffix(
+                Vec::new(),
+                &("".to_string(), "ebongmala".to_string(), "".to_string())
+            ),
+            vec!["এবঙমালা"]
         );
     }
 
