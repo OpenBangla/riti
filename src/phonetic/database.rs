@@ -21,7 +21,7 @@ impl Database {
     }
 
     /// Find words from the dictionary with given word.
-    pub(crate) fn find(&self, word: &str) -> Vec<String> {
+    pub(crate) fn search_dictionary(&self, word: &str) -> Vec<String> {
         let rgx = Regex::new(&self.regex.parse(word)).unwrap();
 
         let table = match &word[0..1] {
@@ -68,13 +68,13 @@ impl Database {
             .collect()
     }
 
-    pub(crate) fn find_suffix(&self, string: &str) -> String {
-        self.suffix.get(string).unwrap_or(&String::new()).to_owned()
+    pub(crate) fn find_suffix(&self, string: &str) -> Option<String> {
+        self.suffix.get(string).cloned()
     }
 
     /// Get the phonetically corrected string from auto-correct dictionary. 
-    pub(crate) fn get_corrected(&self, string: &str) -> String {
-        self.autocorrect.get(string).unwrap_or(&String::new()).to_owned()
+    pub(crate) fn get_corrected(&self, string: &str) -> Option<String> {
+        self.autocorrect.get(string).cloned()
     }
 }
 
@@ -85,7 +85,7 @@ mod tests {
     fn test_database() {
         let db = Database::new();
         assert_eq!(
-            db.find("a"),
+            db.search_dictionary("a"),
             [
                 "অ্যা",
                 "অ্যাঁ",
@@ -95,20 +95,22 @@ mod tests {
                 "এ",
             ]
         );
+        let empty: Vec<String> = Vec::new();
+        assert_eq!(db.search_dictionary("("), empty);
     }
 
     #[test]
     fn test_suffix() {
         let db = Database::new();
-        assert_eq!(db.find_suffix("gulo"), "গুলো");
-        assert_eq!(db.find_suffix("er"), "ের");
-        assert_eq!(db.find_suffix("h"), "");
+        assert_eq!(db.find_suffix("gulo"), Some("গুলো".to_string()));
+        assert_eq!(db.find_suffix("er"), Some("ের".to_string()));
+        assert_eq!(db.find_suffix("h"), None);
     }
 
     #[test]
     fn test_autocorrect() {
         let db = Database::new();
-        assert_eq!(db.get_corrected("academy"), "oZakaDemi");
-        assert_eq!(db.get_corrected("\\nai\\"), "");
+        assert_eq!(db.get_corrected("academy"), Some("oZakaDemi".to_string()));
+        assert_eq!(db.get_corrected("\\nai\\"), None);
     }
 }

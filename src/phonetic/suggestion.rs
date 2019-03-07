@@ -2,13 +2,17 @@
 
 use crate::phonetic::database::Database;
 use crate::utility::Utility;
+use edit_distance::edit_distance;
+use rupantor::avro::AvroPhonetic;
 use rustc_hash::FxHashMap;
+use std::cmp::Ordering;
 
 pub(crate) struct PhoneticSuggestion {
     suggestions: Vec<String>,
     database: Database,
     // Cache for storing dictionary searches.
     cache: FxHashMap<String, Vec<String>>,
+    phonetic: AvroPhonetic,
 }
 
 impl PhoneticSuggestion {
@@ -17,17 +21,19 @@ impl PhoneticSuggestion {
             suggestions: Vec::new(),
             database: Database::new(),
             cache: FxHashMap::default(),
+            phonetic: AvroPhonetic::new(),
         }
     }
 
-    fn add_suffix(&self, list: Vec<String>, splitted: &(String, String, String)) -> Vec<String> {
+    /// Add suffix(গুলো, মালা...etc) to the dictionary suggestions and return them.
+    /// This function gets the suggestion list from the stored cache.
+    fn add_suffix_to_suggestions(&self, splitted: &(String, String, String)) -> Vec<String> {
         let middle = &splitted.1;
-        let mut temp = list.clone();
+        let mut temp = Vec::new();
         if middle.len() > 2 {
             for i in 1..middle.len() {
                 let suffix_key = &middle[i..];
-                let suffix = self.database.find_suffix(suffix_key);
-                if suffix != "" {
+                if let Some(suffix) = self.database.find_suffix(suffix_key) {
                     let key = &middle[0..(middle.len() - suffix_key.len())];
                     if self.cache.contains_key(key) {
                         for item in &self.cache[key] {
@@ -66,13 +72,75 @@ impl PhoneticSuggestion {
             }
         }
 
-        temp
+        if !temp.is_empty() {
+            temp
+        } else {
+            self.cache
+                .get(&splitted.1)
+                .cloned()
+                .unwrap_or_else(|| Vec::new())
+        }
     }
 
     /// Make suggestion from the given `word`.
-    pub(crate) fn suggest(&self, word: &str) -> Vec<String> {
+    pub(crate) fn suggest(&mut self, word: &str) -> Vec<String> {
+        let mut suggestion: Vec<String> = Vec::new();
         let splitted_string = split_string(word);
-        Vec::new()
+
+        let phonetic = self.phonetic.convert(&splitted_string.1);
+
+        if !self.cache.contains_key(&splitted_string.1) {
+            let mut dictionary = self.database.search_dictionary(&splitted_string.1);
+            // Auto Correct
+            if let Some(corrected) = self.database.get_corrected(&splitted_string.1) {
+                let word = self.phonetic.convert(&corrected);
+                suggestion.push(word.clone());
+                // Add it to the cache for adding suffix later.
+                dictionary.push(word);
+            }
+            // Cache it.
+            self.cache.insert(splitted_string.1.clone(), dictionary);
+        }
+
+        let mut suggestions_with_suffix = self.add_suffix_to_suggestions(&splitted_string);
+
+        suggestions_with_suffix.sort_by(|a, b| {
+            let dist1 = edit_distance(&phonetic, a);
+            let dist2 = edit_distance(&phonetic, b);
+
+            if dist1 < dist2 {
+                Ordering::Less
+            } else if dist1 > dist2 {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        });
+
+        suggestion.append(&mut suggestions_with_suffix);
+
+        // Last Item: Phonetic. Check if it already contains.
+        if !suggestion.contains(&phonetic) {
+            suggestion.push(phonetic);
+        }
+
+        for item in suggestion.iter_mut() {
+            *item = format!("{}{}{}", splitted_string.0, item, splitted_string.2);
+        }
+
+        // Emoticons Auto Corrects
+        if let Some(emoticon) = self.database.get_corrected(word) {
+            suggestion.insert(0, emoticon);
+        }
+
+        suggestion
+    }
+}
+
+// Implement Default trait on PhoneticSuggestion, actually for testing convenience.
+impl Default for PhoneticSuggestion {
+    fn default() -> Self {
+        PhoneticSuggestion::new()
     }
 }
 
@@ -117,8 +185,52 @@ fn split_string(input: &str) -> (String, String, String) {
 mod tests {
     use super::split_string;
     use super::PhoneticSuggestion;
-    use crate::phonetic::database::Database;
     use rustc_hash::FxHashMap;
+
+    #[test]
+    fn test_emoticon() {
+        let mut suggestion = PhoneticSuggestion::new();
+
+        assert_eq!(
+            suggestion.suggest(":)"),
+            vec![":)".to_string(), "ঃ)".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_suggestion() {
+        let mut suggestion = PhoneticSuggestion::new();
+
+        assert_eq!(
+            suggestion.suggest("as"),
+            vec![
+                "আস".to_string(),
+                "আশ".to_string(),
+                "এস".to_string(),
+                "আঁশ".to_string()
+            ]
+        );
+        assert_eq!(
+            suggestion.suggest("asgulo"),
+            vec![
+                "আসগুলো".to_string(),
+                "আশগুলো".to_string(),
+                "এসগুলো".to_string(),
+                "আঁশগুলো".to_string(),
+                "আসগুল".to_string()
+            ]
+        );
+        assert_eq!(
+            suggestion.suggest("(as)"),
+            vec![
+                "(আস)".to_string(),
+                "(আশ)".to_string(),
+                "(এস)".to_string(),
+                "(আঁশ)".to_string()
+            ]
+        );
+    }
+
     #[test]
     fn test_suffix() {
         let mut cache: FxHashMap<String, Vec<String>> = FxHashMap::default();
@@ -129,29 +241,40 @@ mod tests {
         cache.insert("ebong".to_string(), vec!["এবং".to_string()]);
 
         let suggestion = PhoneticSuggestion {
-            suggestions: Vec::new(),
-            database: Database::new(),
             cache,
+            ..Default::default()
         };
+
         assert_eq!(
-            suggestion.add_suffix(
-                Vec::new(),
-                &("".to_string(), "computere".to_string(), "".to_string())
-            ),
+            suggestion.add_suffix_to_suggestions(&(
+                "".to_string(),
+                "computer".to_string(),
+                "".to_string()
+            )),
+            vec!["কম্পিউটার"]
+        );
+        assert_eq!(
+            suggestion.add_suffix_to_suggestions(&(
+                "".to_string(),
+                "computere".to_string(),
+                "".to_string()
+            )),
             vec!["কম্পিউটারে"]
         );
         assert_eq!(
-            suggestion.add_suffix(
-                Vec::new(),
-                &("".to_string(), "computergulo".to_string(), "".to_string())
-            ),
+            suggestion.add_suffix_to_suggestions(&(
+                "".to_string(),
+                "computergulo".to_string(),
+                "".to_string()
+            )),
             vec!["কম্পিউটারগুলো"]
         );
         assert_eq!(
-            suggestion.add_suffix(
-                Vec::new(),
-                &("".to_string(), "ebongmala".to_string(), "".to_string())
-            ),
+            suggestion.add_suffix_to_suggestions(&(
+                "".to_string(),
+                "ebongmala".to_string(),
+                "".to_string()
+            )),
             vec!["এবঙমালা"]
         );
     }
