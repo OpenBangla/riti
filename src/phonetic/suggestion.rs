@@ -29,7 +29,7 @@ impl PhoneticSuggestion {
     /// This function gets the suggestion list from the stored cache.
     fn add_suffix_to_suggestions(&self, splitted: &(String, String, String)) -> Vec<String> {
         let middle = &splitted.1;
-        let mut temp = Vec::new();
+        let mut list = Vec::new();
         if middle.len() > 2 {
             for i in 1..middle.len() {
                 let suffix_key = &middle[i..];
@@ -41,7 +41,7 @@ impl PhoneticSuggestion {
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
                             if item_rmc.is_vowel() && suffix_lmc.is_kar() {
                                 let word = format!("{}{}{}", item, "\u{09DF}", suffix);
-                                temp.push(word);
+                                list.push(word);
                             } else {
                                 if item_rmc == '\u{09CE}' {
                                     // Khandatta
@@ -51,7 +51,7 @@ impl PhoneticSuggestion {
                                         "\u{09A4}",
                                         suffix
                                     );
-                                    temp.push(word);
+                                    list.push(word);
                                 } else if item_rmc == '\u{0982}' {
                                     // Anushar
                                     let word = format!(
@@ -60,10 +60,10 @@ impl PhoneticSuggestion {
                                         "\u{0999}",
                                         suffix
                                     );
-                                    temp.push(word);
+                                    list.push(word);
                                 } else {
                                     let word = format!("{}{}", item, suffix);
-                                    temp.push(word);
+                                    list.push(word);
                                 }
                             }
                         }
@@ -72,8 +72,8 @@ impl PhoneticSuggestion {
             }
         }
 
-        if !temp.is_empty() {
-            temp
+        if !list.is_empty() {
+            list
         } else {
             self.cache
                 .get(&splitted.1)
@@ -83,9 +83,9 @@ impl PhoneticSuggestion {
     }
 
     /// Make suggestion from the given `word`.
-    pub(crate) fn suggest(&mut self, word: &str) -> Vec<String> {
-        let mut suggestion: Vec<String> = Vec::new();
-        let splitted_string = split_string(word);
+    pub(crate) fn suggest(&mut self, term: &str) -> Vec<String> {
+        let mut suggestions: Vec<String> = Vec::new();
+        let splitted_string = split_string(term);
 
         let phonetic = self.phonetic.convert(&splitted_string.1);
 
@@ -94,7 +94,7 @@ impl PhoneticSuggestion {
             // Auto Correct
             if let Some(corrected) = self.database.get_corrected(&splitted_string.1) {
                 let word = self.phonetic.convert(&corrected);
-                suggestion.push(word.clone());
+                suggestions.push(word.clone());
                 // Add it to the cache for adding suffix later.
                 dictionary.push(word);
             }
@@ -117,23 +117,23 @@ impl PhoneticSuggestion {
             }
         });
 
-        suggestion.append(&mut suggestions_with_suffix);
+        suggestions.append(&mut suggestions_with_suffix);
 
         // Last Item: Phonetic. Check if it already contains.
-        if !suggestion.contains(&phonetic) {
-            suggestion.push(phonetic);
+        if !suggestions.contains(&phonetic) {
+            suggestions.push(phonetic);
         }
 
-        for item in suggestion.iter_mut() {
+        for item in suggestions.iter_mut() {
             *item = format!("{}{}{}", splitted_string.0, item, splitted_string.2);
         }
 
         // Emoticons Auto Corrects
-        if let Some(emoticon) = self.database.get_corrected(word) {
-            suggestion.insert(0, emoticon);
+        if let Some(emoticon) = self.database.get_corrected(term) {
+            suggestions.insert(0, emoticon);
         }
 
-        suggestion
+        suggestions
     }
 }
 
@@ -202,32 +202,33 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::new();
 
         assert_eq!(
-            suggestion.suggest("as"),
+            suggestion.suggest("a"),
             vec![
-                "আস".to_string(),
-                "আশ".to_string(),
-                "এস".to_string(),
-                "আঁশ".to_string()
+                "আ",
+                "আঃ",
+                "া",
+                "এ",
+                "অ্যা",
+                "অ্যাঁ"
             ]
+        );
+        assert_eq!(
+            suggestion.suggest("as"),
+            vec!["আস", "আশ", "এস", "আঁশ"]
         );
         assert_eq!(
             suggestion.suggest("asgulo"),
             vec![
-                "আসগুলো".to_string(),
-                "আশগুলো".to_string(),
-                "এসগুলো".to_string(),
-                "আঁশগুলো".to_string(),
-                "আসগুল".to_string()
+                "আসগুলো",
+                "আশগুলো",
+                "এসগুলো",
+                "আঁশগুলো",
+                "আসগুল"
             ]
         );
         assert_eq!(
             suggestion.suggest("(as)"),
-            vec![
-                "(আস)".to_string(),
-                "(আশ)".to_string(),
-                "(এস)".to_string(),
-                "(আঁশ)".to_string()
-            ]
+            vec!["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
         );
     }
 
