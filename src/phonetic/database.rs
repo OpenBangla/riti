@@ -89,6 +89,7 @@ mod tests {
     #[test]
     fn test_database() {
         let db = Database::new();
+
         assert_eq!(
             db.search_dictionary("a"),
             [
@@ -100,13 +101,13 @@ mod tests {
                 "এ",
             ]
         );
-        let empty: Vec<String> = Vec::new();
-        assert_eq!(db.search_dictionary("("), empty);
+        assert_eq!(db.search_dictionary("("), Vec::<String>::new());
     }
 
     #[test]
     fn test_suffix() {
         let db = Database::new();
+
         assert_eq!(db.find_suffix("gulo"), Some("গুলো".to_string()));
         assert_eq!(db.find_suffix("er"), Some("ের".to_string()));
         assert_eq!(db.find_suffix("h"), None);
@@ -115,6 +116,7 @@ mod tests {
     #[test]
     fn test_autocorrect() {
         let db = Database::new();
+
         assert_eq!(db.get_corrected("academy"), Some("oZakaDemi".to_string()));
         assert_eq!(db.get_corrected("\\nai\\"), None);
     }
