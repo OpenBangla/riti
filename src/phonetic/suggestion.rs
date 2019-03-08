@@ -1,11 +1,12 @@
 // Suggestion making module.
 
-use crate::phonetic::database::Database;
-use crate::utility::Utility;
+use std::cmp::Ordering;
 use edit_distance::edit_distance;
 use rupantor::avro::AvroPhonetic;
 use rustc_hash::FxHashMap;
-use std::cmp::Ordering;
+
+use crate::phonetic::database::Database;
+use crate::utility::Utility;
 
 pub(crate) struct PhoneticSuggestion {
     suggestions: Vec<String>,
@@ -82,7 +83,7 @@ impl PhoneticSuggestion {
         }
     }
 
-    /// Make suggestion from the given `word`.
+    /// Make suggestions from the given `term`.
     pub(crate) fn suggest(&mut self, term: &str) -> Vec<String> {
         let mut suggestions: Vec<String> = Vec::new();
         let splitted_string = split_string(term);
@@ -191,10 +192,7 @@ mod tests {
     fn test_emoticon() {
         let mut suggestion = PhoneticSuggestion::new();
 
-        assert_eq!(
-            suggestion.suggest(":)"),
-            vec![":)".to_string(), "ঃ)".to_string()]
-        );
+        assert_eq!(suggestion.suggest(":)"), vec![":)", "ঃ)"]);
     }
 
     #[test]
