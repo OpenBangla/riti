@@ -1,7 +1,40 @@
+use maplit::hashmap;
 use regex::Regex;
-use serde_json;
 use rustc_hash::FxHashMap;
+use serde_json;
+
 use crate::phonetic::regex::PhoneticRegex;
+
+lazy_static! {
+    static ref DICTIONARY_TABLE: std::collections::HashMap<&'static str, Vec<&'static str>> = hashmap! [
+        "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
+        "b" => vec!["b", "bh"],
+        "c" => vec!["c", "ch", "k"],
+        "d" => vec!["d", "dh", "dd", "ddh"],
+        "e" => vec!["i", "ii", "e", "y"],
+        "f" => vec!["ph"],
+        "g" => vec!["g", "gh", "j"],
+        "h" => vec!["h"],
+        "i" => vec!["i", "ii", "y"],
+        "j" => vec!["j", "jh", "z"],
+        "k" => vec!["k", "kh"],
+        "l" => vec!["l"],
+        "m" => vec!["h", "m"],
+        "n" => vec!["n", "nya", "nga", "nn"],
+        "o" => vec!["a", "u", "uu", "oi", "o", "ou", "y"],
+        "p" => vec!["p", "ph"],
+        "q" => vec!["k"],
+        "r" => vec!["rri", "h", "r", "rr", "rrh"],
+        "s" => vec!["s", "sh", "ss"],
+        "t" => vec!["t", "th", "tt", "tth", "khandatta"],
+        "u" => vec!["u", "uu", "y"],
+        "v" => vec!["bh"],
+        "w" => vec!["o"],
+        "x" => vec!["e", "k"],
+        "y" => vec!["i", "y"],
+        "z" => vec!["h", "j", "jh", "z"]
+    ];
+}
 
 pub(crate) struct Database {
     regex: PhoneticRegex,
@@ -24,37 +57,9 @@ impl Database {
     pub(crate) fn search_dictionary(&self, word: &str) -> Vec<String> {
         let rgx = Regex::new(&self.regex.parse(word)).unwrap();
 
-        let table = match &word[0..1] {
-            "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
-            "b" => vec!["b", "bh"],
-            "c" => vec!["c", "ch", "k"],
-            "d" => vec!["d", "dh", "dd", "ddh"],
-            "e" => vec!["i", "ii", "e", "y"],
-            "f" => vec!["ph"],
-            "g" => vec!["g", "gh", "j"],
-            "h" => vec!["h"],
-            "i" => vec!["i", "ii", "y"],
-            "j" => vec!["j", "jh", "z"],
-            "k" => vec!["k", "kh"],
-            "l" => vec!["l"],
-            "m" => vec!["h", "m"],
-            "n" => vec!["n", "nya", "nga", "nn"],
-            "o" => vec!["a", "u", "uu", "oi", "o", "ou", "y"],
-            "p" => vec!["p", "ph"],
-            "q" => vec!["k"],
-            "r" => vec!["rri", "h", "r", "rr", "rrh"],
-            "s" => vec!["s", "sh", "ss"],
-            "t" => vec!["t", "th", "tt", "tth", "khandatta"],
-            "u" => vec!["u", "uu", "y"],
-            "v" => vec!["bh"],
-            "w" => vec!["o"],
-            "x" => vec!["e", "k"],
-            "y" => vec!["i", "y"],
-            "z" => vec!["h", "j", "jh", "z"],
-            _ => vec![],
-        };
-
-        table
+        DICTIONARY_TABLE
+            .get(&word[0..1])
+            .unwrap_or(&Vec::new())
             .iter()
             .flat_map(|&item| {
                 self.table[item].iter().filter_map(|i| {
@@ -72,7 +77,7 @@ impl Database {
         self.suffix.get(string).cloned()
     }
 
-    /// Get the phonetically corrected string from auto-correct dictionary. 
+    /// Get the phonetically corrected string from auto-correct dictionary.
     pub(crate) fn get_corrected(&self, string: &str) -> Option<String> {
         self.autocorrect.get(string).cloned()
     }
