@@ -2,3 +2,9 @@
 pub struct Suggestion {
     suggestions: Vec<String>,
 }
+
+impl Suggestion {
+    pub(crate) fn new() -> Self {
+        Suggestion { suggestions: Vec::new() }
+    }
+}

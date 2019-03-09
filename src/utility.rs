@@ -1,3 +1,5 @@
+use crate::context::{MODIFIER_SHIFT, MODIFIER_CTRL, MODIFIER_ALT};
+
 /// Some utility functions which we implement on the `char` type.
 pub(crate) trait Utility {
     /// Checks the char for a vowel character.
@@ -25,9 +27,22 @@ impl Utility for char {
     }
 }
 
+/// Returns boolean tuples of the modifiers from the bit masked integer `modifier`.
+/// First  is Shift, second is Ctrl and third is Alt. 
+pub(crate) fn get_modifiers(modifier: u8) -> (bool, bool, bool) {
+    let shift = (modifier & MODIFIER_SHIFT) == MODIFIER_SHIFT;
+    let ctrl = (modifier & MODIFIER_CTRL) == MODIFIER_CTRL;
+    let alt = (modifier & MODIFIER_ALT) == MODIFIER_ALT;
+
+    (shift, ctrl, alt)
+}
+
 #[cfg(test)]
 mod test {
+    use crate::context::{MODIFIER_SHIFT, MODIFIER_CTRL, MODIFIER_ALT};
     use super::Utility;
+    use super::get_modifiers;
+
     #[test]
     fn test_utilities() {
         assert!('আ'.is_vowel());
@@ -35,5 +50,13 @@ mod test {
         assert!('া'.is_kar());
         assert!(!'আ'.is_kar());
         assert!('ক'.is_pure_consonant());
+    }
+
+    #[test]
+    fn test_get_modifiers() {
+        assert_eq!(get_modifiers(MODIFIER_SHIFT), (true, false, false));
+        assert_eq!(get_modifiers(MODIFIER_CTRL), (false, true, false));
+        assert_eq!(get_modifiers(MODIFIER_ALT), (false, false, true));
+        assert_eq!(get_modifiers(MODIFIER_SHIFT | MODIFIER_CTRL | MODIFIER_ALT), (true, true, true));
     }
 }
