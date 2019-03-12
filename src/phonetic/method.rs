@@ -236,4 +236,8 @@ impl Method for PhoneticMethod {
     fn handle_special_key(&self, key: u16) -> u8 {
         unimplemented!();
     }
+
+    fn key_handled(&self) -> bool {
+        self.handled
+    }
 }

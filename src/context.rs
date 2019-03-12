@@ -21,11 +21,17 @@ impl RitiContext {
     pub fn handle_special_key(&self, key: u16) -> u8 {
         self.method.borrow().handle_special_key(key)
     }
+
+    /// Was the key handled?
+    pub fn key_handled(&self) -> bool {
+        self.method.borrow().key_handled()
+    }
 }
 
 pub(crate) trait Method {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion;
     fn handle_special_key(&self, key: u16) -> u8;
+    fn key_handled(&self) -> bool;
 }
 
 /// Shift modifier key.
