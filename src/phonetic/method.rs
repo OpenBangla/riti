@@ -1,6 +1,6 @@
 // Phonetic Method
 
-use crate::context::Method;
+use crate::context::{Method, IM_COMMIT, IM_DEFAULT, IM_KEY_ACCEPTED};
 use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::suggestion::Suggestion;
@@ -10,12 +10,28 @@ pub(crate) struct PhoneticMethod {
     buffer: String,
     // Was the key handled?
     handled: bool,
-    suggestions: PhoneticSuggestion,
+    suggestion: PhoneticSuggestion,
+    selection_changed: bool,
+}
+
+impl PhoneticMethod {
+    /// Returns `Suggestion` struct with suggestions.
+    fn create_suggestion(&mut self) -> Suggestion {
+        let suggestions = self.suggestion.suggest(&self.buffer);
+
+        Suggestion::new(suggestions)
+    }
 }
 
 impl Method for PhoneticMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion {
         let (shift, ctrl, alt) = get_modifiers(modifier);
+
+        // Reject key which has ctrl, alt combinations.
+        if ctrl || alt {
+            self.handled = false;
+            return Suggestion::empty();
+        }
 
         match (key, shift) {
             // Alphabet Keys
@@ -230,11 +246,30 @@ impl Method for PhoneticMethod {
             _ => panic!("Unknown key code!"),
         }
 
-        Suggestion::new()
+        self.create_suggestion()
     }
 
-    fn handle_special_key(&self, key: u16) -> u8 {
-        unimplemented!();
+    fn handle_special_key(&mut self, key: u16) -> u8 {
+        match key {
+            VC_SPACE => {
+                if !self.buffer.is_empty() {
+                    self.buffer.clear();
+                    IM_COMMIT
+                } else {
+                    IM_DEFAULT
+                }
+            }
+            VC_TAB => {
+                if !self.buffer.is_empty() {
+                    self.selection_changed = true;
+                    IM_KEY_ACCEPTED
+                } else {
+                    IM_DEFAULT
+                }
+            }
+
+            _ => IM_DEFAULT,
+        }
     }
 
     fn key_handled(&self) -> bool {

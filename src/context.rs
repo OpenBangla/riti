@@ -19,7 +19,7 @@ impl RitiContext {
     /// 
     /// See the [`Constants`](index.html#constants) which are bit masked for more information.
     pub fn handle_special_key(&self, key: u16) -> u8 {
-        self.method.borrow().handle_special_key(key)
+        self.method.borrow_mut().handle_special_key(key)
     }
 
     /// Was the key handled?
@@ -30,7 +30,7 @@ impl RitiContext {
 
 pub(crate) trait Method {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion;
-    fn handle_special_key(&self, key: u16) -> u8;
+    fn handle_special_key(&mut self, key: u16) -> u8;
     fn key_handled(&self) -> bool;
 }
 
@@ -47,6 +47,10 @@ pub const MODIFIER_CTRL: u8 = 1 << 1;
 /// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
 pub const MODIFIER_ALT: u8 = 1 << 2;
 
+/// IM needs to do nothing.
+/// 
+/// Returned by the [`handle_special_key()`](struct.RitiContext.html#method.handle_special_key) function.
+pub const IM_DEFAULT: u8 = 0;
 /// IM needs to accept the key.
 /// 
 /// Returned by the [`handle_special_key()`](struct.RitiContext.html#method.handle_special_key) function.
