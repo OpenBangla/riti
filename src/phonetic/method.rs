@@ -15,11 +15,21 @@ pub(crate) struct PhoneticMethod {
 }
 
 impl PhoneticMethod {
+    /// Creates a new `PhoneticMethod` struct.
+    pub(crate) fn new() -> Self {
+        PhoneticMethod {
+            buffer: String::new(),
+            handled: false,
+            suggestion: PhoneticSuggestion::new(),
+            selection_changed: false,
+        }
+    }
+
     /// Returns `Suggestion` struct with suggestions.
     fn create_suggestion(&mut self) -> Suggestion {
         let suggestions = self.suggestion.suggest(&self.buffer);
 
-        Suggestion::new(suggestions)
+        Suggestion::new(self.buffer.clone(), suggestions)
     }
 }
 
@@ -243,6 +253,22 @@ impl Method for PhoneticMethod {
                 self.buffer.push('m');
                 self.handled = true;
             }
+            // Special Key
+            (VC_BACKSPACE, _) => {
+                if !self.buffer.is_empty() {
+                    // Remove the last character.
+                    self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
+                    self.handled = true;
+
+                    if self.buffer.is_empty() {
+                        // The buffer is now empty, so return empty suggestion.
+                        return Suggestion::empty();
+                    }
+                } else {
+                    self.handled = false;
+                    return Suggestion::empty();
+                }
+            }
             _ => panic!("Unknown key code!"),
         }
 
@@ -274,5 +300,36 @@ impl Method for PhoneticMethod {
 
     fn key_handled(&self) -> bool {
         self.handled
+    }
+}
+
+// Implement Default trait on PhoneticMethod for testing convenience.
+impl Default for PhoneticMethod {
+    fn default() -> Self {
+        PhoneticMethod::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::PhoneticMethod;
+    use crate::context::Method;
+    use crate::keycodes::VC_BACKSPACE;
+
+    #[test]
+    fn test_backspace() {
+        let mut method = PhoneticMethod {
+            buffer: "ab".to_string(),
+            ..Default::default()
+        };
+
+        assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty());
+        assert!(method.key_handled());
+
+        assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty());
+        assert!(method.key_handled());
+
+        assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty());
+        assert!(!method.key_handled());
     }
 }
