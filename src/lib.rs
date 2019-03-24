@@ -5,6 +5,7 @@
 extern crate lazy_static;
 
 mod phonetic;
+mod fixed;
 pub mod context;
 mod settings;
 mod keycodes;
