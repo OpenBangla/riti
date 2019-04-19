@@ -141,7 +141,7 @@ impl fmt::Display for LayoutModifiers {
 
 #[cfg(test)]
 mod tests {
-    use super::{LayoutParser, LayoutModifiers};
+    use super::{LayoutModifiers, LayoutParser};
     use crate::keycodes::*;
     use serde_json::{self, Value};
 
@@ -171,16 +171,43 @@ mod tests {
                 .clone(),
         );
 
-        assert_eq!(parser.get_char_for_key(VC_A, LayoutModifiers::Normal), Some("া"));
-        assert_eq!(parser.get_char_for_key(VC_A, LayoutModifiers::Shift), Some("অ"));
-        assert_eq!(parser.get_char_for_key(VC_A, LayoutModifiers::AltGr), Some("ঌ"));
-        assert_eq!(parser.get_char_for_key(VC_A, LayoutModifiers::ShiftAltGr), Some("ৠ"));
+        assert_eq!(
+            parser.get_char_for_key(VC_A, LayoutModifiers::Normal),
+            Some("া")
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_A, LayoutModifiers::Shift),
+            Some("অ")
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_A, LayoutModifiers::AltGr),
+            Some("ঌ")
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_A, LayoutModifiers::ShiftAltGr),
+            Some("ৠ")
+        );
 
-        assert_eq!(parser.get_char_for_key(VC_1, LayoutModifiers::Normal), Some("১"));
-        assert_eq!(parser.get_char_for_key(VC_EXCLAIM, LayoutModifiers::Normal), Some("!"));
+        assert_eq!(
+            parser.get_char_for_key(VC_1, LayoutModifiers::Normal),
+            Some("১")
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_EXCLAIM, LayoutModifiers::Normal),
+            Some("!")
+        );
 
-        assert_eq!(parser.get_char_for_key(VC_BACK_SLASH, LayoutModifiers::Normal), Some("‌")); // ZWNJ
-        assert_eq!(parser.get_char_for_key(VC_BAR, LayoutModifiers::Normal), Some("॥"));
-        assert_eq!(parser.get_char_for_key(VC_BAR, LayoutModifiers::Shift), Some("॥"));
+        assert_eq!(
+            parser.get_char_for_key(VC_BACK_SLASH, LayoutModifiers::Normal),
+            Some("‌")
+        ); // ZWNJ
+        assert_eq!(
+            parser.get_char_for_key(VC_BAR, LayoutModifiers::Normal),
+            Some("॥")
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_BAR, LayoutModifiers::Shift),
+            Some("॥")
+        );
     }
 }

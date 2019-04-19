@@ -1,9 +1,9 @@
 // Suggestion making module.
 
-use std::cmp::Ordering;
 use edit_distance::edit_distance;
 use rupantor::avro::AvroPhonetic;
 use rustc_hash::FxHashMap;
+use std::cmp::Ordering;
 
 use crate::phonetic::database::Database;
 use crate::utility::Utility;
@@ -76,10 +76,7 @@ impl PhoneticSuggestion {
         if !list.is_empty() {
             list
         } else {
-            self.cache
-                .get(splitted.1)
-                .cloned()
-                .unwrap_or_else(Vec::new)
+            self.cache.get(splitted.1).cloned().unwrap_or_else(Vec::new)
         }
     }
 
@@ -245,68 +242,33 @@ mod tests {
         };
 
         assert_eq!(
-            suggestion.add_suffix_to_suggestions(&(
-                "",
-                "computer",
-                ""
-            )),
+            suggestion.add_suffix_to_suggestions(&("", "computer", "")),
             vec!["কম্পিউটার"]
         );
         assert_eq!(
-            suggestion.add_suffix_to_suggestions(&(
-                "",
-                "computere",
-                ""
-            )),
+            suggestion.add_suffix_to_suggestions(&("", "computere", "")),
             vec!["কম্পিউটারে"]
         );
         assert_eq!(
-            suggestion.add_suffix_to_suggestions(&(
-                "",
-                "computergulo",
-                ""
-            )),
+            suggestion.add_suffix_to_suggestions(&("", "computergulo", "")),
             vec!["কম্পিউটারগুলো"]
         );
         assert_eq!(
-            suggestion.add_suffix_to_suggestions(&(
-                "",
-                "ebongmala",
-                ""
-            )),
+            suggestion.add_suffix_to_suggestions(&("", "ebongmala", "")),
             vec!["এবঙমালা"]
         );
     }
 
     #[test]
     fn test_split_string() {
-        assert_eq!(
-            split_string("[][][][]"),
-            ("[][][][]", "", "")
-        );
-        assert_eq!(
-            split_string("t*"),
-            ("", "t", "*")
-        );
-        assert_eq!(
-            split_string("1"),
-            ("", "1", "")
-        );
+        assert_eq!(split_string("[][][][]"), ("[][][][]", "", ""));
+        assert_eq!(split_string("t*"), ("", "t", "*"));
+        assert_eq!(split_string("1"), ("", "1", ""));
         assert_eq!(
             split_string("#\"percent%sign\"#"),
-            (
-                "#\"",
-                "percent%sign",
-                "\"#"
-            )
+            ("#\"", "percent%sign", "\"#")
         );
-        assert_eq!(
-            split_string("text"),
-            ("", "text", "")
-        );
-        assert_eq!(
-            split_string(":)"),
-            ("", ":", ")")
-        );
+        assert_eq!(split_string("text"), ("", "text", ""));
+        assert_eq!(split_string(":)"), ("", ":", ")"));
     }
 }
