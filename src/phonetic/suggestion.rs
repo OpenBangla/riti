@@ -28,8 +28,8 @@ impl PhoneticSuggestion {
 
     /// Add suffix(গুলো, মালা...etc) to the dictionary suggestions and return them.
     /// This function gets the suggestion list from the stored cache.
-    fn add_suffix_to_suggestions(&self, splitted: &(String, String, String)) -> Vec<String> {
-        let middle = &splitted.1;
+    fn add_suffix_to_suggestions(&self, splitted: &(&str, &str, &str)) -> Vec<String> {
+        let middle = splitted.1;
         let mut list = Vec::new();
         if middle.len() > 2 {
             for i in 1..middle.len() {
@@ -77,9 +77,9 @@ impl PhoneticSuggestion {
             list
         } else {
             self.cache
-                .get(&splitted.1)
+                .get(splitted.1)
                 .cloned()
-                .unwrap_or_else(|| Vec::new())
+                .unwrap_or_else(Vec::new)
         }
     }
 
@@ -90,7 +90,7 @@ impl PhoneticSuggestion {
 
         let phonetic = self.phonetic.convert(&splitted_string.1);
 
-        if !self.cache.contains_key(&splitted_string.1) {
+        if !self.cache.contains_key(splitted_string.1) {
             let mut dictionary = self.database.search_dictionary(&splitted_string.1);
             // Auto Correct
             if let Some(corrected) = self.database.get_corrected(&splitted_string.1) {
@@ -100,7 +100,7 @@ impl PhoneticSuggestion {
                 dictionary.push(word);
             }
             // Cache it.
-            self.cache.insert(splitted_string.1.clone(), dictionary);
+            self.cache.insert(splitted_string.1.to_string(), dictionary);
         }
 
         let mut suggestions_with_suffix = self.add_suffix_to_suggestions(&splitted_string);
@@ -147,7 +147,7 @@ impl Default for PhoneticSuggestion {
 
 /// Split the string into three parts.
 /// This function splits preceding and trailing meta characters.
-fn split_string(input: &str) -> (String, String, String) {
+fn split_string(input: &str) -> (&str, &str, &str) {
     let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,";
     let mut first_index = 0;
     let mut last_index = 0;
@@ -165,7 +165,7 @@ fn split_string(input: &str) -> (String, String, String) {
     // a numeric character, then the string has no middle part
     // or last part we need. So return "" for them ;)
     if !encountered_alpha {
-        return (input[..].to_owned(), "".to_owned(), "".to_owned());
+        return (&input[..], "", "");
     }
 
     for (index, c) in input.chars().rev().enumerate() {
@@ -175,9 +175,9 @@ fn split_string(input: &str) -> (String, String, String) {
         }
     }
 
-    let first_part = input[0..first_index].to_owned();
-    let middle_part = input[first_index..=last_index].to_owned();
-    let last_part = input[last_index + 1..].to_owned();
+    let first_part = &input[0..first_index];
+    let middle_part = &input[first_index..=last_index];
+    let last_part = &input[last_index + 1..];
 
     (first_part, middle_part, last_part)
 }
@@ -246,33 +246,33 @@ mod tests {
 
         assert_eq!(
             suggestion.add_suffix_to_suggestions(&(
-                "".to_string(),
-                "computer".to_string(),
-                "".to_string()
+                "",
+                "computer",
+                ""
             )),
             vec!["কম্পিউটার"]
         );
         assert_eq!(
             suggestion.add_suffix_to_suggestions(&(
-                "".to_string(),
-                "computere".to_string(),
-                "".to_string()
+                "",
+                "computere",
+                ""
             )),
             vec!["কম্পিউটারে"]
         );
         assert_eq!(
             suggestion.add_suffix_to_suggestions(&(
-                "".to_string(),
-                "computergulo".to_string(),
-                "".to_string()
+                "",
+                "computergulo",
+                ""
             )),
             vec!["কম্পিউটারগুলো"]
         );
         assert_eq!(
             suggestion.add_suffix_to_suggestions(&(
-                "".to_string(),
-                "ebongmala".to_string(),
-                "".to_string()
+                "",
+                "ebongmala",
+                ""
             )),
             vec!["এবঙমালা"]
         );
@@ -282,31 +282,31 @@ mod tests {
     fn test_split_string() {
         assert_eq!(
             split_string("[][][][]"),
-            ("[][][][]".to_owned(), "".to_owned(), "".to_owned())
+            ("[][][][]", "", "")
         );
         assert_eq!(
             split_string("t*"),
-            ("".to_owned(), "t".to_owned(), "*".to_owned())
+            ("", "t", "*")
         );
         assert_eq!(
             split_string("1"),
-            ("".to_owned(), "1".to_owned(), "".to_owned())
+            ("", "1", "")
         );
         assert_eq!(
             split_string("#\"percent%sign\"#"),
             (
-                "#\"".to_owned(),
-                "percent%sign".to_owned(),
-                "\"#".to_owned()
+                "#\"",
+                "percent%sign",
+                "\"#"
             )
         );
         assert_eq!(
             split_string("text"),
-            ("".to_owned(), "text".to_owned(), "".to_owned())
+            ("", "text", "")
         );
         assert_eq!(
             split_string(":)"),
-            ("".to_owned(), ":".to_owned(), ")".to_owned())
+            ("", ":", ")")
         );
     }
 }

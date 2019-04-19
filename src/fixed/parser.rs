@@ -1,4 +1,4 @@
-// Fixed keyboard layout parser.\
+// Fixed keyboard layout parser.
 
 use serde_json::{Map, Value};
 use std::fmt;
