@@ -27,9 +27,14 @@ impl Utility for char {
     }
 }
 
+/// Tuple of modifier keys.
+/// 
+/// First  is Shift, second is Ctrl and third is Alt.
+pub(crate) type Modifiers = (bool, bool, bool);
+
 /// Returns boolean tuples of the modifiers from the bit masked integer `modifier`.
 /// First  is Shift, second is Ctrl and third is Alt. 
-pub(crate) fn get_modifiers(modifier: u8) -> (bool, bool, bool) {
+pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
     let shift = (modifier & MODIFIER_SHIFT) == MODIFIER_SHIFT;
     let ctrl = (modifier & MODIFIER_CTRL) == MODIFIER_CTRL;
     let alt = (modifier & MODIFIER_ALT) == MODIFIER_ALT;

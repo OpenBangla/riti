@@ -4,8 +4,10 @@ use serde_json::{Map, Value};
 use std::fmt;
 
 use crate::keycodes::*;
+use crate::utility::Modifiers;
 use LayoutModifiers::*;
 
+#[derive(Debug, PartialEq)]
 pub(crate) enum LayoutModifiers {
     Normal,
     Shift,
@@ -128,6 +130,18 @@ impl LayoutParser {
     }
 }
 
+impl From<Modifiers> for LayoutModifiers {
+    fn from(modifiers: Modifiers) -> Self {
+        match modifiers {
+            (false, false, false) => Normal,
+            (true, false, false) => Shift,
+            (false, true, true) => AltGr,
+            (true, true, true) => ShiftAltGr,
+            _ => panic!("Unknown modifier combination")
+        }
+    }
+}
+
 impl fmt::Display for LayoutModifiers {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -143,6 +157,7 @@ impl fmt::Display for LayoutModifiers {
 mod tests {
     use super::{LayoutModifiers, LayoutParser};
     use crate::keycodes::*;
+    use crate::utility::Modifiers;
     use serde_json::{self, Value};
 
     #[test]
@@ -209,5 +224,13 @@ mod tests {
             parser.get_char_for_key(VC_BAR, LayoutModifiers::Shift),
             Some("॥")
         );
+    }
+
+    #[test]
+    fn test_modifiers() {
+        assert_eq!(LayoutModifiers::from((false, false, false)), LayoutModifiers::Normal);
+        assert_eq!(LayoutModifiers::from((true, false, false)), LayoutModifiers::Shift);
+        assert_eq!(LayoutModifiers::from((false, true, true)), LayoutModifiers::AltGr);
+        assert_eq!(LayoutModifiers::from((true, true, true)), LayoutModifiers::ShiftAltGr);
     }
 }
