@@ -94,7 +94,7 @@ impl FixedMethod {
 
         // Automatic Vowel Forming
         let rmc = self.buffer.chars().last().unwrap(); // Right most character
-        if character.chars().last().unwrap().is_kar()
+        if character.chars().nth(0).unwrap().is_kar()
             && (self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc))
         {
             match character {
@@ -112,6 +112,47 @@ impl FixedMethod {
             }
         }
 
+        // Vowel making with Hasanta + Kar
+        if self.buffer.chars().last().unwrap() == B_HASANTA.chars().nth(0).unwrap() {
+            if (character == B_AA_KAR) {
+                self.internal_backspace();
+                self.buffer += B_AA;
+            } else if character == B_I_KAR {
+                self.internal_backspace();
+                self.buffer += B_I;
+            } else if character == B_II_KAR {
+                self.internal_backspace();
+                self.buffer += B_II;
+            } else if character == B_U_KAR {
+                self.internal_backspace();
+                self.buffer += B_U;
+            } else if character == B_UU_KAR {
+                self.internal_backspace();
+                self.buffer += B_UU;
+            } else if character == B_RRI_KAR {
+                self.internal_backspace();
+                self.buffer += B_RRI;
+            } else if character == B_E_KAR {
+                self.internal_backspace();
+                self.buffer += B_E;
+            } else if character == B_OI_KAR {
+                self.internal_backspace();
+                self.buffer += B_OI;
+            } else if character == B_O_KAR {
+                self.internal_backspace();
+                self.buffer += B_O;
+            } else if character == B_OU_KAR {
+                self.internal_backspace();
+                self.buffer += B_OU;
+            } else if character == B_HASANTA {
+                self.buffer += ZWNJ;
+            }
+        }
+
         Ok(())
+    }
+
+    fn internal_backspace(&mut self) {
+        self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
     }
 }
