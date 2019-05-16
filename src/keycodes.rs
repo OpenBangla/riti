@@ -1,5 +1,7 @@
 //! Key codes
 
+#[rustfmt::skip]
+
 // Begin Alphanumeric Zone
 pub const VC_GRAVE: u16 =           0x0029;  // '`'
 pub const VC_TILDE: u16 =           0x0001;  // '~'
