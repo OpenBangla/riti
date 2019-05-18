@@ -44,6 +44,96 @@ impl Method for PhoneticMethod {
         }
 
         match (key, shift) {
+            // Alphanumeric keys
+            (VC_GRAVE, _) => {
+                self.buffer.push('`');
+                self.handled = true;
+            }
+            (VC_TILDE, _) => {
+                self.buffer.push('~');
+                self.handled = true;
+            }
+            (VC_0, _) => {
+                self.buffer.push('0');
+                self.handled = true;
+            }
+            (VC_PAREN_RIGHT, _) => {
+                self.buffer.push(')');
+                self.handled = true;
+            }
+            (VC_1, _) => {
+                self.buffer.push('1');
+                self.handled = true;
+            }
+            (VC_EXCLAIM, _) => {
+                self.buffer.push('!');
+                self.handled = true;
+            }
+            (VC_2, _) => {
+                self.buffer.push('2');
+                self.handled = true;
+            }
+            (VC_AT, _) => {
+                self.buffer.push('@');
+                self.handled = true;
+            }
+            (VC_3, _) => {
+                self.buffer.push('3');
+                self.handled = true;
+            }
+            (VC_HASH, _) => {
+                self.buffer.push('#');
+                self.handled = true;
+            }
+            (VC_4, _) => {
+                self.buffer.push('4');
+                self.handled = true;
+            }
+            (VC_DOLLAR, _) => {
+                self.buffer.push('$');
+                self.handled = true;
+            }
+            (VC_5, _) => {
+                self.buffer.push('5');
+                self.handled = true;
+            }
+            (VC_PERCENT, _) => {
+                self.buffer.push('%');
+                self.handled = true;
+            }
+            (VC_6, _) => {
+                self.buffer.push('6');
+                self.handled = true;
+            }
+            (VC_CIRCUM, true) => {
+                self.buffer.push('^');
+                self.handled = true;
+            }
+            (VC_7, _) => {
+                self.buffer.push('7');
+                self.handled = true;
+            }
+            (VC_AMPERSAND, _) => {
+                self.buffer.push('&');
+                self.handled = true;
+            }
+            (VC_8, _) => {
+                self.buffer.push('8');
+                self.handled = true;
+            }
+            (VC_ASTERISK, _) => {
+                self.buffer.push('*');
+                self.handled = true;
+            }
+            (VC_9, _) => {
+                self.buffer.push('9');
+                self.handled = true;
+            }
+            (VC_PAREN_LEFT, _) => {
+                self.buffer.push('(');
+                self.handled = true;
+            }
+
             // Alphabet Keys
             (VC_Q, true) => {
                 self.buffer.push('Q');
@@ -253,6 +343,154 @@ impl Method for PhoneticMethod {
                 self.buffer.push('m');
                 self.handled = true;
             }
+
+            (VC_MINUS, _) => {
+                self.buffer.push('-');
+                self.handled = true;
+            }
+            (VC_UNDERSCORE, _) => {
+                self.buffer.push('_');
+                self.handled = true;
+            }
+            (VC_EQUALS, _) => {
+                self.buffer.push('=');
+                self.handled = true;
+            }
+            (VC_PLUS, _) => {
+                self.buffer.push('+');
+                self.handled = true;
+            }
+
+            (VC_BRACKET_LEFT, _) => {
+                self.buffer.push('[');
+                self.handled = true;
+            }
+            (VC_BRACKET_RIGHT, _) => {
+                self.buffer.push(']');
+                self.handled = true;
+            }
+            (VC_BRACE_LEFT, _) => {
+                self.buffer.push('{');
+                self.handled = true;
+            }
+            (VC_BRACE_RIGHT, _) => {
+                self.buffer.push('}');
+                self.handled = true;
+            }
+            (VC_BACK_SLASH, _) => {
+                self.buffer.push('\\');
+                self.handled = true;
+            }
+            (VC_BAR, _) => {
+                self.buffer.push('|');
+                self.handled = true;
+            }
+
+            (VC_SEMICOLON, _) => {
+                self.buffer.push(';');
+                self.handled = true;
+            }
+            (VC_COLON, _) => {
+                self.buffer.push(':');
+                self.handled = true;
+            }
+            (VC_APOSTROPHE, _) => {
+                self.buffer.push('\'');
+                self.handled = true;
+            }
+            (VC_QUOTE, _) => {
+                self.buffer.push('\"');
+                self.handled = true;
+            }
+
+            (VC_COMMA, _) => {
+                self.buffer.push(',');
+                self.handled = true;
+            }
+            (VC_LESS, _) => {
+                self.buffer.push('<');
+                self.handled = true;
+            }
+            (VC_PERIOD, _) => {
+                self.buffer.push('.');
+                self.handled = true;
+            }
+            (VC_GREATER, _) => {
+                self.buffer.push('>');
+                self.handled = true;
+            }
+            (VC_SLASH, _) => {
+                self.buffer.push('/');
+                self.handled = true;
+            }
+            (VC_QUESTION, _) => {
+                self.buffer.push('?');
+                self.handled = true;
+            }
+
+            // Keypad keys
+            (VC_KP_0, _) => {
+                self.buffer.push('0');
+                self.handled = true;
+            }
+            (VC_KP_1, _) => {
+                self.buffer.push('1');
+                self.handled = true;
+            }
+            (VC_KP_2, _) => {
+                self.buffer.push('2');
+                self.handled = true;
+            }
+            (VC_KP_3, _) => {
+                self.buffer.push('3');
+                self.handled = true;
+            }
+            (VC_KP_4, _) => {
+                self.buffer.push('4');
+                self.handled = true;
+            }
+            (VC_KP_5, _) => {
+                self.buffer.push('5');
+                self.handled = true;
+            }
+            (VC_KP_6, _) => {
+                self.buffer.push('6');
+                self.handled = true;
+            }
+            (VC_KP_7, _) => {
+                self.buffer.push('7');
+                self.handled = true;
+            }
+            (VC_KP_8, _) => {
+                self.buffer.push('8');
+                self.handled = true;
+            }
+            (VC_KP_9, _) => {
+                self.buffer.push('9');
+                self.handled = true;
+            }
+
+            (VC_KP_DIVIDE, _) => {
+                self.buffer.push('/');
+                self.handled = true;
+            }
+            (VC_KP_MULTIPLY, _) => {
+                self.buffer.push('*');
+                self.handled = true;
+            }
+            (VC_KP_SUBTRACT, _) => {
+                self.buffer.push('-');
+                self.handled = true;
+            }
+            (VC_KP_ADD, _) => {
+                self.buffer.push('+');
+                self.handled = true;
+            }
+            (VC_KP_DECIMAL, _) => {
+                self.buffer.push('.');
+                self.handled = true;
+            }
+
             // Special Key
             (VC_BACKSPACE, _) => {
                 if !self.buffer.is_empty() {
@@ -269,7 +507,18 @@ impl Method for PhoneticMethod {
                     return Suggestion::empty();
                 }
             }
-            _ => panic!("Unknown key code!"),
+            (VC_SHIFT, _) | (VC_CONTROL, _) => {
+                if !self.buffer.is_empty() {
+                    self.handled = true;
+                } else {
+                    self.handled = false;
+                    return Suggestion::empty();
+                }
+            }
+            _ => {
+                self.handled = false;
+                return Suggestion::empty();
+            }
         }
 
         self.create_suggestion()

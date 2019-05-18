@@ -19,7 +19,7 @@ pub(crate) struct PhoneticSuggestion {
 impl PhoneticSuggestion {
     pub(crate) fn new() -> Self {
         PhoneticSuggestion {
-            suggestions: Vec::new(),
+            suggestions: Vec::with_capacity(10),
             database: Database::new(),
             cache: FxHashMap::default(),
             phonetic: AvroPhonetic::new(),
@@ -82,7 +82,7 @@ impl PhoneticSuggestion {
 
     /// Make suggestions from the given `term`.
     pub(crate) fn suggest(&mut self, term: &str) -> Vec<String> {
-        let mut suggestions: Vec<String> = Vec::new();
+        self.suggestions.clear();
         let splitted_string = split_string(term);
 
         let phonetic = self.phonetic.convert(&splitted_string.1);
@@ -92,7 +92,7 @@ impl PhoneticSuggestion {
             // Auto Correct
             if let Some(corrected) = self.database.get_corrected(&splitted_string.1) {
                 let word = self.phonetic.convert(&corrected);
-                suggestions.push(word.clone());
+                self.suggestions.push(word.clone());
                 // Add it to the cache for adding suffix later.
                 dictionary.push(word);
             }
@@ -115,23 +115,23 @@ impl PhoneticSuggestion {
             }
         });
 
-        suggestions.append(&mut suggestions_with_suffix);
+        self.suggestions.append(&mut suggestions_with_suffix);
 
         // Last Item: Phonetic. Check if it already contains.
-        if !suggestions.contains(&phonetic) {
-            suggestions.push(phonetic);
+        if !self.suggestions.contains(&phonetic) {
+            self.suggestions.push(phonetic);
         }
 
-        for item in suggestions.iter_mut() {
+        for item in self.suggestions.iter_mut() {
             *item = format!("{}{}{}", splitted_string.0, item, splitted_string.2);
         }
 
         // Emoticons Auto Corrects
         if let Some(emoticon) = self.database.get_corrected(term) {
-            suggestions.insert(0, emoticon);
+            self.suggestions.insert(0, emoticon);
         }
 
-        suggestions
+        self.suggestions.clone()
     }
 }
 
