@@ -11,3 +11,5 @@ mod settings;
 mod keycodes;
 pub mod suggestion;
 mod utility;
+
+pub(crate) const ENV_LAYOUT: &str = "RITI_LAYOUT_FILE";

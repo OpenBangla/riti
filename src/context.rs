@@ -25,12 +25,19 @@ impl RitiContext {
     pub fn key_handled(&self) -> bool {
         self.method.borrow().key_handled()
     }
+
+    /// Update the suggestion making engine. This would also look for changes
+    /// in layout selection and auto correct database.
+    pub fn update_engine(&self) {
+        self.method.borrow_mut().update_engine()
+    }
 }
 
 pub(crate) trait Method {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion;
     fn handle_special_key(&mut self, key: u16) -> u8;
     fn key_handled(&self) -> bool;
+    fn update_engine(&mut self);
 }
 
 /// Shift modifier key.

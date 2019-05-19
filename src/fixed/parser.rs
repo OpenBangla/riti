@@ -20,7 +20,7 @@ pub(crate) struct LayoutParser {
 }
 
 impl LayoutParser {
-    pub(crate) fn new(layout: Value) -> Self {
+    pub(crate) fn new(layout: &Value) -> Self {
         let layout = layout.as_object().unwrap().clone();
         LayoutParser { layout }
     }
@@ -161,23 +161,11 @@ mod tests {
     use serde_json::{self, Value};
 
     #[test]
-    fn test_loading() {
-        let layout: Value = serde_json::from_str::<Value>(include_str!("../../data/Probhat.json"))
-            .unwrap()
-            .get("layout")
-            .unwrap()
-            .clone();
-        let _parser = LayoutParser::new(layout);
-    }
-
-    #[test]
     fn test_key_bindings() {
         // Load the layout
-        let layout: Value = serde_json::from_str::<Value>(include_str!("../../data/Probhat.json"))
-            .unwrap()
-            .get("layout")
-            .unwrap()
-            .clone();
+        let layout =
+            serde_json::from_str::<Value>(include_str!("../../data/Probhat.json")).unwrap();
+        let layout = layout.get("layout").unwrap();
         let parser = LayoutParser::new(layout);
 
         assert_eq!(

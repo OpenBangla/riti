@@ -550,6 +550,10 @@ impl Method for PhoneticMethod {
     fn key_handled(&self) -> bool {
         self.handled
     }
+
+    fn update_engine(&mut self) {
+        //
+    }
 }
 
 // Implement Default trait on PhoneticMethod for testing convenience.
