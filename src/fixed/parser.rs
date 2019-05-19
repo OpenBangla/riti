@@ -20,7 +20,8 @@ pub(crate) struct LayoutParser {
 }
 
 impl LayoutParser {
-    pub(crate) fn new(layout: Map<String, Value>) -> Self {
+    pub(crate) fn new(layout: Value) -> Self {
+        let layout = layout.as_object().unwrap().clone();
         LayoutParser { layout }
     }
 
@@ -137,7 +138,7 @@ impl From<Modifiers> for LayoutModifiers {
             (true, false, false) => Shift,
             (false, true, true) => AltGr,
             (true, true, true) => ShiftAltGr,
-            _ => panic!("Unknown modifier combination")
+            _ => panic!("Unknown modifier combination"),
         }
     }
 }
@@ -157,34 +158,27 @@ impl fmt::Display for LayoutModifiers {
 mod tests {
     use super::{LayoutModifiers, LayoutParser};
     use crate::keycodes::*;
-    use crate::utility::Modifiers;
     use serde_json::{self, Value};
 
     #[test]
     fn test_loading() {
-        let _parser = LayoutParser::new(
-            serde_json::from_str::<Value>(include_str!("../../data/Probhat.json"))
-                .unwrap()
-                .get("layout")
-                .unwrap()
-                .as_object()
-                .unwrap()
-                .clone(),
-        );
+        let layout: Value = serde_json::from_str::<Value>(include_str!("../../data/Probhat.json"))
+            .unwrap()
+            .get("layout")
+            .unwrap()
+            .clone();
+        let _parser = LayoutParser::new(layout);
     }
 
     #[test]
     fn test_key_bindings() {
         // Load the layout
-        let parser = LayoutParser::new(
-            serde_json::from_str::<Value>(include_str!("../../data/Probhat.json"))
-                .unwrap()
-                .get("layout")
-                .unwrap()
-                .as_object()
-                .unwrap()
-                .clone(),
-        );
+        let layout: Value = serde_json::from_str::<Value>(include_str!("../../data/Probhat.json"))
+            .unwrap()
+            .get("layout")
+            .unwrap()
+            .clone();
+        let parser = LayoutParser::new(layout);
 
         assert_eq!(
             parser.get_char_for_key(VC_A, LayoutModifiers::Normal),
@@ -228,9 +222,21 @@ mod tests {
 
     #[test]
     fn test_modifiers() {
-        assert_eq!(LayoutModifiers::from((false, false, false)), LayoutModifiers::Normal);
-        assert_eq!(LayoutModifiers::from((true, false, false)), LayoutModifiers::Shift);
-        assert_eq!(LayoutModifiers::from((false, true, true)), LayoutModifiers::AltGr);
-        assert_eq!(LayoutModifiers::from((true, true, true)), LayoutModifiers::ShiftAltGr);
+        assert_eq!(
+            LayoutModifiers::from((false, false, false)),
+            LayoutModifiers::Normal
+        );
+        assert_eq!(
+            LayoutModifiers::from((true, false, false)),
+            LayoutModifiers::Shift
+        );
+        assert_eq!(
+            LayoutModifiers::from((false, true, true)),
+            LayoutModifiers::AltGr
+        );
+        assert_eq!(
+            LayoutModifiers::from((true, true, true)),
+            LayoutModifiers::ShiftAltGr
+        );
     }
 }
