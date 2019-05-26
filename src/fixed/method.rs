@@ -118,63 +118,93 @@ impl FixedMethod {
         Suggestion::new("".to_string(), vec![self.buffer.clone()])
     }
 
-    /// Processes the `value` of the pressed key and updates the method's 
+    /// Processes the `value` of the pressed key and updates the method's
     /// internal buffer which will be used when creating suggestion.
-    fn process_key_value(&mut self, character: &str) {
+    fn process_key_value(&mut self, value: &str) {
         let rmc = self.buffer.chars().last().unwrap(); // Right most character
-        // Automatic Vowel Forming
-        if character.chars().nth(0).unwrap().is_kar()
-            && (self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc))
-        {
-            match character {
-                B_AA_KAR => self.buffer += B_AA,
-                B_I_KAR => self.buffer += B_I,
-                B_II_KAR => self.buffer += B_II,
-                B_U_KAR => self.buffer += B_U,
-                B_UU_KAR => self.buffer += B_UU,
-                B_RRI_KAR => self.buffer += B_RRI,
-                B_E_KAR => self.buffer += B_E,
-                B_OI_KAR => self.buffer += B_OI,
-                B_O_KAR => self.buffer += B_O,
-                B_OU_KAR => self.buffer += B_OU,
-                _ => unreachable!(),
-            }
-        }
 
-        // Vowel making with Hasanta + Kar
-        if self.buffer.chars().last().unwrap() == B_HASANTA.chars().nth(0).unwrap() {
-            if character == B_AA_KAR {
+        if value.chars().nth(0).unwrap().is_kar() {
+            // Automatic Vowel Forming
+            if self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc) {
+                match value {
+                    B_AA_KAR => self.buffer += B_AA,
+                    B_I_KAR => self.buffer += B_I,
+                    B_II_KAR => self.buffer += B_II,
+                    B_U_KAR => self.buffer += B_U,
+                    B_UU_KAR => self.buffer += B_UU,
+                    B_RRI_KAR => self.buffer += B_RRI,
+                    B_E_KAR => self.buffer += B_E,
+                    B_OI_KAR => self.buffer += B_OI,
+                    B_O_KAR => self.buffer += B_O,
+                    B_OU_KAR => self.buffer += B_OU,
+                    _ => unreachable!(),
+                }
+                return;
+            }
+
+            // Automatic Fix of Chandra Position
+            if rmc == B_CHANDRA.chars().nth(0).unwrap() {
                 self.internal_backspace();
-                self.buffer += B_AA;
-            } else if character == B_I_KAR {
-                self.internal_backspace();
-                self.buffer += B_I;
-            } else if character == B_II_KAR {
-                self.internal_backspace();
-                self.buffer += B_II;
-            } else if character == B_U_KAR {
-                self.internal_backspace();
-                self.buffer += B_U;
-            } else if character == B_UU_KAR {
-                self.internal_backspace();
-                self.buffer += B_UU;
-            } else if character == B_RRI_KAR {
-                self.internal_backspace();
-                self.buffer += B_RRI;
-            } else if character == B_E_KAR {
-                self.internal_backspace();
-                self.buffer += B_E;
-            } else if character == B_OI_KAR {
-                self.internal_backspace();
-                self.buffer += B_OI;
-            } else if character == B_O_KAR {
-                self.internal_backspace();
-                self.buffer += B_O;
-            } else if character == B_OU_KAR {
-                self.internal_backspace();
-                self.buffer += B_OU;
-            } else if character == B_HASANTA {
-                self.buffer += ZWNJ;
+                self.buffer = format!("{}{}{}", self.buffer, value, B_CHANDRA);
+                return;
+            }
+
+            // Vowel making with Hasanta + Kar
+            if rmc == B_HASANTA.chars().nth(0).unwrap() {
+                match value {
+                    B_AA_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_AA;
+                    }
+                    B_I_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_I;
+                    }
+                    B_II_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_II;
+                    }
+                    B_U_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_U;
+                    }
+                    B_UU_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_UU;
+                    }
+                    B_RRI_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_RRI;
+                    }
+                    B_E_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_E;
+                    }
+                    B_OI_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_OI;
+                    }
+                    B_O_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_O;
+                    }
+                    B_OU_KAR => {
+                        self.internal_backspace();
+                        self.buffer += B_OU;
+                    }
+                    _ => unreachable!(),
+                }
+                return;
+            }
+
+            // Traditional Kar Joining
+            // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
+            if rmc.is_pure_consonant() {
+                self.buffer = format!("{}{}{}", self.buffer, ZWNJ, value);
+                return;
+            } else {
+                self.buffer += value;
+                return;
             }
         }
     }
@@ -208,7 +238,7 @@ mod tests {
             ENV_LAYOUT,
             format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         );
-        
+
         let mut method = FixedMethod {
             buffer: "আমি".to_string(),
             ..Default::default()
