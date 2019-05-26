@@ -123,88 +123,92 @@ impl FixedMethod {
     fn process_key_value(&mut self, value: &str) {
         let rmc = self.buffer.chars().last().unwrap(); // Right most character
 
-        if value.chars().nth(0).unwrap().is_kar() {
-            // Automatic Vowel Forming
-            if self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc) {
-                match value {
-                    B_AA_KAR => self.buffer += B_AA,
-                    B_I_KAR => self.buffer += B_I,
-                    B_II_KAR => self.buffer += B_II,
-                    B_U_KAR => self.buffer += B_U,
-                    B_UU_KAR => self.buffer += B_UU,
-                    B_RRI_KAR => self.buffer += B_RRI,
-                    B_E_KAR => self.buffer += B_E,
-                    B_OI_KAR => self.buffer += B_OI,
-                    B_O_KAR => self.buffer += B_O,
-                    B_OU_KAR => self.buffer += B_OU,
-                    _ => unreachable!(),
+        if let Some(character) = value.chars().nth(0) {
+            if character.is_kar() {
+                // Automatic Vowel Forming
+                if self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc) {
+                    match character {
+                        B_AA_KAR => self.buffer.push(B_AA),
+                        B_I_KAR => self.buffer.push(B_I),
+                        B_II_KAR => self.buffer.push(B_II),
+                        B_U_KAR => self.buffer.push(B_U),
+                        B_UU_KAR => self.buffer.push(B_UU),
+                        B_RRI_KAR => self.buffer.push(B_RRI),
+                        B_E_KAR => self.buffer.push(B_E),
+                        B_OI_KAR => self.buffer.push(B_OI),
+                        B_O_KAR => self.buffer.push(B_O),
+                        B_OU_KAR => self.buffer.push(B_OU),
+                        _ => unreachable!(),
+                    }
+                    return;
                 }
-                return;
-            }
 
-            // Automatic Fix of Chandra Position
-            if rmc == B_CHANDRA.chars().nth(0).unwrap() {
-                self.internal_backspace();
-                self.buffer = format!("{}{}{}", self.buffer, value, B_CHANDRA);
-                return;
-            }
 
-            // Vowel making with Hasanta + Kar
-            if rmc == B_HASANTA.chars().nth(0).unwrap() {
-                match value {
-                    B_AA_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_AA;
-                    }
-                    B_I_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_I;
-                    }
-                    B_II_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_II;
-                    }
-                    B_U_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_U;
-                    }
-                    B_UU_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_UU;
-                    }
-                    B_RRI_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_RRI;
-                    }
-                    B_E_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_E;
-                    }
-                    B_OI_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_OI;
-                    }
-                    B_O_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_O;
-                    }
-                    B_OU_KAR => {
-                        self.internal_backspace();
-                        self.buffer += B_OU;
-                    }
-                    _ => unreachable!(),
+                // Automatic Fix of Chandra Position
+                if rmc == B_CHANDRA {
+                    self.internal_backspace();
+                    self.buffer = format!("{}{}{}", self.buffer, character, B_CHANDRA);
+                    return;
                 }
-                return;
-            }
 
-            // Traditional Kar Joining
-            // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
-            if rmc.is_pure_consonant() {
-                self.buffer = format!("{}{}{}", self.buffer, ZWNJ, value);
-                return;
-            } else {
-                self.buffer += value;
-                return;
+                // Vowel making with Hasanta + Kar
+                if rmc == B_HASANTA {
+                    match character {
+                        B_AA_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_AA);
+                        }
+                        B_I_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_I);
+                        }
+                        B_II_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_II);
+                        }
+                        B_U_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_U);
+                        }
+                        B_UU_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_UU);
+                        }
+                        B_RRI_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_RRI);
+                        }
+                        B_E_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_E);
+                        }
+                        B_OI_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_OI);
+                        }
+                        B_O_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_O);
+                        }
+                        B_OU_KAR => {
+                            self.internal_backspace();
+                            self.buffer.push(B_OU);
+                        }
+                        _ => unreachable!(),
+                    }
+                    return;
+                }
+
+
+                // Traditional Kar Joining
+                // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
+                if rmc.is_pure_consonant() {
+                    self.buffer = format!("{}{}{}", self.buffer, ZWNJ, character);
+                    return;
+                } else {
+                    self.buffer.push(character);
+                    return;
+                }
             }
         }
     }
