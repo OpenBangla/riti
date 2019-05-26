@@ -123,7 +123,19 @@ impl FixedMethod {
     fn process_key_value(&mut self, value: &str) {
         let rmc = self.buffer.chars().last().unwrap(); // Right most character
 
+        // Zo fola insertion
+        if value == "\u{09CD}\u{09AF}" {
+            if rmc == B_R {
+                self.buffer = format!("{}{}{}", self.buffer, ZWJ, value);
+                return;
+            } else {
+                self.buffer.push_str(value);
+                return;
+            }
+        }
+
         if let Some(character) = value.chars().nth(0) {
+            // Kar insertion
             if character.is_kar() {
                 // Automatic Vowel Forming
                 if self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc) {
@@ -141,18 +153,13 @@ impl FixedMethod {
                         _ => unreachable!(),
                     }
                     return;
-                }
-
-
-                // Automatic Fix of Chandra Position
-                if rmc == B_CHANDRA {
+                } else if rmc == B_CHANDRA {
+                    // Automatic Fix of Chandra Position
                     self.internal_backspace();
                     self.buffer = format!("{}{}{}", self.buffer, character, B_CHANDRA);
                     return;
-                }
-
-                // Vowel making with Hasanta + Kar
-                if rmc == B_HASANTA {
+                } else if rmc == B_HASANTA {
+                    // Vowel making with Hasanta + Kar
                     match character {
                         B_AA_KAR => {
                             self.internal_backspace();
@@ -197,18 +204,21 @@ impl FixedMethod {
                         _ => unreachable!(),
                     }
                     return;
-                }
-
-
-                // Traditional Kar Joining
-                // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
-                if rmc.is_pure_consonant() {
+                } else if rmc.is_pure_consonant() {
+                    // Traditional Kar Joining
+                    // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
                     self.buffer = format!("{}{}{}", self.buffer, ZWNJ, character);
                     return;
                 } else {
                     self.buffer.push(character);
                     return;
                 }
+            }
+
+            // Hasanta
+            if character == B_HASANTA && rmc == B_HASANTA {
+                self.buffer.push(ZWNJ);
+                return;
             }
         }
     }
