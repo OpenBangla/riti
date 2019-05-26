@@ -51,8 +51,8 @@ impl Method for FixedMethod {
             }
         } else if key == VC_BACKSPACE {
             if !self.buffer.is_empty() {
-                // Remove the last character.
-                self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
+                // Remove the last character from buffer.
+                self.internal_backspace();
                 self.handled = true;
 
                 if !self.buffer.is_empty() {
@@ -184,7 +184,43 @@ impl FixedMethod {
         Ok(())
     }
 
+    /// Removes the last character from the buffer.
     fn internal_backspace(&mut self) {
-        self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
+        let len = self.buffer.chars().count() - 1;
+        self.buffer = self.buffer.chars().take(len).collect();
+    }
+}
+
+// Implement Default trait on FixedMethod for testing convenience.
+impl Default for FixedMethod {
+    fn default() -> Self {
+        FixedMethod::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::FixedMethod;
+    use crate::context::Method;
+
+    use crate::keycodes::VC_BACKSPACE;
+    use crate::ENV_LAYOUT;
+    use std::env::set_var;
+    #[test]
+    fn test_backspace() {
+        set_var(
+            ENV_LAYOUT,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
+        );
+        
+        let mut method = FixedMethod {
+            buffer: "আমি".to_string(),
+            ..Default::default()
+        };
+
+        assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আম
+        assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আ
+        assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // Empty
     }
 }
