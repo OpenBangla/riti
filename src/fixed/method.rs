@@ -4,7 +4,7 @@ use std::fs::read_to_string;
 
 use crate::context::Method;
 use crate::fixed::chars::*;
-use crate::fixed::parser::{LayoutModifiers, LayoutParser};
+use crate::fixed::parser::LayoutParser;
 use crate::keycodes::*;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
@@ -22,8 +22,8 @@ pub(crate) struct FixedMethod {
 
 impl Method for FixedMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion {
-        let mods = get_modifiers(modifier);
-        let (_, ctrl, alt) = mods;
+        let modifier = get_modifiers(modifier);
+        let (_, ctrl, alt) = modifier;
         // Don't catch Ctrl or Alt without AltGr combination.
         if (ctrl && !alt) || (!ctrl && alt) {
             // Handle edge cases
@@ -67,9 +67,10 @@ impl Method for FixedMethod {
             }
         }
 
-        let modifier: LayoutModifiers = mods.into();
-
-        if self.process_key(key, modifier).is_err() {
+        if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
+            self.process_key_value(&value);
+            self.handled = true;
+        } else {
             self.handled = false;
             return Suggestion::empty();
         }
@@ -117,15 +118,11 @@ impl FixedMethod {
         Suggestion::new("".to_string(), vec![self.buffer.clone()])
     }
 
-    /// Processes the given `key` and updates the method's internal
-    /// buffer which will be used when creating suggestion.
-    ///
-    /// Returns Ok(()) if the key was processed otherwise an Err(())
-    fn process_key(&mut self, key: u16, modifier: LayoutModifiers) -> Result<(), ()> {
-        let character = self.parser.get_char_for_key(key, modifier).ok_or(())?;
-
-        // Automatic Vowel Forming
+    /// Processes the `value` of the pressed key and updates the method's 
+    /// internal buffer which will be used when creating suggestion.
+    fn process_key_value(&mut self, character: &str) {
         let rmc = self.buffer.chars().last().unwrap(); // Right most character
+        // Automatic Vowel Forming
         if character.chars().nth(0).unwrap().is_kar()
             && (self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc))
         {
@@ -180,8 +177,6 @@ impl FixedMethod {
                 self.buffer += ZWNJ;
             }
         }
-
-        Ok(())
     }
 
     /// Removes the last character from the buffer.

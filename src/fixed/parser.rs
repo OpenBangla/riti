@@ -25,18 +25,23 @@ impl LayoutParser {
         LayoutParser { layout }
     }
 
-    fn layout_get_value(&self, key: &str, modifier: LayoutModifiers) -> Option<&str> {
+    fn layout_get_value(&self, key: &str, modifier: LayoutModifiers) -> Option<String> {
         self.layout
             .get(&format!("Key_{}_{}", key, modifier))
             .unwrap()
             .as_str()
+            .map(|s| s.to_string())
     }
 
-    fn layout_get_value_numpad(&self, key: &str) -> Option<&str> {
-        self.layout.get(key).unwrap().as_str()
+    fn layout_get_value_numpad(&self, key: &str) -> Option<String> {
+        self.layout
+            .get(key)
+            .unwrap()
+            .as_str()
+            .map(|s| s.to_string())
     }
 
-    pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers) -> Option<&str> {
+    pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers) -> Option<String> {
         match (key, modifier) {
             // Numerics
             (VC_0, _) => self.layout_get_value("0", Normal),
@@ -170,41 +175,41 @@ mod tests {
 
         assert_eq!(
             parser.get_char_for_key(VC_A, LayoutModifiers::Normal),
-            Some("া")
+            Some("া".to_string())
         );
         assert_eq!(
             parser.get_char_for_key(VC_A, LayoutModifiers::Shift),
-            Some("অ")
+            Some("অ".to_string())
         );
         assert_eq!(
             parser.get_char_for_key(VC_A, LayoutModifiers::AltGr),
-            Some("ঌ")
+            Some("ঌ".to_string())
         );
         assert_eq!(
             parser.get_char_for_key(VC_A, LayoutModifiers::ShiftAltGr),
-            Some("ৠ")
+            Some("ৠ".to_string())
         );
 
         assert_eq!(
             parser.get_char_for_key(VC_1, LayoutModifiers::Normal),
-            Some("১")
+            Some("১".to_string())
         );
         assert_eq!(
             parser.get_char_for_key(VC_EXCLAIM, LayoutModifiers::Normal),
-            Some("!")
+            Some("!".to_string())
         );
 
         assert_eq!(
             parser.get_char_for_key(VC_BACK_SLASH, LayoutModifiers::Normal),
-            Some("‌")
+            Some("‌".to_string())
         ); // ZWNJ
         assert_eq!(
             parser.get_char_for_key(VC_BAR, LayoutModifiers::Normal),
-            Some("॥")
+            Some("॥".to_string())
         );
         assert_eq!(
             parser.get_char_for_key(VC_BAR, LayoutModifiers::Shift),
-            Some("॥")
+            Some("॥".to_string())
         );
     }
 
