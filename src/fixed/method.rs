@@ -134,6 +134,12 @@ impl FixedMethod {
             }
         }
 
+        // Reph insertion
+        if value == "\u{09B0}\u{09CD}" {
+            self.insert_reph();
+            return;
+        }
+
         if let Some(character) = value.chars().nth(0) {
             // Kar insertion
             if character.is_kar() {
@@ -221,11 +227,125 @@ impl FixedMethod {
                 return;
             }
         }
+
+        self.buffer.push_str(value);
+    }
+
+    /// Checks if the Reph is moveable by the Reph insertion algorithm.
+    ///
+    /// `rmc`: Right most character.
+    ///
+    /// `len`: length of the text.
+    fn is_reph_moveable(&self, rmc: char, len: usize) -> bool {
+        if rmc.is_pure_consonant() {
+            return true;
+        } else if len > 2 {
+            if rmc.is_vowel()
+                && self
+                    .buffer
+                    .chars()
+                    .skip(len - 2)
+                    .nth(0)
+                    .unwrap()
+                    .is_pure_consonant()
+            {
+                return true;
+            } else if rmc == B_CHANDRA {
+                if self
+                    .buffer
+                    .chars()
+                    .skip(len - 2)
+                    .nth(0)
+                    .unwrap()
+                    .is_pure_consonant()
+                {
+                    return true;
+                } else if len > 3
+                    && self.buffer.chars().skip(len - 2).nth(0).unwrap().is_vowel()
+                    && self
+                        .buffer
+                        .chars()
+                        .skip(len - 3)
+                        .nth(0)
+                        .unwrap()
+                        .is_pure_consonant()
+                {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    fn insert_reph(&mut self) {
+        let rmc = self.buffer.chars().last().unwrap();
+        let len = self.buffer.chars().count();
+        let reph_moveable = self.is_reph_moveable(rmc, len);
+
+        let mut encountered_constant = false;
+        let mut encountered_vowel = false;
+        let mut encountered_hasanta = false;
+        let mut encountered_chandra = false;
+
+        if reph_moveable {
+            let cache = self.buffer.clone();
+            let mut step = 0usize;
+
+            for i in 1..=len {
+                let character = cache.chars().skip(i).nth(0).unwrap();
+
+                if character.is_pure_consonant() {
+                    if encountered_constant && !encountered_hasanta {
+                        break;
+                    }
+                    encountered_constant = true;
+                    encountered_hasanta = false; // reset
+                    step += 1;
+                    continue;
+                } else if character == B_HASANTA {
+                    encountered_hasanta = true;
+                    step += 1;
+                    continue;
+                } else if character.is_vowel() {
+                    if encountered_vowel {
+                        break;
+                    }
+
+                    if i == 1 || encountered_chandra {
+                        encountered_vowel = true;
+                        step += 1;
+                        continue;
+                    }
+
+                    break;
+                } else if character == B_CHANDRA {
+                    if i == 1 {
+                        encountered_chandra = true;
+                        step += 1;
+                        continue;
+                    }
+                    break;
+                }
+            }
+
+            let temp: String = cache.chars().skip(step).collect();
+            self.internal_backspace_step(step);
+            self.buffer = format!("{}{}{}{}", self.buffer, B_R, B_HASANTA, temp);
+        } else {
+            self.buffer = format!("{}{}{}", self.buffer, B_R, B_HASANTA);
+        }
     }
 
     /// Removes the last character from the buffer.
     fn internal_backspace(&mut self) {
         let len = self.buffer.chars().count() - 1;
+        self.buffer = self.buffer.chars().take(len).collect();
+    }
+
+    /// Removes the last `n` character from the buffer.
+    fn internal_backspace_step(&mut self, n: usize) {
+        let len = self.buffer.chars().count() - n;
         self.buffer = self.buffer.chars().take(len).collect();
     }
 }
