@@ -236,39 +236,22 @@ impl FixedMethod {
     /// `rmc`: Right most character.
     ///
     /// `len`: length of the text.
+    #[rustfmt::skip]
     fn is_reph_moveable(&self, rmc: char, len: usize) -> bool {
         if rmc.is_pure_consonant() {
             return true;
         } else if len > 2 {
             if rmc.is_vowel()
-                && self
-                    .buffer
-                    .chars()
-                    .skip(len - 2)
-                    .nth(0)
-                    .unwrap()
-                    .is_pure_consonant()
+                && self.buffer.chars().skip(len - 2).nth(0).unwrap().is_pure_consonant()
             {
                 return true;
             } else if rmc == B_CHANDRA {
-                if self
-                    .buffer
-                    .chars()
-                    .skip(len - 2)
-                    .nth(0)
-                    .unwrap()
-                    .is_pure_consonant()
+                if self.buffer.chars().skip(len - 2).nth(0).unwrap().is_pure_consonant()
                 {
                     return true;
                 } else if len > 3
                     && self.buffer.chars().skip(len - 2).nth(0).unwrap().is_vowel()
-                    && self
-                        .buffer
-                        .chars()
-                        .skip(len - 3)
-                        .nth(0)
-                        .unwrap()
-                        .is_pure_consonant()
+                    && self.buffer.chars().skip(len - 3).nth(0).unwrap().is_pure_consonant()
                 {
                     return true;
                 }
@@ -278,6 +261,7 @@ impl FixedMethod {
         false
     }
 
+    /// Inserts Reph into the buffer.
     fn insert_reph(&mut self) {
         let rmc = self.buffer.chars().last().unwrap();
         let len = self.buffer.chars().count();
@@ -289,12 +273,9 @@ impl FixedMethod {
         let mut encountered_chandra = false;
 
         if reph_moveable {
-            let cache = self.buffer.clone();
             let mut step = 0usize;
 
-            for i in 1..=len {
-                let character = cache.chars().skip(i).nth(0).unwrap();
-
+            for (index, character) in self.buffer.chars().rev().enumerate() {
                 if character.is_pure_consonant() {
                     if encountered_constant && !encountered_hasanta {
                         break;
@@ -312,7 +293,7 @@ impl FixedMethod {
                         break;
                     }
 
-                    if i == 1 || encountered_chandra {
+                    if index == 0 || encountered_chandra {
                         encountered_vowel = true;
                         step += 1;
                         continue;
@@ -320,7 +301,7 @@ impl FixedMethod {
 
                     break;
                 } else if character == B_CHANDRA {
-                    if i == 1 {
+                    if index == 0 {
                         encountered_chandra = true;
                         step += 1;
                         continue;
@@ -329,7 +310,7 @@ impl FixedMethod {
                 }
             }
 
-            let temp: String = cache.chars().skip(step).collect();
+            let temp: String = self.buffer.chars().skip(len - step).collect();
             self.internal_backspace_step(step);
             self.buffer = format!("{}{}{}{}", self.buffer, B_R, B_HASANTA, temp);
         } else {
@@ -359,13 +340,13 @@ impl Default for FixedMethod {
 
 #[cfg(test)]
 mod tests {
+    use std::env::set_var;
 
     use super::FixedMethod;
     use crate::context::Method;
-
     use crate::keycodes::VC_BACKSPACE;
     use crate::ENV_LAYOUT;
-    use std::env::set_var;
+
     #[test]
     fn test_backspace() {
         set_var(
@@ -381,5 +362,39 @@ mod tests {
         assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আম
         assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আ
         assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // Empty
+    }
+
+    #[test]
+    fn test_reph_insertion() {
+        set_var(
+            ENV_LAYOUT,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
+        );
+
+        let mut method = FixedMethod::new();
+
+        method.buffer = "অক".to_string();
+        method.insert_reph();
+        assert_eq!(method.buffer, "অর্ক".to_string());
+
+        method.buffer = "ক".to_string();
+        method.insert_reph();
+        assert_eq!(method.buffer, "র্ক".to_string());
+
+        method.buffer = "কত".to_string();
+        method.insert_reph();
+        assert_eq!(method.buffer, "কর্ত".to_string());
+
+        method.buffer = "অক্কা".to_string();
+        method.insert_reph();
+        assert_eq!(method.buffer, "অর্ক্কা".to_string());
+
+        method.buffer = "কক্ষ্ম".to_string();
+        method.insert_reph();
+        assert_eq!(method.buffer, "কর্ক্ষ্ম".to_string());
+
+        method.buffer = "কব্যা".to_string();
+        method.insert_reph();
+        assert_eq!(method.buffer, "কর্ব্যা".to_string());
     }
 }
