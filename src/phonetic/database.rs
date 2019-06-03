@@ -1,12 +1,12 @@
-use maplit::hashmap;
 use regex::Regex;
 use rustc_hash::FxHashMap;
 use serde_json;
 
+use crate::hashmap;
 use crate::phonetic::regex::PhoneticRegex;
 
 lazy_static! {
-    static ref DICTIONARY_TABLE: std::collections::HashMap<&'static str, Vec<&'static str>> = hashmap! [
+    static ref DICTIONARY_TABLE: FxHashMap<&'static str, Vec<&'static str>> = hashmap! [
         "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
         "b" => vec!["b", "bh"],
         "c" => vec!["c", "ch", "k"],
@@ -86,6 +86,7 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::Database;
+    
     #[test]
     fn test_database() {
         let db = Database::new();

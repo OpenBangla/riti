@@ -1,4 +1,4 @@
-use crate::context::{MODIFIER_SHIFT, MODIFIER_CTRL, MODIFIER_ALT};
+use crate::context::{MODIFIER_ALT, MODIFIER_CTRL, MODIFIER_SHIFT};
 
 /// Some utility functions which we implement on the `char` type.
 pub(crate) trait Utility {
@@ -18,7 +18,8 @@ impl Utility for char {
 
     /// Checks the char for a kar character.
     fn is_kar(&self) -> bool {
-        "\u{09BE}\u{09BF}\u{09C0}\u{09C1}\u{09C2}\u{09C3}\u{09C7}\u{09C8}\u{09CB}\u{09CC}\u{09C4}".contains(*self)
+        "\u{09BE}\u{09BF}\u{09C0}\u{09C1}\u{09C2}\u{09C3}\u{09C7}\u{09C8}\u{09CB}\u{09CC}\u{09C4}"
+            .contains(*self)
     }
 
     /// Checks the char for a pure consonant character.
@@ -28,12 +29,12 @@ impl Utility for char {
 }
 
 /// Tuple of modifier keys.
-/// 
+///
 /// First  is Shift, second is Ctrl and third is Alt.
 pub(crate) type Modifiers = (bool, bool, bool);
 
 /// Returns boolean tuples of the modifiers from the bit masked integer `modifier`.
-/// First  is Shift, second is Ctrl and third is Alt. 
+/// First  is Shift, second is Ctrl and third is Alt.
 pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
     let shift = (modifier & MODIFIER_SHIFT) == MODIFIER_SHIFT;
     let ctrl = (modifier & MODIFIER_CTRL) == MODIFIER_CTRL;
@@ -42,12 +43,33 @@ pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
     (shift, ctrl, alt)
 }
 
+#[macro_export]
+/// A helper macro for initializing HashMap.
+/// Originally from the `maplit` crate but customized for use
+/// with HashMap associated with `FxHasher`.
+macro_rules! hashmap {
+    (@single $($x:tt)*) => (());
+    (@count $($rest:expr),*) => (<[()]>::len(&[$(hashmap!(@single $rest)),*]));
+
+    ($($key:expr => $value:expr,)+) => { hashmap!($($key => $value),+) };
+    ($($key:expr => $value:expr),*) => {
+        {
+            let _cap = hashmap!(@count $($key),*);
+            let mut _map = std::collections::HashMap::with_capacity_and_hasher(_cap, std::hash::BuildHasherDefault::<rustc_hash::FxHasher>::default());
+            $(
+                let _ = _map.insert($key, $value);
+            )*
+            _map
+        }
+    };
+}
+
 #[cfg(test)]
 mod test {
-    use crate::context::{MODIFIER_SHIFT, MODIFIER_CTRL, MODIFIER_ALT};
-    use super::Utility;
     use super::get_modifiers;
-
+    use super::Utility;
+    use crate::context::{MODIFIER_ALT, MODIFIER_CTRL, MODIFIER_SHIFT};
+    
     #[test]
     fn test_utilities() {
         assert!('আ'.is_vowel());
@@ -62,6 +84,9 @@ mod test {
         assert_eq!(get_modifiers(MODIFIER_SHIFT), (true, false, false));
         assert_eq!(get_modifiers(MODIFIER_CTRL), (false, true, false));
         assert_eq!(get_modifiers(MODIFIER_ALT), (false, false, true));
-        assert_eq!(get_modifiers(MODIFIER_SHIFT | MODIFIER_CTRL | MODIFIER_ALT), (true, true, true));
+        assert_eq!(
+            get_modifiers(MODIFIER_SHIFT | MODIFIER_CTRL | MODIFIER_ALT),
+            (true, true, true)
+        );
     }
 }
