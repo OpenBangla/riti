@@ -63,13 +63,10 @@ impl Database {
             .unwrap_or(&Vec::new())
             .par_iter()
             .flat_map(|&item| {
-                self.table[item].par_iter().filter_map(|i| {
-                    if rgx.is_match(i) {
-                        Some(i.to_owned())
-                    } else {
-                        None
-                    }
-                })
+                self.table[item]
+                    .par_iter()
+                    .filter(|i| rgx.is_match(i))
+                    .cloned()
             })
             .collect()
     }
