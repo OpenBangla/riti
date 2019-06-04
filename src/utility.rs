@@ -45,8 +45,7 @@ pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
 
 #[macro_export]
 /// A helper macro for initializing HashMap.
-/// Originally from the `maplit` crate but customized for use
-/// with HashMap associated with `FxHasher`.
+/// Originally from the `maplit` crate but customized for use with `hashbrown::HashMap`.
 macro_rules! hashmap {
     (@single $($x:tt)*) => (());
     (@count $($rest:expr),*) => (<[()]>::len(&[$(hashmap!(@single $rest)),*]));
@@ -55,7 +54,7 @@ macro_rules! hashmap {
     ($($key:expr => $value:expr),*) => {
         {
             let _cap = hashmap!(@count $($key),*);
-            let mut _map = std::collections::HashMap::with_capacity_and_hasher(_cap, std::hash::BuildHasherDefault::<rustc_hash::FxHasher>::default());
+            let mut _map = hashbrown::HashMap::with_capacity(_cap);
             $(
                 let _ = _map.insert($key, $value);
             )*

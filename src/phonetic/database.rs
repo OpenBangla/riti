@@ -1,12 +1,13 @@
+use hashbrown::HashMap;
+use rayon::prelude::*;
 use regex::Regex;
 use rustc_hash::FxHashMap;
-use serde_json;
 
 use crate::hashmap;
 use crate::phonetic::regex::PhoneticRegex;
 
 lazy_static! {
-    static ref DICTIONARY_TABLE: FxHashMap<&'static str, Vec<&'static str>> = hashmap! [
+    static ref DICTIONARY_TABLE: HashMap<&'static str, Vec<&'static str>> = hashmap! [
         "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
         "b" => vec!["b", "bh"],
         "c" => vec!["c", "ch", "k"],
@@ -38,7 +39,7 @@ lazy_static! {
 
 pub(crate) struct Database {
     regex: PhoneticRegex,
-    table: FxHashMap<String, Vec<String>>,
+    table: HashMap<String, Vec<String>>,
     suffix: FxHashMap<String, String>,
     autocorrect: FxHashMap<String, String>,
 }
@@ -60,9 +61,9 @@ impl Database {
         DICTIONARY_TABLE
             .get(&word[0..1])
             .unwrap_or(&Vec::new())
-            .iter()
+            .par_iter()
             .flat_map(|&item| {
-                self.table[item].iter().filter_map(|i| {
+                self.table[item].par_iter().filter_map(|i| {
                     if rgx.is_match(i) {
                         Some(i.to_owned())
                     } else {
@@ -86,7 +87,7 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::Database;
-    
+
     #[test]
     fn test_database() {
         let db = Database::new();
