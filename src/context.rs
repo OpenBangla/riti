@@ -1,11 +1,9 @@
-use crate::settings::Settings;
 use crate::suggestion::Suggestion;
 use std::cell::RefCell;
 
 /// Context handle used for libRiti IM APIs
 pub struct RitiContext {
     method: RefCell<Box<dyn Method>>,
-    settings: Settings,
 }
 
 impl RitiContext {

@@ -1,5 +1,4 @@
 use serde_json::Value;
-use std::env::var;
 use std::fs::read_to_string;
 
 use crate::context::Method;
@@ -9,7 +8,7 @@ use crate::keycodes::*;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
 use crate::utility::Utility;
-use crate::ENV_LAYOUT;
+use crate::settings::*;
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
@@ -87,7 +86,7 @@ impl Method for FixedMethod {
     }
 
     fn update_engine(&mut self) {
-        let layout = var(ENV_LAYOUT).unwrap();
+        let layout = get_settings_layout_file();
 
         // Check if the layout was changed.
         if self.layout != layout {
@@ -102,7 +101,7 @@ impl FixedMethod {
     /// Creates a new instance of `FixedMethod` with the layout which
     /// is set in the `RITI_LAYOUT_FILE` environment variable.
     pub(crate) fn new() -> Self {
-        let layout = var(ENV_LAYOUT).unwrap();
+        let layout = get_settings_layout_file();
         let file = serde_json::from_str::<Value>(&read_to_string(&layout).unwrap()).unwrap();
         let parser = LayoutParser::new(file.get("layout").unwrap());
 
@@ -121,7 +120,7 @@ impl FixedMethod {
     /// Processes the `value` of the pressed key and updates the method's
     /// internal buffer which will be used when creating suggestion.
     fn process_key_value(&mut self, value: &str) {
-        let rmc = self.buffer.chars().last().unwrap(); // Right most character
+        let rmc = self.buffer.chars().last().unwrap_or_default(); // Right most character
 
         // Zo fola insertion
         if value == "\u{09CD}\u{09AF}" {
@@ -144,7 +143,7 @@ impl FixedMethod {
             // Kar insertion
             if character.is_kar() {
                 // Automatic Vowel Forming
-                if self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc) {
+                if get_settings_fixed_automatic_vowel() && (self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc)) {
                     match character {
                         B_AA_KAR => self.buffer.push(B_AA),
                         B_I_KAR => self.buffer.push(B_I),
@@ -159,7 +158,7 @@ impl FixedMethod {
                         _ => unreachable!(),
                     }
                     return;
-                } else if rmc == B_CHANDRA {
+                } else if get_settings_fixed_automatic_chandra() && rmc == B_CHANDRA {
                     // Automatic Fix of Chandra Position
                     self.internal_backspace();
                     self.buffer = format!("{}{}{}", self.buffer, character, B_CHANDRA);
@@ -210,7 +209,7 @@ impl FixedMethod {
                         _ => unreachable!(),
                     }
                     return;
-                } else if rmc.is_pure_consonant() {
+                } else if get_settings_fixed_traditional_kar() && rmc.is_pure_consonant() {
                     // Traditional Kar Joining
                     // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
                     self.buffer = format!("{}{}{}", self.buffer, ZWNJ, character);
@@ -273,7 +272,7 @@ impl FixedMethod {
         let mut encountered_chandra = false;
 
         if reph_moveable {
-            let mut step = 0usize;
+            let mut step = 0;
 
             for (index, character) in self.buffer.chars().rev().enumerate() {
                 if character.is_pure_consonant() {
@@ -344,13 +343,14 @@ mod tests {
 
     use super::FixedMethod;
     use crate::context::Method;
-    use crate::keycodes::VC_BACKSPACE;
-    use crate::ENV_LAYOUT;
+    use crate::keycodes::*;
+    use crate::fixed::chars::*;
+    use crate::settings::*;
 
     #[test]
     fn test_backspace() {
         set_var(
-            ENV_LAYOUT,
+            ENV_LAYOUT_FILE,
             format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         );
 
@@ -367,7 +367,7 @@ mod tests {
     #[test]
     fn test_reph_insertion() {
         set_var(
-            ENV_LAYOUT,
+            ENV_LAYOUT_FILE,
             format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         );
 
@@ -396,5 +396,62 @@ mod tests {
         method.buffer = "কব্যা".to_string();
         method.insert_reph();
         assert_eq!(method.buffer, "কর্ব্যা".to_string());
+    }
+
+    #[test]
+    fn test_features() {
+        set_var(
+            ENV_LAYOUT_FILE,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
+        );
+        set_var(ENV_LAYOUT_FIXED_VOWEL, "true");
+        set_var(ENV_LAYOUT_FIXED_CHANDRA, "true");
+        set_var(ENV_LAYOUT_FIXED_KAR, "true");
+
+        let mut method = FixedMethod::new();
+
+        // Automatic Vowel Forming
+        method.buffer = "".to_string();
+        method.process_key_value(&B_AA_KAR.to_string());
+        assert_eq!(method.buffer, B_AA.to_string());
+
+        method.buffer = "আ".to_string();
+        method.process_key_value(&B_I_KAR.to_string());
+        assert_eq!(method.buffer, "আই".to_string());
+
+        // Automatic Chandra position
+        method.buffer = "কঁ".to_string();
+        method.process_key_value(&B_AA_KAR.to_string());
+        assert_eq!(method.buffer, "কাঁ".to_string());
+
+        // Traditional Kar joining
+        method.buffer = "র".to_string();
+        method.process_key_value(&B_U_KAR.to_string());
+        assert_eq!(method.buffer, "র‌ু".to_string());
+
+        // Without Traditional Kar joining
+        set_var(ENV_LAYOUT_FIXED_KAR, "false");
+        method.buffer = "র".to_string();
+        method.process_key_value(&B_U_KAR.to_string());
+        assert_eq!(method.buffer, "রু".to_string());
+
+        // Vowel making with Hasanta
+        method.buffer = "্".to_string();
+        method.process_key_value(&B_U_KAR.to_string());
+        assert_eq!(method.buffer, "উ".to_string());
+
+        // Double Hasanta for Hasanta + ZWNJ
+        method.buffer = B_HASANTA.to_string();
+        method.process_key_value(&B_HASANTA.to_string());
+        assert_eq!(method.buffer, "\u{09CD}\u{200C}".to_string());
+
+        // Others
+        method.buffer = "ক".to_string();
+        method.process_key_value(&B_KH.to_string());
+        assert_eq!(method.buffer, "কখ".to_string());
+
+        method.buffer = "ক".to_string();
+        method.process_key_value(&B_AA_KAR.to_string());
+        assert_eq!(method.buffer, "কা".to_string());
     }
 }
