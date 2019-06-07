@@ -85,12 +85,12 @@ impl PhoneticSuggestion {
         self.suggestions.clear();
         let splitted_string = split_string(term);
 
-        let phonetic = self.phonetic.convert(&splitted_string.1);
+        let phonetic = self.phonetic.convert(splitted_string.1);
 
         if !self.cache.contains_key(splitted_string.1) {
-            let mut dictionary = self.database.search_dictionary(&splitted_string.1);
+            let mut dictionary = self.database.search_dictionary(splitted_string.1);
             // Auto Correct
-            if let Some(corrected) = self.database.get_corrected(&splitted_string.1) {
+            if let Some(corrected) = self.database.get_corrected(splitted_string.1) {
                 let word = self.phonetic.convert(&corrected);
                 self.suggestions.push(word.clone());
                 // Add it to the cache for adding suffix later.
