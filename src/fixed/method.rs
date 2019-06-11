@@ -5,10 +5,10 @@ use crate::context::Method;
 use crate::fixed::chars::*;
 use crate::fixed::parser::LayoutParser;
 use crate::keycodes::*;
+use crate::settings::*;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
 use crate::utility::Utility;
-use crate::settings::*;
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
@@ -143,7 +143,9 @@ impl FixedMethod {
             // Kar insertion
             if character.is_kar() {
                 // Automatic Vowel Forming
-                if get_settings_fixed_automatic_vowel() && (self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc)) {
+                if get_settings_fixed_automatic_vowel()
+                    && (self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc))
+                {
                     match character {
                         B_AA_KAR => self.buffer.push(B_AA),
                         B_I_KAR => self.buffer.push(B_I),
@@ -239,21 +241,18 @@ impl FixedMethod {
     fn is_reph_moveable(&self, rmc: char, len: usize) -> bool {
         if rmc.is_pure_consonant() {
             return true;
-        } else if len > 2 {
-            if rmc.is_vowel()
-                && self.buffer.chars().skip(len - 2).nth(0).unwrap().is_pure_consonant()
+        } else if rmc.is_vowel()
+            && self.buffer.chars().skip(len - 2).nth(0).unwrap_or_default().is_pure_consonant()
+        {
+            return true;
+        } else if rmc == B_CHANDRA {
+            if self.buffer.chars().skip(len - 2).nth(0).unwrap_or_default().is_pure_consonant()
             {
                 return true;
-            } else if rmc == B_CHANDRA {
-                if self.buffer.chars().skip(len - 2).nth(0).unwrap().is_pure_consonant()
-                {
-                    return true;
-                } else if len > 3
-                    && self.buffer.chars().skip(len - 2).nth(0).unwrap().is_vowel()
-                    && self.buffer.chars().skip(len - 3).nth(0).unwrap().is_pure_consonant()
-                {
-                    return true;
-                }
+            } else if self.buffer.chars().skip(len - 2).nth(0).unwrap_or_default().is_vowel()
+                && self.buffer.chars().skip(len - 3).nth(0).unwrap_or_default().is_pure_consonant()
+            {
+                return true;
             }
         }
 
@@ -343,8 +342,8 @@ mod tests {
 
     use super::FixedMethod;
     use crate::context::Method;
-    use crate::keycodes::*;
     use crate::fixed::chars::*;
+    use crate::keycodes::*;
     use crate::settings::*;
 
     #[test]
