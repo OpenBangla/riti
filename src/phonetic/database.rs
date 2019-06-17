@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 use crate::hashmap;
 use crate::phonetic::regex::PhoneticRegex;
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref DICTIONARY_TABLE: HashMap<&'static str, Vec<&'static str>> = hashmap! [
         "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
         "b" => vec!["b", "bh"],
