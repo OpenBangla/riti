@@ -1,5 +1,7 @@
-use crate::suggestion::Suggestion;
 use std::cell::RefCell;
+
+use crate::suggestion::Suggestion;
+use crate::phonetic::method::PhoneticMethod;
 
 /// Context handle used for libRiti IM APIs
 pub struct RitiContext {
@@ -7,6 +9,11 @@ pub struct RitiContext {
 }
 
 impl RitiContext {
+    pub fn new() -> Self {
+        let method = RefCell::new(Box::new(PhoneticMethod::new()));
+        RitiContext { method }
+    }
+
     /// Get suggestion for key.
     pub fn get_suggestion_for_key(&self, key: u16, modifier: u8) -> Suggestion {
         self.method.borrow_mut().get_suggestion(key, modifier)
