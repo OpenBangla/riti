@@ -24,4 +24,14 @@ impl Suggestion {
     pub fn is_empty(&self) -> bool {
         self.suggestions.is_empty()
     }
+
+    /// Get the suggestions as a slice.
+    pub fn get_suggestions(&self) -> &[String] {        
+        self.suggestions.as_slice()
+    }
+
+    /// Get the length of the suggestions contained.
+    pub fn len(&self) -> usize {
+        self.suggestions.len()
+    }
 }
