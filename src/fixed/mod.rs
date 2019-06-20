@@ -1,3 +1,3 @@
 mod parser;
-mod method;
+pub(crate) mod method;
 mod chars;
