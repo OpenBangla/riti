@@ -10,6 +10,12 @@ pub extern fn riti_context_new() -> *const RitiContext {
 }
 
 #[no_mangle]
+pub extern fn riti_context_free(ptr: *mut RitiContext) {
+    if ptr.is_null() { return }
+    unsafe { Box::from_raw(ptr); }
+}
+
+#[no_mangle]
 pub extern fn riti_get_suggestion_for_key(ptr: *const RitiContext, key: u16, modifier: u8) -> Suggestion {
     let context = unsafe {
         assert!(!ptr.is_null());
@@ -38,7 +44,7 @@ pub extern fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *const 
 
     let slice = suggestion.get_suggestions();
 
-    let mut res_vec: Vec<*const c_char> = Vec::new();
+    let mut res_vec: Vec<*const c_char> = Vec::with_capacity(slice.len());
 
     for string in slice.into_iter() {
         unsafe {
