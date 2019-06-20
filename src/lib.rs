@@ -9,3 +9,4 @@ mod keycodes;
 pub mod suggestion;
 mod utility;
 mod ffi;
+mod loader;

@@ -2,6 +2,9 @@ use std::cell::RefCell;
 
 use crate::suggestion::Suggestion;
 use crate::phonetic::method::PhoneticMethod;
+use crate::fixed::method::FixedMethod;
+use crate::loader::{LayoutLoader, LayoutType};
+use crate::settings::get_settings_layout_file;
 
 /// Context handle used for libRiti IM APIs
 pub struct RitiContext {
@@ -9,9 +12,21 @@ pub struct RitiContext {
 }
 
 impl RitiContext {
+    /// A new `RitiContext` instance.
     pub fn new() -> Self {
-        let method = RefCell::new(Box::new(PhoneticMethod::new()));
-        RitiContext { method }
+        let path = get_settings_layout_file();
+        let loader = LayoutLoader::new(&path);
+
+        match loader.layout_type() {
+            LayoutType::Phonetic => {
+                let method = RefCell::new(Box::new(PhoneticMethod::new()));
+                RitiContext { method }
+            }
+            LayoutType::Fixed => {
+                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout())));
+                RitiContext { method }
+            }
+        }
     }
 
     /// Get suggestion for key.

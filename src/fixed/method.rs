@@ -9,6 +9,7 @@ use crate::settings::*;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
 use crate::utility::Utility;
+use crate::loader::LayoutLoader;
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
@@ -98,18 +99,16 @@ impl Method for FixedMethod {
 }
 
 impl FixedMethod {
-    /// Creates a new instance of `FixedMethod` with the layout which
-    /// is set in the `RITI_LAYOUT_FILE` environment variable.
-    pub(crate) fn new() -> Self {
-        let layout = get_settings_layout_file();
-        let file = serde_json::from_str::<Value>(&read_to_string(&layout).unwrap()).unwrap();
-        let parser = LayoutParser::new(file.get("layout").unwrap());
+    /// Creates a new instance of `FixedMethod` with the given layout.
+    pub(crate) fn new(layout: &Value) -> Self {
+        let file = get_settings_layout_file();
+        let parser = LayoutParser::new(layout);
 
         FixedMethod {
             buffer: String::new(),
             handled: false,
             parser,
-            layout,
+            layout: file,
         }
     }
 
@@ -330,9 +329,20 @@ impl FixedMethod {
 }
 
 // Implement Default trait on FixedMethod for testing convenience.
+// This constructor uses the layout file specified in the 
+// environment variable `RITI_LAYOUT_FILE`.
 impl Default for FixedMethod {
     fn default() -> Self {
-        FixedMethod::new()
+        let layout = get_settings_layout_file();
+        let loader = LayoutLoader::new(&layout);
+        let parser = LayoutParser::new(loader.layout());
+
+        FixedMethod {
+            buffer: String::new(),
+            handled: false,
+            parser,
+            layout
+        }
     }
 }
 
@@ -370,7 +380,7 @@ mod tests {
             format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         );
 
-        let mut method = FixedMethod::new();
+        let mut method = FixedMethod::default();
 
         method.buffer = "অক".to_string();
         method.insert_reph();
@@ -407,7 +417,7 @@ mod tests {
         set_var(ENV_LAYOUT_FIXED_CHANDRA, "true");
         set_var(ENV_LAYOUT_FIXED_KAR, "true");
 
-        let mut method = FixedMethod::new();
+        let mut method = FixedMethod::default();
 
         // Automatic Vowel Forming
         method.buffer = "".to_string();
