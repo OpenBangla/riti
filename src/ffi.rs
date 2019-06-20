@@ -5,7 +5,7 @@ use crate::context::RitiContext;
 use crate::suggestion::Suggestion;
 
 #[no_mangle]
-pub extern fn riti_context_new() -> *const RitiContext {
+pub extern fn riti_context_new() -> *mut RitiContext {
     Box::into_raw(Box::new(RitiContext::new()))
 }
 
@@ -16,7 +16,7 @@ pub extern fn riti_context_free(ptr: *mut RitiContext) {
 }
 
 #[no_mangle]
-pub extern fn riti_get_suggestion_for_key(ptr: *const RitiContext, key: u16, modifier: u8) -> Suggestion {
+pub extern fn riti_get_suggestion_for_key(ptr: *mut RitiContext, key: u16, modifier: u8) -> Suggestion {
     let context = unsafe {
         assert!(!ptr.is_null());
         &*ptr
@@ -26,7 +26,7 @@ pub extern fn riti_get_suggestion_for_key(ptr: *const RitiContext, key: u16, mod
 }
 
 #[no_mangle]
-pub extern fn riti_context_key_handled(ptr: *const RitiContext) -> bool {
+pub extern fn riti_context_key_handled(ptr: *mut RitiContext) -> bool {
     let context = unsafe {
         assert!(!ptr.is_null());
         &*ptr
@@ -36,7 +36,7 @@ pub extern fn riti_context_key_handled(ptr: *const RitiContext) -> bool {
 }
 
 #[no_mangle]
-pub extern fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *const *const c_char {
+pub extern fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *const *mut c_char {
     let suggestion = unsafe {
         assert!(!ptr.is_null());
         &*ptr
@@ -44,7 +44,7 @@ pub extern fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *const 
 
     let slice = suggestion.get_suggestions();
 
-    let mut res_vec: Vec<*const c_char> = Vec::with_capacity(slice.len());
+    let mut res_vec = Vec::with_capacity(slice.len());
 
     for string in slice.into_iter() {
         unsafe {
