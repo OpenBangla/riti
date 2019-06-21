@@ -1,8 +1,11 @@
 [package]
-name = "libRiti"
+name = "riti"
 version = "0.1.0"
 authors = ["Muhammad Mominul Huque <mominul2082@gmail.com>"]
 edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
 
 [dependencies]
 serde_json = "1.0"
