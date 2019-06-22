@@ -525,6 +525,17 @@ impl Method for PhoneticMethod {
                     return Suggestion::empty();
                 }
             }
+
+            (VC_RIGHT, _) | (VC_LEFT, _) => {
+                if !self.buffer.is_empty() {
+                    self.selection_changed = true;
+                    self.handled = true;
+                } else {
+                    self.handled = false;
+                    return Suggestion::empty();
+                }
+            }
+
             _ => {
                 self.handled = false;
                 return Suggestion::empty();
