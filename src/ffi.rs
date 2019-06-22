@@ -87,3 +87,13 @@ pub extern fn riti_suggestion_get_length(ptr: *const Suggestion) -> usize {
 
     suggestion.len()
 }
+
+#[no_mangle]
+pub extern fn riti_suggestion_is_empty(ptr: *const Suggestion) -> bool {
+    let suggestion = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    suggestion.is_empty()
+}

@@ -268,6 +268,8 @@ uintptr_t riti_suggestion_get_length(const Suggestion *ptr);
 
 char *const *riti_suggestion_get_suggestions(const Suggestion *ptr);
 
+bool riti_suggestion_is_empty(const Suggestion *ptr);
+
 } // extern "C"
 
 #endif // RITI_H
