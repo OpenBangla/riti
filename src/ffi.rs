@@ -16,13 +16,21 @@ pub extern fn riti_context_free(ptr: *mut RitiContext) {
 }
 
 #[no_mangle]
-pub extern fn riti_get_suggestion_for_key(ptr: *mut RitiContext, key: u16, modifier: u8) -> Suggestion {
+pub extern fn riti_get_suggestion_for_key(ptr: *mut RitiContext, key: u16, modifier: u8) -> *mut Suggestion {
     let context = unsafe {
         assert!(!ptr.is_null());
         &*ptr
     };
 
-    context.get_suggestion_for_key(key, modifier)
+    let suggestion = context.get_suggestion_for_key(key, modifier);
+
+    Box::into_raw(Box::new(suggestion))
+}
+
+#[no_mangle]
+pub extern fn riti_suggestion_free(ptr: *mut Suggestion) {
+    if ptr.is_null() { return }
+    unsafe { Box::from_raw(ptr); }
 }
 
 #[no_mangle]

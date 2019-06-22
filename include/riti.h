@@ -256,9 +256,11 @@ bool riti_context_key_handled(RitiContext *ptr);
 
 RitiContext *riti_context_new();
 
-Suggestion riti_get_suggestion_for_key(RitiContext *ptr,
-                                       uint16_t key,
-                                       uint8_t modifier);
+Suggestion *riti_get_suggestion_for_key(RitiContext *ptr,
+                                        uint16_t key,
+                                        uint8_t modifier);
+
+void riti_suggestion_free(Suggestion *ptr);
 
 uintptr_t riti_suggestion_get_length(const Suggestion *ptr);
 
