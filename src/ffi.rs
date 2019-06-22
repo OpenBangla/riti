@@ -67,6 +67,18 @@ pub extern fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *const 
 }
 
 #[no_mangle]
+pub extern fn riti_suggestion_get_auxiliary_text(ptr: *const Suggestion) -> *mut c_char {
+    let suggestion = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    unsafe {
+        CString::from_vec_unchecked(suggestion.get_auxiliary_text().into()).into_raw()
+    }
+}
+
+#[no_mangle]
 pub extern fn riti_suggestion_get_length(ptr: *const Suggestion) -> usize {
     let suggestion = unsafe {
         assert!(!ptr.is_null());

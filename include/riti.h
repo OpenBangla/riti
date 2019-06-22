@@ -262,6 +262,8 @@ Suggestion *riti_get_suggestion_for_key(RitiContext *ptr,
 
 void riti_suggestion_free(Suggestion *ptr);
 
+char *riti_suggestion_get_auxiliary_text(const Suggestion *ptr);
+
 uintptr_t riti_suggestion_get_length(const Suggestion *ptr);
 
 char *const *riti_suggestion_get_suggestions(const Suggestion *ptr);

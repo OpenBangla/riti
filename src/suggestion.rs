@@ -30,6 +30,11 @@ impl Suggestion {
         self.suggestions.as_slice()
     }
 
+    /// Get the auxiliary text.
+    pub fn get_auxiliary_text(&self) -> &str {
+        &self.auxiliary
+    }
+
     /// Get the length of the suggestions contained.
     pub fn len(&self) -> usize {
         self.suggestions.len()
