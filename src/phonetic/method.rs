@@ -499,6 +499,7 @@ impl Method for PhoneticMethod {
                     self.handled = true;
 
                     if self.buffer.is_empty() {
+                        self.handled = false;
                         // The buffer is now empty, so return empty suggestion.
                         return Suggestion::empty();
                     }
@@ -601,7 +602,7 @@ mod tests {
         assert!(method.key_handled());
 
         assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty());
-        assert!(method.key_handled());
+        assert!(!method.key_handled());
 
         assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty());
         assert!(!method.key_handled());
