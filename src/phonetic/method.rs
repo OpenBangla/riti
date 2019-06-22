@@ -515,6 +515,16 @@ impl Method for PhoneticMethod {
                     return Suggestion::empty();
                 }
             }
+            (VC_ENTER, _) | (VC_SPACE, _) => {
+                self.handled = false;
+                if !self.buffer.is_empty() {
+                    let suggestion = self.create_suggestion();
+                    self.buffer.clear();
+                    return suggestion;
+                } else {
+                    return Suggestion::empty();
+                }
+            }
             _ => {
                 self.handled = false;
                 return Suggestion::empty();
