@@ -30,7 +30,9 @@ impl PhoneticSuggestion {
     /// This function gets the suggestion list from the stored cache.
     fn add_suffix_to_suggestions(&self, splitted: &(&str, &str, &str)) -> Vec<String> {
         let middle = splitted.1;
-        let mut list = Vec::new();
+        // Fill up the list with what we have from dictionary.
+        let mut list = self.cache.get(splitted.1).cloned().unwrap_or_default();
+
         if middle.len() > 2 {
             for i in 1..middle.len() {
                 let suffix_key = &middle[i..];
@@ -73,11 +75,9 @@ impl PhoneticSuggestion {
             }
         }
 
-        if !list.is_empty() {
-            list
-        } else {
-            self.cache.get(splitted.1).cloned().unwrap_or_default()
-        }
+        // Remove duplicates.
+        list.dedup();
+        list
     }
 
     /// Make suggestions from the given `term`.
@@ -227,6 +227,13 @@ mod tests {
             suggestion.suggest("(as)"),
             vec!["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
         );
+
+        // Suffix suggestion validation
+        assert_eq!(suggestion.suggest("apn"), vec!["আপন", "আপ্ন"]);
+        assert_eq!(suggestion.suggest("apni"), vec!["আপনি", "আপনই", "আপ্নি"]);
+
+        assert_eq!(suggestion.suggest("am"), vec!["আম", "এম"]);
+        assert_eq!(suggestion.suggest("ami"), vec!["আমি", "আমই", "এমই"]);
     }
 
     #[test]
