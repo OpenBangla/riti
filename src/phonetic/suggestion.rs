@@ -76,7 +76,7 @@ impl PhoneticSuggestion {
         if !list.is_empty() {
             list
         } else {
-            self.cache.get(splitted.1).cloned().unwrap_or_else(Vec::new)
+            self.cache.get(splitted.1).cloned().unwrap_or_default()
         }
     }
 
@@ -128,7 +128,9 @@ impl PhoneticSuggestion {
 
         // Emoticons Auto Corrects
         if let Some(emoticon) = self.database.get_corrected(term) {
-            self.suggestions.insert(0, emoticon);
+            if emoticon == term {
+                self.suggestions.insert(0, emoticon);
+            }
         }
 
         self.suggestions.clone()
