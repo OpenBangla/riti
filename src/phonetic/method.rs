@@ -16,11 +16,11 @@ pub(crate) struct PhoneticMethod {
 
 impl PhoneticMethod {
     /// Creates a new `PhoneticMethod` struct.
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(layout: &serde_json::Value) -> Self {
         PhoneticMethod {
             buffer: String::new(),
             handled: false,
-            suggestion: PhoneticSuggestion::new(),
+            suggestion: PhoneticSuggestion::new(layout),
             selection_changed: false,
         }
     }
@@ -580,18 +580,33 @@ impl Method for PhoneticMethod {
 // Implement Default trait on PhoneticMethod for testing convenience.
 impl Default for PhoneticMethod {
     fn default() -> Self {
-        PhoneticMethod::new()
+        let layout = crate::settings::get_settings_layout_file();
+        let loader = crate::loader::LayoutLoader::new(&layout);
+
+        PhoneticMethod {
+            buffer: String::new(),
+            handled: false,
+            suggestion: PhoneticSuggestion::new(loader.layout()),
+            selection_changed: false,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::env::set_var;
     use super::PhoneticMethod;
     use crate::context::Method;
     use crate::keycodes::VC_BACKSPACE;
+    use crate::settings::ENV_LAYOUT_FILE;
 
     #[test]
     fn test_backspace() {
+        set_var(
+            ENV_LAYOUT_FILE,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
+        );
+
         let mut method = PhoneticMethod {
             buffer: "ab".to_string(),
             ..Default::default()

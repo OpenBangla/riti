@@ -1,7 +1,7 @@
 // Suggestion making module.
 
 use edit_distance::edit_distance;
-use rupantor::avro::AvroPhonetic;
+use rupantor::parser::PhoneticParser;
 use rustc_hash::FxHashMap;
 use std::cmp::Ordering;
 
@@ -13,16 +13,16 @@ pub(crate) struct PhoneticSuggestion {
     database: Database,
     // Cache for storing dictionary searches.
     cache: FxHashMap<String, Vec<String>>,
-    phonetic: AvroPhonetic,
+    phonetic: PhoneticParser,
 }
 
 impl PhoneticSuggestion {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(layout: &serde_json::Value) -> Self {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
             cache: FxHashMap::default(),
-            phonetic: AvroPhonetic::new(),
+            phonetic: PhoneticParser::new(layout),
         }
     }
 
@@ -143,7 +143,15 @@ impl PhoneticSuggestion {
 // Implement Default trait on PhoneticSuggestion, actually for testing convenience.
 impl Default for PhoneticSuggestion {
     fn default() -> Self {
-        PhoneticSuggestion::new()
+        let layout = crate::settings::get_settings_layout_file();
+        let loader = crate::loader::LayoutLoader::new(&layout);
+        
+        PhoneticSuggestion {
+            suggestions: Vec::with_capacity(10),
+            database: Database::new(),
+            cache: FxHashMap::default(),
+            phonetic: PhoneticParser::new(loader.layout()),
+        }
     }
 }
 
@@ -186,13 +194,21 @@ fn split_string(input: &str) -> (&str, &str, &str) {
 
 #[cfg(test)]
 mod tests {
+    use std::env::set_var;
+    use rustc_hash::FxHashMap;
+
     use super::split_string;
     use super::PhoneticSuggestion;
-    use rustc_hash::FxHashMap;
+    use crate::settings::ENV_LAYOUT_FILE;
 
     #[test]
     fn test_emoticon() {
-        let mut suggestion = PhoneticSuggestion::new();
+        set_var(
+            ENV_LAYOUT_FILE,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
+        );
+
+        let mut suggestion = PhoneticSuggestion::default();
 
         assert_eq!(suggestion.suggest(":)"), vec![":)", "ঃ)"]);
         assert_eq!(suggestion.suggest("."), vec!["।"]);
@@ -200,7 +216,12 @@ mod tests {
 
     #[test]
     fn test_suggestion() {
-        let mut suggestion = PhoneticSuggestion::new();
+        set_var(
+            ENV_LAYOUT_FILE,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
+        );
+
+        let mut suggestion = PhoneticSuggestion::default();
 
         assert_eq!(
             suggestion.suggest("a"),
@@ -242,6 +263,11 @@ mod tests {
 
     #[test]
     fn test_suffix() {
+        set_var(
+            ENV_LAYOUT_FILE,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
+        );
+
         let mut cache: FxHashMap<String, Vec<String>> = FxHashMap::default();
         cache.insert(
             "computer".to_string(),

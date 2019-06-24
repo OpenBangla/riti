@@ -19,7 +19,7 @@ impl RitiContext {
 
         match loader.layout_type() {
             LayoutType::Phonetic => {
-                let method = RefCell::new(Box::new(PhoneticMethod::new()));
+                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout())));
                 RitiContext { method }
             }
             LayoutType::Fixed => {
