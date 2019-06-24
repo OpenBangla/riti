@@ -59,7 +59,7 @@ impl Database {
         let rgx = Regex::new(&self.regex.parse(word)).unwrap();
 
         DICTIONARY_TABLE
-            .get(&word[0..1])
+            .get(word.get(0..1).unwrap_or_default())
             .unwrap_or(&Vec::new())
             .par_iter()
             .flat_map(|&item| {

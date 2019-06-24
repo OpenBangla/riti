@@ -85,6 +85,9 @@ impl PhoneticSuggestion {
         self.suggestions.clear();
         let splitted_string = split_string(term);
 
+        // Convert preceding and trailing meta characters into Bengali(phonetic representation).
+        let splitted_string: (&str, &str, &str) = (&self.phonetic.convert(splitted_string.0), splitted_string.1, &self.phonetic.convert(splitted_string.2));
+
         let phonetic = self.phonetic.convert(splitted_string.1);
 
         if !self.cache.contains_key(splitted_string.1) {
@@ -192,6 +195,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::new();
 
         assert_eq!(suggestion.suggest(":)"), vec![":)", "ঃ)"]);
+        assert_eq!(suggestion.suggest("."), vec!["।"]);
     }
 
     #[test]
