@@ -34,14 +34,14 @@ impl RitiContext {
         self.method.borrow_mut().get_suggestion(key, modifier)
     }
 
-    /// Returns bit masked integer instructing how the IM should handle the special key(eg. Enter, Space etc.)
-    ///
-    /// See the [`Constants`](index.html#constants) which are bit masked for more information.
-    pub fn handle_special_key(&self, key: u16) -> u8 {
-        self.method.borrow_mut().handle_special_key(key)
+    /// A candidate of the suggestion list was committed.
+    /// 
+    /// `index`: index of the candidate.
+    pub fn candidate_committed(&self, index: usize) {
+        self.method.borrow_mut().candidate_committed(index)
     }
 
-    /// Was the key handled?
+    /// Returns `true` if the key was handled, `false` otherwise.
     pub fn key_handled(&self) -> bool {
         self.method.borrow().key_handled()
     }
@@ -55,7 +55,7 @@ impl RitiContext {
 
 pub(crate) trait Method {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion;
-    fn handle_special_key(&mut self, key: u16) -> u8;
+    fn candidate_committed(&mut self, index: usize);
     fn key_handled(&self) -> bool;
     fn update_engine(&mut self);
 }
@@ -72,26 +72,3 @@ pub const MODIFIER_CTRL: u8 = 1 << 1;
 ///
 /// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
 pub const MODIFIER_ALT: u8 = 1 << 2;
-
-/// IM needs to do nothing.
-///
-/// Returned by the [`handle_special_key()`](struct.RitiContext.html#method.handle_special_key) function.
-pub const IM_DEFAULT: u8 = 0;
-/// IM needs to accept the key.
-///
-/// Returned by the [`handle_special_key()`](struct.RitiContext.html#method.handle_special_key) function.
-pub const IM_KEY_ACCEPTED: u8 = 1 << 0;
-/// IM needs to commit the current suggestion.
-///
-/// Returned by the [`handle_special_key()`](struct.RitiContext.html#method.handle_special_key) function.
-pub const IM_COMMIT: u8 = 1 << 1;
-/// IM needs to update suggestions.
-///
-/// Returned by the [`handle_special_key()`](struct.RitiContext.html#method.handle_special_key) function,
-/// usually when the key is BackSpace.
-pub const IM_NEED_UPDATE: u8 = 1 << 2;
-/// IM needs to reset.
-///
-/// Returned by the [`handle_special_key()`](struct.RitiContext.html#method.handle_special_key) function,
-/// usually when the key is BackSpace.
-pub const IM_NEED_RESET: u8 = 1 << 3;

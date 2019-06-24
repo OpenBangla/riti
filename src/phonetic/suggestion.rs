@@ -138,6 +138,11 @@ impl PhoneticSuggestion {
 
         self.suggestions.clone()
     }
+
+    /// Returns a slice of the `suggestions` vector.
+    pub(crate) fn suggestions(&self) -> &[String] {
+        &self.suggestions
+    }
 }
 
 // Implement Default trait on PhoneticSuggestion, actually for testing convenience.

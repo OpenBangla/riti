@@ -16,16 +16,6 @@
 #include <cstdlib>
 #include <new>
 
-static const uint8_t IM_COMMIT = 1 << 1;
-
-static const uint8_t IM_DEFAULT = 0;
-
-static const uint8_t IM_KEY_ACCEPTED = 1 << 0;
-
-static const uint8_t IM_NEED_RESET = 1 << 3;
-
-static const uint8_t IM_NEED_UPDATE = 1 << 2;
-
 static const uint8_t MODIFIER_ALT = 1 << 2;
 
 static const uint8_t MODIFIER_CTRL = 1 << 1;
@@ -250,8 +240,17 @@ struct Suggestion;
 
 extern "C" {
 
+/*
+ A candidate of the suggestion list was committed.
+ `index`: index of the candidate.
+ */
+void riti_context_candidate_committed(RitiContext *ptr, uintptr_t index);
+
 void riti_context_free(RitiContext *ptr);
 
+/*
+ Returns `true` if the key was handled, `false` otherwise.
+ */
 bool riti_context_key_handled(RitiContext *ptr);
 
 RitiContext *riti_context_new();

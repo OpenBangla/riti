@@ -1,6 +1,6 @@
 // Phonetic Method
 
-use crate::context::{Method, IM_COMMIT, IM_DEFAULT, IM_KEY_ACCEPTED};
+use crate::context::Method;
 use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::suggestion::Suggestion;
@@ -517,13 +517,9 @@ impl Method for PhoneticMethod {
             }
             (VC_ENTER, _) | (VC_SPACE, _) => {
                 self.handled = false;
-                if !self.buffer.is_empty() {
-                    let suggestion = self.create_suggestion();
-                    self.buffer.clear();
-                    return suggestion;
-                } else {
-                    return Suggestion::empty();
-                }
+                self.buffer.clear();
+
+                return Suggestion::empty();
             }
 
             (VC_RIGHT, _) | (VC_LEFT, _) => {
@@ -532,8 +528,15 @@ impl Method for PhoneticMethod {
                     self.handled = true;
                 } else {
                     self.handled = false;
-                    return Suggestion::empty();
                 }
+
+                return Suggestion::empty();
+            }
+
+            (VC_TAB, _) => {
+                self.handled = !self.buffer.is_empty();
+
+                return Suggestion::empty();
             }
 
             _ => {
@@ -545,27 +548,17 @@ impl Method for PhoneticMethod {
         self.create_suggestion()
     }
 
-    fn handle_special_key(&mut self, key: u16) -> u8 {
-        match key {
-            VC_SPACE => {
-                if !self.buffer.is_empty() {
-                    self.buffer.clear();
-                    IM_COMMIT
-                } else {
-                    IM_DEFAULT
-                }
-            }
-            VC_TAB => {
-                if !self.buffer.is_empty() {
-                    self.selection_changed = true;
-                    IM_KEY_ACCEPTED
-                } else {
-                    IM_DEFAULT
-                }
-            }
-
-            _ => IM_DEFAULT,
+    fn candidate_committed(&mut self, index: usize) {
+        // Check if user has selected a different suggestion
+        if self.selection_changed {
+            // TODO: Save this to a file
+            let _suggestion = &self.suggestion.suggestions()[index];
         }
+
+        // Reset to defaults
+        self.buffer.clear();
+        self.selection_changed = false;
+        self.handled = false;
     }
 
     fn key_handled(&self) -> bool {

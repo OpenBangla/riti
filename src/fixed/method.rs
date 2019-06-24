@@ -78,8 +78,8 @@ impl Method for FixedMethod {
         self.create_suggestion()
     }
 
-    fn handle_special_key(&mut self, _key: u16) -> u8 {
-        0
+    fn candidate_committed(&mut self, _index: usize) {
+        //
     }
 
     fn key_handled(&self) -> bool {

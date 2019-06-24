@@ -33,6 +33,20 @@ pub extern fn riti_suggestion_free(ptr: *mut Suggestion) {
     unsafe { Box::from_raw(ptr); }
 }
 
+/// A candidate of the suggestion list was committed.
+/// 
+/// `index`: index of the candidate.
+#[no_mangle]
+pub extern fn riti_context_candidate_committed(ptr: *mut RitiContext, index: usize) {
+    let context = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    context.candidate_committed(index)
+}
+
+/// Returns `true` if the key was handled, `false` otherwise.
 #[no_mangle]
 pub extern fn riti_context_key_handled(ptr: *mut RitiContext) -> bool {
     let context = unsafe {
