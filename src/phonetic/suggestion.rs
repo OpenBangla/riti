@@ -5,12 +5,14 @@ use rupantor::parser::PhoneticParser;
 use rustc_hash::FxHashMap;
 use std::cmp::Ordering;
 
-use crate::phonetic::database::Database;
+use super::database::Database;
+use super::autocorrect::AutoCorrect;
 use crate::utility::Utility;
 
 pub(crate) struct PhoneticSuggestion {
     suggestions: Vec<String>,
     database: Database,
+    pub(crate) autocorrect: AutoCorrect,
     // Cache for storing dictionary searches.
     cache: FxHashMap<String, Vec<String>>,
     phonetic: PhoneticParser,
@@ -21,6 +23,7 @@ impl PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
+            autocorrect: AutoCorrect::new(),
             cache: FxHashMap::default(),
             phonetic: PhoneticParser::new(layout),
         }
@@ -93,7 +96,7 @@ impl PhoneticSuggestion {
         if !self.cache.contains_key(splitted_string.1) {
             let mut dictionary = self.database.search_dictionary(splitted_string.1);
             // Auto Correct
-            if let Some(corrected) = self.database.get_corrected(splitted_string.1) {
+            if let Some(corrected) = self.autocorrect.search(splitted_string.1) {
                 let word = self.phonetic.convert(&corrected);
                 self.suggestions.push(word.clone());
                 // Add it to the cache for adding suffix later.
@@ -130,7 +133,7 @@ impl PhoneticSuggestion {
         }
 
         // Emoticons Auto Corrects
-        if let Some(emoticon) = self.database.get_corrected(term) {
+        if let Some(emoticon) = self.autocorrect.search(term) {
             if emoticon == term {
                 self.suggestions.insert(0, emoticon);
             }
@@ -154,6 +157,7 @@ impl Default for PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
+            autocorrect: AutoCorrect::new(),
             cache: FxHashMap::default(),
             phonetic: PhoneticParser::new(loader.layout()),
         }

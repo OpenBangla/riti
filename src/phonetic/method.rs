@@ -535,6 +535,7 @@ impl Method for PhoneticMethod {
 
             (VC_TAB, _) => {
                 self.handled = !self.buffer.is_empty();
+                self.selection_changed = true;
 
                 return Suggestion::empty();
             }
@@ -566,7 +567,7 @@ impl Method for PhoneticMethod {
     }
 
     fn update_engine(&mut self) {
-        //
+        self.suggestion.autocorrect.update();
     }
 }
 

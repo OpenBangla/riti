@@ -255,6 +255,12 @@ bool riti_context_key_handled(RitiContext *ptr);
 
 RitiContext *riti_context_new();
 
+/*
+ Update the suggestion making engine. This would also look for changes
+ in layout selection and AutoCorrect database.
+ */
+void riti_context_update_engine(RitiContext *ptr);
+
 Suggestion *riti_get_suggestion_for_key(RitiContext *ptr,
                                         uint16_t key,
                                         uint8_t modifier);

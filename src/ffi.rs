@@ -57,6 +57,18 @@ pub extern fn riti_context_key_handled(ptr: *mut RitiContext) -> bool {
     context.key_handled()
 }
 
+/// Update the suggestion making engine. This would also look for changes
+/// in layout selection and AutoCorrect database.
+#[no_mangle]
+pub extern fn riti_context_update_engine(ptr: *mut RitiContext) {
+    let context = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    context.update_engine()
+}
+
 #[no_mangle]
 pub extern fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *const *mut c_char {
     let suggestion = unsafe {

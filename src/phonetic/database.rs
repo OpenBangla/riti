@@ -41,7 +41,6 @@ pub(crate) struct Database {
     regex: PhoneticRegex,
     table: HashMap<String, Vec<String>>,
     suffix: FxHashMap<String, String>,
-    autocorrect: FxHashMap<String, String>,
 }
 
 impl Database {
@@ -50,7 +49,6 @@ impl Database {
             regex: PhoneticRegex::new(),
             table: serde_json::from_str(include_str!("dictionary.json")).unwrap(),
             suffix: serde_json::from_str(include_str!("suffix.json")).unwrap(),
-            autocorrect: serde_json::from_str(include_str!("autocorrect.json")).unwrap(),
         }
     }
 
@@ -73,11 +71,6 @@ impl Database {
 
     pub(crate) fn find_suffix(&self, string: &str) -> Option<String> {
         self.suffix.get(string).cloned()
-    }
-
-    /// Get the phonetically corrected string from auto-correct dictionary.
-    pub(crate) fn get_corrected(&self, string: &str) -> Option<String> {
-        self.autocorrect.get(string).cloned()
     }
 }
 
@@ -110,13 +103,5 @@ mod tests {
         assert_eq!(db.find_suffix("gulo"), Some("গুলো".to_string()));
         assert_eq!(db.find_suffix("er"), Some("ের".to_string()));
         assert_eq!(db.find_suffix("h"), None);
-    }
-
-    #[test]
-    fn test_autocorrect() {
-        let db = Database::new();
-
-        assert_eq!(db.get_corrected("academy"), Some("oZakaDemi".to_string()));
-        assert_eq!(db.get_corrected("\\nai\\"), None);
     }
 }

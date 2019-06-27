@@ -47,7 +47,7 @@ impl RitiContext {
     }
 
     /// Update the suggestion making engine. This would also look for changes
-    /// in layout selection and auto correct database.
+    /// in layout selection and AutoCorrect database.
     pub fn update_engine(&self) {
         self.method.borrow_mut().update_engine()
     }
