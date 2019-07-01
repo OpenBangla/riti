@@ -92,6 +92,19 @@ pub extern fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *const 
     res
 }
 
+/// Get the only suggestion of the *lonely* `Suggestion`.
+#[no_mangle]
+pub extern fn riti_suggestion_get_lonely_suggestion(ptr: *const Suggestion) -> *mut c_char {
+    let suggestion = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    unsafe {
+        CString::from_vec_unchecked(suggestion.get_lonely_suggestion().into()).into_raw()
+    }
+}
+
 #[no_mangle]
 pub extern fn riti_suggestion_get_auxiliary_text(ptr: *const Suggestion) -> *mut c_char {
     let suggestion = unsafe {
@@ -112,6 +125,19 @@ pub extern fn riti_suggestion_get_length(ptr: *const Suggestion) -> usize {
     };
 
     suggestion.len()
+}
+
+/// Returns `true` when the `Suggestion` struct is a **lonely** one, otherwise returns `false`.
+/// 
+/// A *lonely* `Suggestion` struct means that the struct has only one suggestion.
+#[no_mangle]
+pub extern fn riti_suggestion_is_lonely(ptr: *const Suggestion) -> bool {
+    let suggestion = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    suggestion.is_lonely()
 }
 
 #[no_mangle]

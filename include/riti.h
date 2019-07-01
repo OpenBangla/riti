@@ -271,9 +271,20 @@ char *riti_suggestion_get_auxiliary_text(const Suggestion *ptr);
 
 uintptr_t riti_suggestion_get_length(const Suggestion *ptr);
 
+/*
+ Get the only suggestion of the *lonely* `Suggestion`.
+ */
+char *riti_suggestion_get_lonely_suggestion(const Suggestion *ptr);
+
 char *const *riti_suggestion_get_suggestions(const Suggestion *ptr);
 
 bool riti_suggestion_is_empty(const Suggestion *ptr);
+
+/*
+ Returns `true` when the `Suggestion` struct is a **lonely** one, otherwise returns `false`.
+ A *lonely* `Suggestion` struct means that the struct has only one suggestion.
+ */
+bool riti_suggestion_is_lonely(const Suggestion *ptr);
 
 } // extern "C"
 

@@ -5,6 +5,7 @@ use std::fs::read_to_string;
 use std::str::FromStr;
 
 /// Layout Loader
+/// 
 /// This struct is used to load the specified layout file and
 /// to give access to it's contents.
 pub(crate) struct LayoutLoader {

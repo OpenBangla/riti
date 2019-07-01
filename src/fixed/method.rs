@@ -113,7 +113,7 @@ impl FixedMethod {
     }
 
     fn create_suggestion(&self) -> Suggestion {
-        Suggestion::new("".to_string(), vec![self.buffer.clone()])
+        Suggestion::new_lonely(self.buffer.clone())
     }
 
     /// Processes the `value` of the pressed key and updates the method's

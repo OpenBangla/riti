@@ -34,7 +34,7 @@ impl AutoCorrect {
     }
 
     /// Search for a `term` in AutoCorrect dictionary.
-    /// We first search in the user defined 
+    /// We search in the user defined AutoCorrect entries first.
     pub(crate) fn search(&self, term: &str) -> Option<String> {
         self.user.get(term).cloned().or_else(|| self.database.get(term).cloned())
     }
