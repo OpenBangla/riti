@@ -65,6 +65,11 @@ impl Method for FixedMethod {
                 self.handled = false;
                 return Suggestion::empty();
             }
+        } else if key == VC_ENTER || key == VC_SPACE {
+            self.handled = false;
+            self.buffer.clear();
+
+            return Suggestion::empty();
         }
 
         if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
