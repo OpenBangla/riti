@@ -574,8 +574,7 @@ impl Method for PhoneticMethod {
 // Implement Default trait on PhoneticMethod for testing convenience.
 impl Default for PhoneticMethod {
     fn default() -> Self {
-        let layout = crate::settings::get_settings_layout_file();
-        let loader = crate::loader::LayoutLoader::new(&layout);
+        let loader = crate::loader::LayoutLoader::load_from_settings();
 
         PhoneticMethod {
             buffer: String::new(),

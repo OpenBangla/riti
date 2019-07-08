@@ -151,8 +151,7 @@ impl PhoneticSuggestion {
 // Implement Default trait on PhoneticSuggestion, actually for testing convenience.
 impl Default for PhoneticSuggestion {
     fn default() -> Self {
-        let layout = crate::settings::get_settings_layout_file();
-        let loader = crate::loader::LayoutLoader::new(&layout);
+        let loader = crate::loader::LayoutLoader::load_from_settings();
         
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),

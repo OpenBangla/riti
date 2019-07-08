@@ -63,7 +63,7 @@ pub extern fn riti_context_key_handled(ptr: *mut RitiContext) -> bool {
 pub extern fn riti_context_update_engine(ptr: *mut RitiContext) {
     let context = unsafe {
         assert!(!ptr.is_null());
-        &*ptr
+        &mut *ptr
     };
 
     context.update_engine()

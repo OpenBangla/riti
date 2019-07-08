@@ -1,9 +1,7 @@
 use serde_json::Value;
-use std::fs::read_to_string;
 
 use crate::context::Method;
-use crate::fixed::chars::*;
-use crate::fixed::parser::LayoutParser;
+use super::{chars::*, parser::LayoutParser};
 use crate::keycodes::*;
 use crate::settings::*;
 use crate::suggestion::Suggestion;
@@ -17,7 +15,6 @@ pub(crate) struct FixedMethod {
     buffer: String,
     handled: bool,
     parser: LayoutParser,
-    layout: String,
 }
 
 impl Method for FixedMethod {
@@ -92,28 +89,19 @@ impl Method for FixedMethod {
     }
 
     fn update_engine(&mut self) {
-        let layout = get_settings_layout_file();
-
-        // Check if the layout was changed.
-        if self.layout != layout {
-            let file = serde_json::from_str::<Value>(&read_to_string(&layout).unwrap()).unwrap();
-            let parser = LayoutParser::new(file.get("layout").unwrap());
-            self.parser = parser;
-        }
+        //
     }
 }
 
 impl FixedMethod {
     /// Creates a new instance of `FixedMethod` with the given layout.
     pub(crate) fn new(layout: &Value) -> Self {
-        let file = get_settings_layout_file();
         let parser = LayoutParser::new(layout);
 
         FixedMethod {
             buffer: String::new(),
             handled: false,
-            parser,
-            layout: file,
+            parser
         }
     }
 
@@ -338,15 +326,13 @@ impl FixedMethod {
 // environment variable `RITI_LAYOUT_FILE`.
 impl Default for FixedMethod {
     fn default() -> Self {
-        let layout = get_settings_layout_file();
-        let loader = LayoutLoader::new(&layout);
+        let loader = LayoutLoader::load_from_settings();
         let parser = LayoutParser::new(loader.layout());
 
         FixedMethod {
             buffer: String::new(),
             handled: false,
-            parser,
-            layout
+            parser
         }
     }
 }
