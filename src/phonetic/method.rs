@@ -587,18 +587,14 @@ impl Default for PhoneticMethod {
 
 #[cfg(test)]
 mod tests {
-    use std::env::set_var;
     use super::PhoneticMethod;
     use crate::context::Method;
     use crate::keycodes::VC_BACKSPACE;
-    use crate::settings::ENV_LAYOUT_FILE;
+    use crate::settings::tests::set_default_phonetic;
 
     #[test]
     fn test_backspace() {
-        set_var(
-            ENV_LAYOUT_FILE,
-            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
-        );
+        set_default_phonetic();
 
         let mut method = PhoneticMethod {
             buffer: "ab".to_string(),

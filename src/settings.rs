@@ -1,7 +1,8 @@
 use std::env::var;
+use std::path::PathBuf;
 
 pub(crate) const ENV_LAYOUT_FILE: &str = "RITI_LAYOUT_FILE";
-pub(crate) const ENV_PHONETIC_AUTOCORRECT: &str = "RITI_PHONETIC_AUTOCORRECT";
+pub(crate) const ENV_PHONETIC_DATABASE_DIR: &str = "RITI_PHONETIC_DATABASE_DIR";
 pub(crate) const ENV_LAYOUT_FIXED_VOWEL: &str = "RITI_LAYOUT_FIXED_VOWEL";
 pub(crate) const ENV_LAYOUT_FIXED_CHANDRA: &str = "RITI_LAYOUT_FIXED_CHANDRA";
 pub(crate) const ENV_LAYOUT_FIXED_KAR: &str = "RITI_LAYOUT_FIXED_KAR";
@@ -11,9 +12,9 @@ pub(crate) fn get_settings_layout_file() -> String {
     var(ENV_LAYOUT_FILE).unwrap()
 }
 
-/// Get file path of Auto Correct file.
-pub(crate) fn get_settings_phonetic_autocorrect() -> String {
-    var(ENV_PHONETIC_AUTOCORRECT).unwrap()
+/// Get the base file path of database directory.
+pub(crate) fn get_settings_phonetic_database_dir() -> PathBuf {
+    var(ENV_PHONETIC_DATABASE_DIR).unwrap().into()
 }
 
 /// Get file path of user defined Auto Correct file.
@@ -44,9 +45,29 @@ pub(crate) fn get_settings_fixed_traditional_kar() -> bool {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::env::set_var;
     use super::*;
+
+    /// Sets default settings for testing Phonetic Method.
+    pub(crate) fn set_default_phonetic() {
+        set_var(
+            ENV_LAYOUT_FILE,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
+        );
+        set_var(ENV_PHONETIC_DATABASE_DIR, format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"));
+    }
+
+    /// Sets default settings for testing Fixed Method.
+    pub(crate) fn set_defaults_fixed() {
+        set_var(
+            ENV_LAYOUT_FILE,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
+        );
+        set_var(ENV_LAYOUT_FIXED_VOWEL, "true");
+        set_var(ENV_LAYOUT_FIXED_CHANDRA, "true");
+        set_var(ENV_LAYOUT_FIXED_KAR, "true");
+    }
 
     #[test]
     fn test_get_bools() {

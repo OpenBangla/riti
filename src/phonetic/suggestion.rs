@@ -202,19 +202,15 @@ fn split_string(input: &str) -> (&str, &str, &str) {
 
 #[cfg(test)]
 mod tests {
-    use std::env::set_var;
     use rustc_hash::FxHashMap;
 
     use super::split_string;
     use super::PhoneticSuggestion;
-    use crate::settings::ENV_LAYOUT_FILE;
+    use crate::settings::tests::set_default_phonetic;
 
     #[test]
     fn test_emoticon() {
-        set_var(
-            ENV_LAYOUT_FILE,
-            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
-        );
+        set_default_phonetic();
 
         let mut suggestion = PhoneticSuggestion::default();
 
@@ -224,10 +220,7 @@ mod tests {
 
     #[test]
     fn test_suggestion() {
-        set_var(
-            ENV_LAYOUT_FILE,
-            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
-        );
+        set_default_phonetic();
 
         let mut suggestion = PhoneticSuggestion::default();
 
@@ -271,10 +264,7 @@ mod tests {
 
     #[test]
     fn test_suffix() {
-        set_var(
-            ENV_LAYOUT_FILE,
-            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
-        );
+        set_default_phonetic();
 
         let mut cache: FxHashMap<String, Vec<String>> = FxHashMap::default();
         cache.insert(

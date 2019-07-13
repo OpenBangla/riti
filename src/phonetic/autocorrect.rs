@@ -20,9 +20,7 @@ impl AutoCorrect {
     /// 
     /// User defined AutoCorrect dictionary is loaded from `$XDG_DATA_HOME/openbangla-keyboard/autocorrect.json` path.
     pub(crate) fn new() -> Self {
-        //TODO
-        //let database = serde_json::from_str(&read_to_string(get_settings_phonetic_autocorrect()).unwrap()).unwrap();
-        let database = serde_json::from_str(include_str!("autocorrect.json")).unwrap();
+        let database = serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("autocorrect.json")).unwrap()).unwrap();
 
         let user = if let Ok(file) = read_to_string(get_settings_user_phonetic_autocorrect()) {
             serde_json::from_str(&file).unwrap()
@@ -52,9 +50,12 @@ impl AutoCorrect {
 #[cfg(test)]
 mod tests {
     use super::AutoCorrect;
+    use crate::settings::tests::set_default_phonetic;
 
     #[test]
     fn test_autocorrect() {
+        set_default_phonetic();
+
         let db = AutoCorrect::new();
 
         assert_eq!(db.search("academy"), Some("oZakaDemi".to_string()));

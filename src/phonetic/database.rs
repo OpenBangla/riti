@@ -1,3 +1,4 @@
+use std::fs::read_to_string;
 use hashbrown::HashMap;
 use rayon::prelude::*;
 use regex::Regex;
@@ -5,6 +6,7 @@ use rustc_hash::FxHashMap;
 
 use crate::hashmap;
 use crate::phonetic::regex::PhoneticRegex;
+use crate::settings::get_settings_phonetic_database_dir;
 
 lazy_static::lazy_static! {
     static ref DICTIONARY_TABLE: HashMap<&'static str, Vec<&'static str>> = hashmap! [
@@ -47,8 +49,8 @@ impl Database {
     pub(crate) fn new() -> Database {
         Database {
             regex: PhoneticRegex::new(),
-            table: serde_json::from_str(include_str!("dictionary.json")).unwrap(),
-            suffix: serde_json::from_str(include_str!("suffix.json")).unwrap(),
+            table: serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("dictionary.json")).unwrap()).unwrap(),
+            suffix: serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("suffix.json")).unwrap()).unwrap(),
         }
     }
 
@@ -77,9 +79,12 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::Database;
+    use crate::settings::tests::set_default_phonetic;
 
     #[test]
     fn test_database() {
+        set_default_phonetic();
+
         let db = Database::new();
 
         assert_eq!(
@@ -98,6 +103,8 @@ mod tests {
 
     #[test]
     fn test_suffix() {
+        set_default_phonetic();
+        
         let db = Database::new();
 
         assert_eq!(db.find_suffix("gulo"), Some("গুলো".to_string()));

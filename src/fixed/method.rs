@@ -345,14 +345,11 @@ mod tests {
     use crate::context::Method;
     use crate::fixed::chars::*;
     use crate::keycodes::*;
-    use crate::settings::*;
+    use crate::settings::{self, tests::set_defaults_fixed};
 
     #[test]
     fn test_backspace() {
-        set_var(
-            ENV_LAYOUT_FILE,
-            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
-        );
+        set_defaults_fixed();
 
         let mut method = FixedMethod {
             buffer: "আমি".to_string(),
@@ -366,10 +363,7 @@ mod tests {
 
     #[test]
     fn test_reph_insertion() {
-        set_var(
-            ENV_LAYOUT_FILE,
-            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
-        );
+        set_defaults_fixed();
 
         let mut method = FixedMethod::default();
 
@@ -400,13 +394,7 @@ mod tests {
 
     #[test]
     fn test_features() {
-        set_var(
-            ENV_LAYOUT_FILE,
-            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
-        );
-        set_var(ENV_LAYOUT_FIXED_VOWEL, "true");
-        set_var(ENV_LAYOUT_FIXED_CHANDRA, "true");
-        set_var(ENV_LAYOUT_FIXED_KAR, "true");
+        set_defaults_fixed();
 
         let mut method = FixedMethod::default();
 
@@ -430,7 +418,7 @@ mod tests {
         assert_eq!(method.buffer, "র‌ু".to_string());
 
         // Without Traditional Kar joining
-        set_var(ENV_LAYOUT_FIXED_KAR, "false");
+        set_var(settings::ENV_LAYOUT_FIXED_KAR, "false");
         method.buffer = "র".to_string();
         method.process_key_value(&B_U_KAR.to_string());
         assert_eq!(method.buffer, "রু".to_string());
