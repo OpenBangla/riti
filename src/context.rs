@@ -52,8 +52,8 @@ impl RitiContext {
             self.loader = LayoutLoader::load_from_settings();
 
             match self.loader.layout_type() {
-                LayoutType::Phonetic => self.method.replace_with(|_| Box::new(PhoneticMethod::new(self.loader.layout()))),
-                LayoutType::Fixed => self.method.replace_with(|_| Box::new(FixedMethod::new(self.loader.layout())))
+                LayoutType::Phonetic => self.method.replace(Box::new(PhoneticMethod::new(self.loader.layout()))),
+                LayoutType::Fixed => self.method.replace(Box::new(FixedMethod::new(self.loader.layout())))
             };
         } else {
             self.method.borrow_mut().update_engine();
