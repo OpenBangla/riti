@@ -29,7 +29,7 @@ impl PhoneticMethod {
     fn create_suggestion(&mut self) -> Suggestion {
         let suggestions = self.suggestion.suggest(&self.buffer);
 
-        Suggestion::new(self.buffer.clone(), suggestions)
+        Suggestion::new(&self.buffer, suggestions)
     }
 }
 

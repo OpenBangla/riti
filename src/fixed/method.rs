@@ -106,7 +106,7 @@ impl FixedMethod {
     }
 
     fn create_suggestion(&self) -> Suggestion {
-        Suggestion::new_lonely(self.buffer.clone())
+        Suggestion::new_lonely(&self.buffer)
     }
 
     /// Processes the `value` of the pressed key and updates the method's

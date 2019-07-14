@@ -84,7 +84,7 @@ impl PhoneticSuggestion {
     }
 
     /// Make suggestions from the given `term`.
-    pub(crate) fn suggest(&mut self, term: &str) -> Vec<String> {
+    pub(crate) fn suggest(&mut self, term: &str) -> &[String] {
         self.suggestions.clear();
         let splitted_string = split_string(term);
 
@@ -139,7 +139,7 @@ impl PhoneticSuggestion {
             }
         }
 
-        self.suggestions.clone()
+        &self.suggestions
     }
 
     /// Returns a slice of the `suggestions` vector.

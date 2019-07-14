@@ -16,7 +16,7 @@ pub extern fn riti_context_free(ptr: *mut RitiContext) {
 }
 
 #[no_mangle]
-pub extern fn riti_get_suggestion_for_key(ptr: *mut RitiContext, key: u16, modifier: u8) -> *mut Suggestion {
+pub extern fn riti_get_suggestion_for_key<'a>(ptr: *mut RitiContext, key: u16, modifier: u8) -> *mut Suggestion<'a> {
     let context = unsafe {
         assert!(!ptr.is_null());
         &*ptr

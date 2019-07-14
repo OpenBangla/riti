@@ -1,20 +1,20 @@
 /// Suggestions which are intend to be shown by the IM's candidate window.
-pub struct Suggestion {
+pub struct Suggestion<'a> {
     // Auxiliary text
-    auxiliary: String,
+    auxiliary: &'a str,
     // This is Some() when the `Suggestion` is a *lonely* one. 
-    suggestion: Option<String>,
-    suggestions: Vec<String>,
+    suggestion: Option<&'a str>,
+    suggestions: Option<&'a [String]>,
 }
 
-impl Suggestion {
+impl<'a> Suggestion<'a> {
     /// Creates a new `Suggestion` struct with given arguments.
     /// 
     /// `auxiliary`: The auxiliary text.
     /// 
     /// `suggestions`: Vector of suggestions.
-    pub fn new(auxiliary: String, suggestions: Vec<String>) -> Self {
-        Suggestion { auxiliary, suggestion: None, suggestions }
+    pub fn new(auxiliary: &'a str, suggestions: &'a [String]) -> Self {
+        Suggestion { auxiliary, suggestion: None, suggestions: Some(suggestions) }
     }
 
     /// Creates a new `Suggestion` struct with only one suggestion.
@@ -22,13 +22,13 @@ impl Suggestion {
     /// *A lonely suggestion.* 😁
     /// 
     /// `suggestion`: The suggestion.
-    pub fn new_lonely(suggestion: String) -> Self {
-        Suggestion { auxiliary: String::new(), suggestion: Some(suggestion), suggestions: Vec::new() }
+    pub fn new_lonely(suggestion: &'a str) -> Self {
+        Suggestion { auxiliary: "", suggestion: Some(suggestion), suggestions: None }
     }
 
     /// Constructs an empty `Suggestion` struct.
     pub fn empty() -> Self {
-        Suggestion { auxiliary: String::new(), suggestion: None, suggestions: Vec::new() }
+        Suggestion { auxiliary: "", suggestion: None, suggestions: None }
     }
 
     /// Returns `true` when the `Suggestion` struct is a **lonely** one, otherwise returns `false`.
@@ -43,13 +43,13 @@ impl Suggestion {
         if self.suggestion.is_some() {
             self.suggestion.as_ref().unwrap().is_empty()
         } else {
-            self.suggestions.is_empty()
+            self.suggestions.unwrap().is_empty()
         }
     }
 
     /// Get the suggestions as a slice.
     pub fn get_suggestions(&self) -> &[String] {        
-        self.suggestions.as_slice()
+        self.suggestions.unwrap()
     }
 
     /// Get the only suggestion of the *lonely* `Suggestion`.
@@ -64,6 +64,6 @@ impl Suggestion {
 
     /// Get the length of the suggestions contained.
     pub fn len(&self) -> usize {
-        self.suggestions.len()
+        self.suggestions.map_or(0, |v| v.len())
     }
 }
