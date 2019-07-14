@@ -19,7 +19,7 @@ pub extern fn riti_context_free(ptr: *mut RitiContext) {
 pub extern fn riti_get_suggestion_for_key<'a>(ptr: *mut RitiContext, key: u16, modifier: u8) -> *mut Suggestion<'a> {
     let context = unsafe {
         assert!(!ptr.is_null());
-        &*ptr
+        &mut *ptr
     };
 
     let suggestion = context.get_suggestion_for_key(key, modifier);
@@ -40,7 +40,7 @@ pub extern fn riti_suggestion_free(ptr: *mut Suggestion) {
 pub extern fn riti_context_candidate_committed(ptr: *mut RitiContext, index: usize) {
     let context = unsafe {
         assert!(!ptr.is_null());
-        &*ptr
+        &mut *ptr
     };
 
     context.candidate_committed(index)

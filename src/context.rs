@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-
 use crate::suggestion::Suggestion;
 use crate::phonetic::method::PhoneticMethod;
 use crate::fixed::method::FixedMethod;
@@ -7,7 +5,7 @@ use crate::loader::{LayoutLoader, LayoutType};
 
 /// Context handle used for libRiti IM APIs
 pub struct RitiContext {
-    method: RefCell<Box<dyn Method>>,
+    method: Box<dyn Method>,
     loader: LayoutLoader,
 }
 
@@ -18,31 +16,31 @@ impl RitiContext {
 
         match loader.layout_type() {
             LayoutType::Phonetic => {
-                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout())));
+                let method = Box::new(PhoneticMethod::new(loader.layout()));
                 RitiContext { method, loader }
             }
             LayoutType::Fixed => {
-                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout())));
+                let method = Box::new(FixedMethod::new(loader.layout()));
                 RitiContext { method, loader }
             }
         }
     }
 
     /// Get suggestion for key.
-    pub fn get_suggestion_for_key(&self, key: u16, modifier: u8) -> Suggestion {
-        self.method.borrow_mut().get_suggestion(key, modifier)
+    pub fn get_suggestion_for_key(&mut self, key: u16, modifier: u8) -> Suggestion {
+        self.method.get_suggestion(key, modifier)
     }
 
     /// A candidate of the suggestion list was committed.
     /// 
     /// `index`: index of the candidate.
-    pub fn candidate_committed(&self, index: usize) {
-        self.method.borrow_mut().candidate_committed(index)
+    pub fn candidate_committed(&mut self, index: usize) {
+        self.method.candidate_committed(index)
     }
 
     /// Returns `true` if the key was handled, `false` otherwise.
     pub fn key_handled(&self) -> bool {
-        self.method.borrow().key_handled()
+        self.method.key_handled()
     }
 
     /// Update the suggestion making engine. This would also look for changes
@@ -52,11 +50,11 @@ impl RitiContext {
             self.loader = LayoutLoader::load_from_settings();
 
             match self.loader.layout_type() {
-                LayoutType::Phonetic => self.method.replace(Box::new(PhoneticMethod::new(self.loader.layout()))),
-                LayoutType::Fixed => self.method.replace(Box::new(FixedMethod::new(self.loader.layout())))
+                LayoutType::Phonetic => self.method = Box::new(PhoneticMethod::new(self.loader.layout())),
+                LayoutType::Fixed => self.method = Box::new(FixedMethod::new(self.loader.layout()))
             };
         } else {
-            self.method.borrow_mut().update_engine();
+            self.method.update_engine();
         }
     }
 }

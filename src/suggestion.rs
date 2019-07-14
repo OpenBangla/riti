@@ -41,9 +41,9 @@ impl<'a> Suggestion<'a> {
     /// Returns `true` if the `Suggestion` struct is empty.
     pub fn is_empty(&self) -> bool {
         if self.suggestion.is_some() {
-            self.suggestion.as_ref().unwrap().is_empty()
+            self.suggestion.unwrap().is_empty()
         } else {
-            self.suggestions.unwrap().is_empty()
+            self.suggestions.map_or(true, |v| v.is_empty())
         }
     }
 

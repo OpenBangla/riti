@@ -214,8 +214,8 @@ mod tests {
 
         let mut suggestion = PhoneticSuggestion::default();
 
-        assert_eq!(suggestion.suggest(":)"), vec![":)", "ঃ)"]);
-        assert_eq!(suggestion.suggest("."), vec!["।"]);
+        assert_eq!(suggestion.suggest(":)"), [":)", "ঃ)"]);
+        assert_eq!(suggestion.suggest("."), ["।"]);
     }
 
     #[test]
@@ -226,7 +226,7 @@ mod tests {
 
         assert_eq!(
             suggestion.suggest("a"),
-            vec![
+            [
                 "আ",
                 "আঃ",
                 "া",
@@ -237,11 +237,11 @@ mod tests {
         );
         assert_eq!(
             suggestion.suggest("as"),
-            vec!["আস", "আশ", "এস", "আঁশ"]
+            ["আস", "আশ", "এস", "আঁশ"]
         );
         assert_eq!(
             suggestion.suggest("asgulo"),
-            vec![
+            [
                 "আসগুলো",
                 "আশগুলো",
                 "এসগুলো",
@@ -251,15 +251,15 @@ mod tests {
         );
         assert_eq!(
             suggestion.suggest("(as)"),
-            vec!["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
+            ["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
         );
 
         // Suffix suggestion validation
-        assert_eq!(suggestion.suggest("apn"), vec!["আপন", "আপ্ন"]);
-        assert_eq!(suggestion.suggest("apni"), vec!["আপনি", "আপনই", "আপ্নি"]);
+        assert_eq!(suggestion.suggest("apn"), ["আপন", "আপ্ন"]);
+        assert_eq!(suggestion.suggest("apni"), ["আপনি", "আপনই", "আপ্নি"]);
 
-        assert_eq!(suggestion.suggest("am"), vec!["আম", "এম"]);
-        assert_eq!(suggestion.suggest("ami"), vec!["আমি", "আমই", "এমই"]);
+        assert_eq!(suggestion.suggest("am"), ["আম", "এম"]);
+        assert_eq!(suggestion.suggest("ami"), ["আমি", "আমই", "এমই"]);
     }
 
     #[test]
