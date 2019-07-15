@@ -54,12 +54,12 @@ impl<'a> Suggestion<'a> {
 
     /// Get the only suggestion of the *lonely* `Suggestion`.
     pub fn get_lonely_suggestion(&self) -> &str {        
-        self.suggestion.as_ref().unwrap()
+        self.suggestion.unwrap()
     }
 
     /// Get the auxiliary text.
     pub fn get_auxiliary_text(&self) -> &str {
-        &self.auxiliary
+        self.auxiliary
     }
 
     /// Get the length of the suggestions contained.
