@@ -359,6 +359,7 @@ mod tests {
         assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আম
         assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আ
         assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // Empty
+        assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // Empty
     }
 
     #[test]
