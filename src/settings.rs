@@ -26,6 +26,15 @@ pub(crate) fn get_settings_user_phonetic_autocorrect() -> String {
     format!("{}{}", base, "/openbangla-keyboard/autocorrect.json")
 }
 
+/// Get file path of user defined phonetic candidate selection file.
+pub(crate) fn get_settings_user_phonetic_selection_data() -> String {
+    let base = var("XDG_DATA_HOME").unwrap_or_else(|_| {
+        format!("{}{}", var("HOME").unwrap(), "/.local/share")
+    });
+
+    format!("{}{}", base, "/openbangla-keyboard/phonetic-candidate-selection.json")
+}
+
 /// Check if the Automatic Vowel Forming of 
 /// Fixed Keyboard layout method feature is enabled. 
 pub(crate) fn get_settings_fixed_automatic_vowel() -> bool {

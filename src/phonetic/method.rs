@@ -1,10 +1,13 @@
 // Phonetic Method
+use std::fs::{read_to_string, write};
+use rustc_hash::FxHashMap;
 
 use crate::context::Method;
 use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
+use crate::settings::get_settings_user_phonetic_selection_data;
 
 pub(crate) struct PhoneticMethod {
     buffer: String,
@@ -12,22 +15,32 @@ pub(crate) struct PhoneticMethod {
     handled: bool,
     suggestion: PhoneticSuggestion,
     selection_changed: bool,
+    // Candidate selections.
+    selections: FxHashMap<String, String>,
 }
 
 impl PhoneticMethod {
     /// Creates a new `PhoneticMethod` struct.
     pub(crate) fn new(layout: &serde_json::Value) -> Self {
+        let selections = if let Ok(file) = read_to_string(get_settings_user_phonetic_selection_data()) {
+            serde_json::from_str(&file).unwrap()
+        } else {
+            FxHashMap::default()
+        };
+
         PhoneticMethod {
             buffer: String::new(),
             handled: false,
             suggestion: PhoneticSuggestion::new(layout),
             selection_changed: false,
+            selections,
         }
     }
 
     /// Returns `Suggestion` struct with suggestions.
     fn create_suggestion(&mut self) -> Suggestion {
         let suggestions = self.suggestion.suggest(&self.buffer);
+        let _prev_index = self.suggestion.get_prev_selection(&mut self.selections);
 
         Suggestion::new(self.buffer.clone(), suggestions)
     }
@@ -552,8 +565,9 @@ impl Method for PhoneticMethod {
     fn candidate_committed(&mut self, index: usize) {
         // Check if user has selected a different suggestion
         if self.selection_changed {
-            // TODO: Save this to a file
-            let _suggestion = &self.suggestion.suggestions()[index];
+            let suggestion = self.suggestion.suggestions()[index].clone();
+            self.selections.insert(self.suggestion.buffer.clone(), suggestion);
+            write(get_settings_user_phonetic_selection_data(), serde_json::to_string(&self.selections).unwrap()).unwrap();
         }
 
         // Reset to defaults
@@ -581,6 +595,7 @@ impl Default for PhoneticMethod {
             handled: false,
             suggestion: PhoneticSuggestion::new(loader.layout()),
             selection_changed: false,
+            selections: FxHashMap::default(),
         }
     }
 }

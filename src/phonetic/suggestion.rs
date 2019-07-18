@@ -10,6 +10,7 @@ use super::autocorrect::AutoCorrect;
 use crate::utility::Utility;
 
 pub(crate) struct PhoneticSuggestion {
+    pub(crate) buffer: String,
     suggestions: Vec<String>,
     database: Database,
     pub(crate) autocorrect: AutoCorrect,
@@ -21,6 +22,7 @@ pub(crate) struct PhoneticSuggestion {
 impl PhoneticSuggestion {
     pub(crate) fn new(layout: &serde_json::Value) -> Self {
         PhoneticSuggestion {
+            buffer: String::new(),
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
             autocorrect: AutoCorrect::new(),
@@ -31,10 +33,9 @@ impl PhoneticSuggestion {
 
     /// Add suffix(গুলো, মালা...etc) to the dictionary suggestions and return them.
     /// This function gets the suggestion list from the stored cache.
-    fn add_suffix_to_suggestions(&self, splitted: &(&str, &str, &str)) -> Vec<String> {
-        let middle = splitted.1;
+    fn add_suffix_to_suggestions(&self, middle: &str) -> Vec<String> {
         // Fill up the list with what we have from dictionary.
-        let mut list = self.cache.get(splitted.1).cloned().unwrap_or_default();
+        let mut list = self.cache.get(middle).cloned().unwrap_or_default();
 
         if middle.len() > 2 {
             for i in 1..middle.len() {
@@ -91,6 +92,8 @@ impl PhoneticSuggestion {
         // Convert preceding and trailing meta characters into Bengali(phonetic representation).
         let splitted_string: (&str, &str, &str) = (&self.phonetic.convert(splitted_string.0), splitted_string.1, &self.phonetic.convert(splitted_string.2));
 
+        self.buffer = splitted_string.1.to_string();
+
         let phonetic = self.phonetic.convert(splitted_string.1);
 
         if !self.cache.contains_key(splitted_string.1) {
@@ -106,7 +109,7 @@ impl PhoneticSuggestion {
             self.cache.insert(splitted_string.1.to_string(), dictionary);
         }
 
-        let mut suggestions_with_suffix = self.add_suffix_to_suggestions(&splitted_string);
+        let mut suggestions_with_suffix = self.add_suffix_to_suggestions(splitted_string.1);
 
         suggestions_with_suffix.sort_by(|a, b| {
             let dist1 = edit_distance(&phonetic, a);
@@ -142,6 +145,45 @@ impl PhoneticSuggestion {
         self.suggestions.clone()
     }
 
+    pub(crate) fn get_prev_selection(&self, selections: &mut FxHashMap<String, String>) -> usize {
+        let mut selected = String::new();
+        let len = self.buffer.len();
+
+        if let Some(item) = selections.get(&self.buffer) {
+            selected = item.clone();
+        } else if len >= 2 {
+            for i in 1..len {
+                let test = &self.buffer[len - i..len];
+
+                if let Some(suffix) = self.database.find_suffix(test) {
+                    let key = &self.buffer[0..len - test.len()];
+
+                    if let Some(word) = selections.get(key) {
+                        let rmc = word.chars().last().unwrap();
+                        let suffix_lmc = suffix.chars().nth(0).unwrap();
+
+                        if rmc.is_vowel() && suffix_lmc.is_kar() {
+                            selected = format!("{}{}{}", word, '\u{09DF}', suffix); // \u{09DF} = B_Y
+                        } else {
+                            if rmc == '\u{09CE}' { // \u{09CE} = ৎ
+                                selected = format!("{}{}{}", word.trim_end_matches('\u{09CE}'), '\u{09A4}', suffix); // \u{09A4} = ত
+                            } else if rmc == '\u{0982}' { // \u{0982} = ঃ
+                                selected = format!("{}{}{}", word.trim_end_matches('\u{0982}'), '\u{0999}', suffix); // \u09a4 = b_NGA
+                            } else {
+                                selected = format!("{}{}", word, suffix);
+                            }
+                        }
+
+                        // Save this for future reuse.
+                        selections.insert(self.buffer.clone(), selected.to_string());
+                    }
+                }
+            }
+        }
+
+        self.suggestions.binary_search(&selected).unwrap_or_default()
+    }
+
     /// Returns a slice of the `suggestions` vector.
     pub(crate) fn suggestions(&self) -> &[String] {
         &self.suggestions
@@ -154,6 +196,7 @@ impl Default for PhoneticSuggestion {
         let loader = crate::loader::LayoutLoader::load_from_settings();
         
         PhoneticSuggestion {
+            buffer: String::new(),
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
             autocorrect: AutoCorrect::new(),
@@ -266,7 +309,7 @@ mod tests {
     fn test_suffix() {
         set_default_phonetic();
 
-        let mut cache: FxHashMap<String, Vec<String>> = FxHashMap::default();
+        let mut cache = FxHashMap::default();
         cache.insert(
             "computer".to_string(),
             vec!["কম্পিউটার".to_string()],
@@ -279,21 +322,34 @@ mod tests {
         };
 
         assert_eq!(
-            suggestion.add_suffix_to_suggestions(&("", "computer", "")),
+            suggestion.add_suffix_to_suggestions("computer"),
             vec!["কম্পিউটার"]
         );
         assert_eq!(
-            suggestion.add_suffix_to_suggestions(&("", "computere", "")),
+            suggestion.add_suffix_to_suggestions("computere"),
             vec!["কম্পিউটারে"]
         );
         assert_eq!(
-            suggestion.add_suffix_to_suggestions(&("", "computergulo", "")),
+            suggestion.add_suffix_to_suggestions("computergulo"),
             vec!["কম্পিউটারগুলো"]
         );
         assert_eq!(
-            suggestion.add_suffix_to_suggestions(&("", "ebongmala", "")),
+            suggestion.add_suffix_to_suggestions("ebongmala"),
             vec!["এবঙমালা"]
         );
+    }
+
+    #[test]
+    fn test_prev_selected() {
+        let mut suggestion = PhoneticSuggestion::default();
+
+        let mut selections = FxHashMap::default();
+        selections.insert("onno".to_string(), "অন্য".to_string());
+
+        suggestion.buffer = "onnogulo".to_string();
+        suggestion.suggestions = vec!["অন্নগুলো".to_string(), "অন্যগুলো".to_string()];
+
+        assert_eq!(suggestion.get_prev_selection(&mut selections), 1);
     }
 
     #[test]
