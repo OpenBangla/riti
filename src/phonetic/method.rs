@@ -40,9 +40,9 @@ impl PhoneticMethod {
     /// Returns `Suggestion` struct with suggestions.
     fn create_suggestion(&mut self) -> Suggestion {
         let suggestions = self.suggestion.suggest(&self.buffer);
-        let _prev_index = self.suggestion.get_prev_selection(&mut self.selections);
+        let prev_index = self.suggestion.get_prev_selection(&mut self.selections);
 
-        Suggestion::new(self.buffer.clone(), suggestions)
+        Suggestion::new(self.buffer.clone(), suggestions, prev_index)
     }
 }
 

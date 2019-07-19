@@ -286,6 +286,11 @@ bool riti_suggestion_is_empty(const Suggestion *ptr);
  */
 bool riti_suggestion_is_lonely(const Suggestion *ptr);
 
+/*
+ Returns index of the suggestion, which was previously selected.
+ */
+uintptr_t riti_suggestion_previously_selected_index(const Suggestion *ptr);
+
 } // extern "C"
 
 #endif // RITI_H

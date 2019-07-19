@@ -117,6 +117,17 @@ pub extern fn riti_suggestion_get_auxiliary_text(ptr: *const Suggestion) -> *mut
     }
 }
 
+/// Returns index of the suggestion, which was previously selected.
+#[no_mangle]
+pub extern fn riti_suggestion_previously_selected_index(ptr: *const Suggestion) -> usize {
+    let suggestion = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    suggestion.previously_selected_index()
+}
+
 #[no_mangle]
 pub extern fn riti_suggestion_get_length(ptr: *const Suggestion) -> usize {
     let suggestion = unsafe {

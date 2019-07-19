@@ -5,6 +5,8 @@ pub struct Suggestion {
     // This is Some() when the `Suggestion` is a *lonely* one. 
     suggestion: Option<String>,
     suggestions: Vec<String>,
+    // Index of the previously selected suggestion.
+    selection: usize,
 }
 
 impl Suggestion {
@@ -13,8 +15,10 @@ impl Suggestion {
     /// `auxiliary`: The auxiliary text.
     /// 
     /// `suggestions`: Vector of suggestions.
-    pub fn new(auxiliary: String, suggestions: Vec<String>) -> Self {
-        Suggestion { auxiliary, suggestion: None, suggestions }
+    /// 
+    /// `selection`: Index of the previously selected suggestion.
+    pub fn new(auxiliary: String, suggestions: Vec<String>, selection: usize) -> Self {
+        Suggestion { auxiliary, suggestion: None, suggestions, selection }
     }
 
     /// Creates a new `Suggestion` struct with only one suggestion.
@@ -23,12 +27,12 @@ impl Suggestion {
     /// 
     /// `suggestion`: The suggestion.
     pub fn new_lonely(suggestion: String) -> Self {
-        Suggestion { auxiliary: String::new(), suggestion: Some(suggestion), suggestions: Vec::new() }
+        Suggestion { auxiliary: String::new(), suggestion: Some(suggestion), suggestions: Vec::new(), selection: 0 }
     }
 
     /// Constructs an empty `Suggestion` struct.
     pub fn empty() -> Self {
-        Suggestion { auxiliary: String::new(), suggestion: None, suggestions: Vec::new() }
+        Suggestion { auxiliary: String::new(), suggestion: None, suggestions: Vec::new(), selection: 0 }
     }
 
     /// Returns `true` when the `Suggestion` struct is a **lonely** one, otherwise returns `false`.
@@ -60,6 +64,11 @@ impl Suggestion {
     /// Get the auxiliary text.
     pub fn get_auxiliary_text(&self) -> &str {
         &self.auxiliary
+    }
+
+    /// Returns index of the suggestion, which was previously selected.
+    pub fn previously_selected_index(&self) -> usize {
+        self.selection
     }
 
     /// Get the length of the suggestions contained.
