@@ -181,7 +181,16 @@ impl PhoneticSuggestion {
             }
         }
 
-        self.suggestions.binary_search(&selected).unwrap_or_default()
+        // Get the index
+        let mut index = 0;
+        for (i, item) in self.suggestions.iter().enumerate() {
+            if selected.eq(item) {
+                index = i;
+                break;
+            }
+        }
+
+        index
     }
 
     /// Returns a slice of the `suggestions` vector.
