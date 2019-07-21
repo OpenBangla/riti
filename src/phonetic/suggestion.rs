@@ -38,12 +38,20 @@ impl PhoneticSuggestion {
         let mut list = self.cache.get(middle).cloned().unwrap_or_default();
 
         if middle.len() > 2 {
+            let mut suffix_found = false;
+            
             for i in 1..middle.len() {
                 let suffix_key = &middle[i..];
+
+                if suffix_found {
+                    break;
+                }
+
                 if let Some(suffix) = self.database.find_suffix(suffix_key) {
                     let key = &middle[0..(middle.len() - suffix_key.len())];
-                    if self.cache.contains_key(key) {
-                        for item in &self.cache[key] {
+                    if let Some(cache) = self.cache.get(key) {
+                        suffix_found = true;
+                        for item in cache {
                             let item_rmc = item.chars().last().unwrap(); // Right most character.
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
                             if item_rmc.is_vowel() && suffix_lmc.is_kar() {
