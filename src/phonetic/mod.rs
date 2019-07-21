@@ -1,4 +1,3 @@
-mod autocorrect;
 mod database;
 pub(crate) mod method;
 mod regex;

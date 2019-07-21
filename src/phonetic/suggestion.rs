@@ -6,14 +6,12 @@ use rustc_hash::FxHashMap;
 use std::cmp::Ordering;
 
 use super::database::Database;
-use super::autocorrect::AutoCorrect;
 use crate::utility::Utility;
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) buffer: String,
-    suggestions: Vec<String>,
-    database: Database,
-    pub(crate) autocorrect: AutoCorrect,
+    pub(crate) suggestions: Vec<String>,
+    pub(crate) database: Database,
     // Cache for storing dictionary searches.
     cache: FxHashMap<String, Vec<String>>,
     phonetic: PhoneticParser,
@@ -25,7 +23,6 @@ impl PhoneticSuggestion {
             buffer: String::new(),
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
-            autocorrect: AutoCorrect::new(),
             cache: FxHashMap::default(),
             phonetic: PhoneticParser::new(layout),
         }
@@ -107,7 +104,7 @@ impl PhoneticSuggestion {
         if !self.cache.contains_key(splitted_string.1) {
             let mut dictionary = self.database.search_dictionary(splitted_string.1);
             // Auto Correct
-            if let Some(corrected) = self.autocorrect.search(splitted_string.1) {
+            if let Some(corrected) = self.database.search_corrected(splitted_string.1) {
                 let word = self.phonetic.convert(&corrected);
                 self.suggestions.push(word.clone());
                 // Add it to the cache for adding suffix later.
@@ -144,7 +141,7 @@ impl PhoneticSuggestion {
         }
 
         // Emoticons Auto Corrects
-        if let Some(emoticon) = self.autocorrect.search(term) {
+        if let Some(emoticon) = self.database.search_corrected(term) {
             if emoticon == term {
                 self.suggestions.insert(0, emoticon);
             }
@@ -191,11 +188,6 @@ impl PhoneticSuggestion {
 
         self.suggestions.iter().position(|item| *item == selected).unwrap_or_default()
     }
-
-    /// Returns a slice of the `suggestions` vector.
-    pub(crate) fn suggestions(&self) -> &[String] {
-        &self.suggestions
-    }
 }
 
 // Implement Default trait on PhoneticSuggestion, actually for testing convenience.
@@ -207,7 +199,6 @@ impl Default for PhoneticSuggestion {
             buffer: String::new(),
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
-            autocorrect: AutoCorrect::new(),
             cache: FxHashMap::default(),
             phonetic: PhoneticParser::new(loader.layout()),
         }

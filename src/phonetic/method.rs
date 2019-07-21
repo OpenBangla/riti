@@ -565,7 +565,7 @@ impl Method for PhoneticMethod {
     fn candidate_committed(&mut self, index: usize) {
         // Check if user has selected a different suggestion
         if self.selection_changed {
-            let suggestion = self.suggestion.suggestions()[index].clone();
+            let suggestion = self.suggestion.suggestions[index].clone();
             self.selections.insert(self.suggestion.buffer.clone(), suggestion);
             write(get_settings_user_phonetic_selection_data(), serde_json::to_string(&self.selections).unwrap()).unwrap();
         }
@@ -581,7 +581,7 @@ impl Method for PhoneticMethod {
     }
 
     fn update_engine(&mut self) {
-        self.suggestion.autocorrect.update();
+        self.suggestion.database.update();
     }
 }
 

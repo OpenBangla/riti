@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 
 use crate::hashmap;
 use crate::phonetic::regex::PhoneticRegex;
-use crate::settings::get_settings_phonetic_database_dir;
+use crate::settings::{get_settings_phonetic_database_dir, get_settings_user_phonetic_autocorrect};
 
 lazy_static::lazy_static! {
     static ref DICTIONARY_TABLE: HashMap<&'static str, Vec<&'static str>> = hashmap! [
@@ -43,14 +43,26 @@ pub(crate) struct Database {
     regex: PhoneticRegex,
     table: HashMap<String, Vec<String>>,
     suffix: FxHashMap<String, String>,
+    autocorrect: FxHashMap<String, String>,
+    // The user's auto-correct entries.
+    user_autocorrect: FxHashMap<String, String>,
 }
 
 impl Database {
     pub(crate) fn new() -> Database {
+        // Load the user's auto-correct entries.
+        let user_autocorrect = if let Ok(file) = read_to_string(get_settings_user_phonetic_autocorrect()) {
+            serde_json::from_str(&file).unwrap()
+        } else {
+            FxHashMap::default()
+        };
+
         Database {
             regex: PhoneticRegex::new(),
             table: serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("dictionary.json")).unwrap()).unwrap(),
             suffix: serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("suffix.json")).unwrap()).unwrap(),
+            autocorrect: serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("autocorrect.json")).unwrap()).unwrap(),
+            user_autocorrect,
         }
     }
 
@@ -73,6 +85,22 @@ impl Database {
 
     pub(crate) fn find_suffix(&self, string: &str) -> Option<String> {
         self.suffix.get(string).cloned()
+    }
+
+    /// Search for a `term` in AutoCorrect dictionary.
+    /// 
+    /// This looks in the user defined AutoCorrect entries first.
+    pub(crate) fn search_corrected(&self, term: &str) -> Option<String> {
+        self.user_autocorrect.get(term).cloned().or_else(|| self.autocorrect.get(term).cloned())
+    }
+
+    /// Update the user defined AutoCorrect dictionary.
+    pub(crate) fn update(&mut self) {
+        self.user_autocorrect = if let Ok(file) = read_to_string(get_settings_user_phonetic_autocorrect()) {
+            serde_json::from_str(&file).unwrap()
+        } else {
+            FxHashMap::default()
+        };
     }
 }
 
@@ -110,5 +138,15 @@ mod tests {
         assert_eq!(db.find_suffix("gulo"), Some("গুলো".to_string()));
         assert_eq!(db.find_suffix("er"), Some("ের".to_string()));
         assert_eq!(db.find_suffix("h"), None);
+    }
+
+    #[test]
+    fn test_autocorrect() {
+        set_default_phonetic();
+
+        let db = Database::new();
+
+        assert_eq!(db.search_corrected("academy"), Some("oZakaDemi".to_string()));
+        assert_eq!(db.search_corrected("\\nai\\"), None);
     }
 }
