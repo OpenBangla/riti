@@ -17,6 +17,8 @@ pub(crate) struct PhoneticMethod {
     selection_changed: bool,
     // Candidate selections.
     selections: FxHashMap<String, String>,
+    // Previously selected candidate index of the current suggestion list.
+    prev_selection: usize,
 }
 
 impl PhoneticMethod {
@@ -34,15 +36,24 @@ impl PhoneticMethod {
             suggestion: PhoneticSuggestion::new(layout),
             selection_changed: false,
             selections,
+            prev_selection: 0,
         }
     }
 
     /// Returns `Suggestion` struct with suggestions.
     fn create_suggestion(&mut self) -> Suggestion {
         let suggestions = self.suggestion.suggest(&self.buffer);
-        let prev_index = self.suggestion.get_prev_selection(&mut self.selections);
+        self.prev_selection = self.suggestion.get_prev_selection(&mut self.selections);
 
-        Suggestion::new(self.buffer.clone(), suggestions, prev_index)
+        Suggestion::new(self.buffer.clone(), suggestions, self.prev_selection)
+    }
+
+    fn current_suggestion(&self) -> Suggestion {
+        if !self.buffer.is_empty() {
+            Suggestion::new(self.buffer.clone(), self.suggestion.suggestions.clone(), self.prev_selection)
+        } else {
+            Suggestion::empty()
+        }
     }
 }
 
@@ -530,9 +541,11 @@ impl Method for PhoneticMethod {
             }
             (VC_ENTER, _) | (VC_SPACE, _) => {
                 self.handled = false;
+
+                let suggestion = self.current_suggestion();
                 self.buffer.clear();
 
-                return Suggestion::empty();
+                return suggestion;
             }
 
             (VC_RIGHT, _) | (VC_LEFT, _) => {
@@ -555,7 +568,9 @@ impl Method for PhoneticMethod {
 
             _ => {
                 self.handled = false;
-                return Suggestion::empty();
+                let suggestion = self.current_suggestion();
+                self.buffer.clear();
+                return suggestion;
             }
         }
 
@@ -596,6 +611,7 @@ impl Default for PhoneticMethod {
             suggestion: PhoneticSuggestion::new(loader.layout()),
             selection_changed: false,
             selections: FxHashMap::default(),
+            prev_selection: 0,
         }
     }
 }
