@@ -34,7 +34,9 @@ impl Method for FixedMethod {
                 }
             } else {
                 self.handled = false;
-                return self.current_suggestion();
+                let suggestion = self.current_suggestion();
+                self.buffer.clear();
+                return suggestion;
             }
         }
 
@@ -76,8 +78,8 @@ impl Method for FixedMethod {
             self.handled = true;
         } else {
             self.handled = false;
-            self.buffer.clear();
             let suggestion = self.current_suggestion();
+            self.buffer.clear();
             return suggestion;
         }
 
