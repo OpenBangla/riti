@@ -541,7 +541,7 @@ impl Method for PhoneticMethod {
                 return self.current_suggestion();
             }
             (VC_ENTER, _) | (VC_SPACE, _) => {
-                if key == VC_ENTER && get_settings_enter_closes_preview_window() {
+                if key == VC_ENTER && get_settings_enter_closes_preview_window() && !self.buffer.is_empty() {
                     self.handled = true;
                 } else {
                     self.handled = false;
