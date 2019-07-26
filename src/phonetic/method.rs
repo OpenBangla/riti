@@ -7,7 +7,7 @@ use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
-use crate::settings::get_settings_user_phonetic_selection_data;
+use crate::settings::{get_settings_user_phonetic_selection_data, get_settings_enter_closes_preview_window, get_settings_preview_window_horizontal};
 
 pub(crate) struct PhoneticMethod {
     buffer: String,
@@ -541,7 +541,11 @@ impl Method for PhoneticMethod {
                 return self.current_suggestion();
             }
             (VC_ENTER, _) | (VC_SPACE, _) => {
-                self.handled = false;
+                if key == VC_ENTER && get_settings_enter_closes_preview_window() {
+                    self.handled = true;
+                } else {
+                    self.handled = false;
+                }
 
                 let suggestion = self.current_suggestion();
                 self.buffer.clear();
@@ -550,7 +554,18 @@ impl Method for PhoneticMethod {
             }
 
             (VC_RIGHT, _) | (VC_LEFT, _) => {
-                if !self.buffer.is_empty() {
+                if !self.buffer.is_empty() && get_settings_preview_window_horizontal() {
+                    self.selection_changed = true;
+                    self.handled = true;
+                } else {
+                    self.handled = false;
+                }
+
+                return self.current_suggestion();
+            }
+
+            (VC_UP, _) | (VC_DOWN, _) => {
+                if !self.buffer.is_empty() && !get_settings_preview_window_horizontal() {
                     self.selection_changed = true;
                     self.handled = true;
                 } else {

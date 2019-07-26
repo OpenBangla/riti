@@ -5,6 +5,7 @@ use std::fmt;
 
 use crate::keycodes::*;
 use crate::utility::Modifiers;
+use crate::settings::get_settings_fixed_numberpad;
 use LayoutModifiers::*;
 
 #[derive(Debug, PartialEq)]
@@ -34,11 +35,15 @@ impl LayoutParser {
     }
 
     fn layout_get_value_numpad(&self, key: &str) -> Option<String> {
-        self.layout
-            .get(key)
-            .unwrap()
-            .as_str()
-            .map(|s| s.to_string())
+        if get_settings_fixed_numberpad() {
+            self.layout
+                .get(key)
+                .unwrap()
+                .as_str()
+                .map(|s| s.to_string())
+        } else {
+            None
+        }
     }
 
     pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers) -> Option<String> {

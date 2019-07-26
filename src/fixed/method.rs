@@ -140,7 +140,7 @@ impl FixedMethod {
         }
 
         // Reph insertion
-        if value == "\u{09B0}\u{09CD}" {
+        if value == "\u{09B0}\u{09CD}" && get_settings_fixed_old_reph() {
             self.insert_reph();
             return;
         }
