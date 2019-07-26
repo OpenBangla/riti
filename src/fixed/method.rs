@@ -34,7 +34,7 @@ impl Method for FixedMethod {
                 }
             } else {
                 self.handled = false;
-                return Suggestion::empty();
+                return self.current_suggestion();
             }
         }
 
@@ -64,9 +64,11 @@ impl Method for FixedMethod {
             }
         } else if key == VC_ENTER || key == VC_SPACE {
             self.handled = false;
+
+            let suggestion = self.current_suggestion();
             self.buffer.clear();
 
-            return Suggestion::empty();
+            return suggestion;
         }
 
         if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
@@ -74,14 +76,16 @@ impl Method for FixedMethod {
             self.handled = true;
         } else {
             self.handled = false;
-            return Suggestion::empty();
+            self.buffer.clear();
+            let suggestion = self.current_suggestion();
+            return suggestion;
         }
 
         self.create_suggestion()
     }
 
     fn candidate_committed(&mut self, _index: usize) {
-        //
+        self.buffer.clear();
     }
 
     fn key_handled(&self) -> bool {
@@ -107,6 +111,14 @@ impl FixedMethod {
 
     fn create_suggestion(&self) -> Suggestion {
         Suggestion::new_lonely(self.buffer.clone())
+    }
+
+    fn current_suggestion(&self) -> Suggestion {
+        if !self.buffer.is_empty() {
+            Suggestion::new_lonely(self.buffer.clone())
+        } else {
+            Suggestion::empty()
+        }
     }
 
     /// Processes the `value` of the pressed key and updates the method's

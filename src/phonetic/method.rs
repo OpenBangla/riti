@@ -536,8 +536,9 @@ impl Method for PhoneticMethod {
                     self.handled = true;
                 } else {
                     self.handled = false;
-                    return Suggestion::empty();
                 }
+
+                return self.current_suggestion();
             }
             (VC_ENTER, _) | (VC_SPACE, _) => {
                 self.handled = false;
@@ -556,14 +557,18 @@ impl Method for PhoneticMethod {
                     self.handled = false;
                 }
 
-                return Suggestion::empty();
+                return self.current_suggestion();
             }
 
             (VC_TAB, _) => {
-                self.handled = !self.buffer.is_empty();
-                self.selection_changed = true;
+                if !self.buffer.is_empty() {
+                    self.handled = true;
+                    self.selection_changed = true;
+                } else {
+                    self.handled = false;
+                }
 
-                return Suggestion::empty();
+                return self.current_suggestion();
             }
 
             _ => {
