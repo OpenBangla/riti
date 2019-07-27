@@ -551,7 +551,7 @@ impl Method for PhoneticMethod {
                 return self.current_suggestion();
             }
             (VC_ENTER, _) | (VC_SPACE, _) => {
-                if key == VC_ENTER && get_settings_enter_closes_preview_window() && !self.buffer.is_empty() {
+                if key == VC_ENTER && get_settings_enter_closes_preview_window() && get_settings_phonetic_database_on() && !self.buffer.is_empty() {
                     self.handled = true;
                 } else {
                     self.handled = false;
@@ -564,7 +564,7 @@ impl Method for PhoneticMethod {
             }
 
             (VC_RIGHT, _) | (VC_LEFT, _) => {
-                if !self.buffer.is_empty() && get_settings_preview_window_horizontal() {
+                if !self.buffer.is_empty() && get_settings_preview_window_horizontal() && get_settings_phonetic_database_on() {
                     self.selection_changed = true;
                     self.handled = true;
                 } else {
@@ -575,7 +575,7 @@ impl Method for PhoneticMethod {
             }
 
             (VC_UP, _) | (VC_DOWN, _) => {
-                if !self.buffer.is_empty() && !get_settings_preview_window_horizontal() {
+                if !self.buffer.is_empty() && !get_settings_preview_window_horizontal() && get_settings_phonetic_database_on() {
                     self.selection_changed = true;
                     self.handled = true;
                 } else {
@@ -586,7 +586,7 @@ impl Method for PhoneticMethod {
             }
 
             (VC_TAB, _) => {
-                if !self.buffer.is_empty() {
+                if !self.buffer.is_empty() && get_settings_phonetic_database_on() {
                     self.handled = true;
                     self.selection_changed = true;
                 } else {
