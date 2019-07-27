@@ -56,7 +56,11 @@ impl PhoneticMethod {
 
     fn current_suggestion(&self) -> Suggestion {
         if !self.buffer.is_empty() {
-            Suggestion::new(self.buffer.clone(), self.suggestion.suggestions.clone(), self.prev_selection)
+            if get_settings_phonetic_database_on() {
+                Suggestion::new(self.buffer.clone(), self.suggestion.suggestions.clone(), self.prev_selection)
+            } else {
+                Suggestion::new_lonely(self.suggestion.suggestion_only_phonetic(&self.buffer))
+            }
         } else {
             Suggestion::empty()
         }

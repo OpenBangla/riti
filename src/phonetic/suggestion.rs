@@ -90,7 +90,7 @@ impl PhoneticSuggestion {
     }
 
     /// Make suggestion from given `term` with only phonetic transliteration.
-    pub(crate) fn suggestion_only_phonetic(&mut self, term: &str) -> String {
+    pub(crate) fn suggestion_only_phonetic(&self, term: &str) -> String {
         let splitted_string = split_string(term);
         
         format!("{}{}{}", self.phonetic.convert(splitted_string.0), self.phonetic.convert(splitted_string.1), self.phonetic.convert(splitted_string.2))
@@ -261,7 +261,7 @@ mod tests {
     fn test_suggestion_only_phonetic() {
         set_default_phonetic();
 
-        let mut suggestion = PhoneticSuggestion::default();
+        let suggestion = PhoneticSuggestion::default();
 
         assert_eq!(suggestion.suggestion_only_phonetic("{kotha}"), "{কথা}");
         assert_eq!(suggestion.suggestion_only_phonetic(",ah,,"), ",আহ্‌");
