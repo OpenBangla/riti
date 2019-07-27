@@ -89,8 +89,15 @@ impl PhoneticSuggestion {
         list
     }
 
-    /// Make suggestions from the given `term`.
-    pub(crate) fn suggest(&mut self, term: &str) -> Vec<String> {
+    /// Make suggestion from given `term` with only phonetic transliteration.
+    pub(crate) fn suggestion_only_phonetic(&mut self, term: &str) -> String {
+        let splitted_string = split_string(term);
+        
+        format!("{}{}{}", self.phonetic.convert(splitted_string.0), self.phonetic.convert(splitted_string.1), self.phonetic.convert(splitted_string.2))
+    } 
+
+    /// Make suggestions from the given `term`. This will include dictionary and auto-correct suggestion.
+    pub(crate) fn suggestion_with_dict(&mut self, term: &str) -> Vec<String> {
         self.suggestions.clear();
         let splitted_string = split_string(term);
 
@@ -251,13 +258,23 @@ mod tests {
     use crate::settings::tests::set_default_phonetic;
 
     #[test]
+    fn test_suggestion_only_phonetic() {
+        set_default_phonetic();
+
+        let mut suggestion = PhoneticSuggestion::default();
+
+        assert_eq!(suggestion.suggestion_only_phonetic("{kotha}"), "{কথা}");
+        assert_eq!(suggestion.suggestion_only_phonetic(",ah,,"), ",আহ্‌");
+    }
+
+    #[test]
     fn test_emoticon() {
         set_default_phonetic();
 
         let mut suggestion = PhoneticSuggestion::default();
 
-        assert_eq!(suggestion.suggest(":)"), vec![":)", "ঃ)"]);
-        assert_eq!(suggestion.suggest("."), vec!["।"]);
+        assert_eq!(suggestion.suggestion_with_dict(":)"), vec![":)", "ঃ)"]);
+        assert_eq!(suggestion.suggestion_with_dict("."), vec!["।"]);
     }
 
     #[test]
@@ -267,7 +284,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
 
         assert_eq!(
-            suggestion.suggest("a"),
+            suggestion.suggestion_with_dict("a"),
             vec![
                 "আ",
                 "আঃ",
@@ -278,11 +295,11 @@ mod tests {
             ]
         );
         assert_eq!(
-            suggestion.suggest("as"),
+            suggestion.suggestion_with_dict("as"),
             vec!["আস", "আশ", "এস", "আঁশ"]
         );
         assert_eq!(
-            suggestion.suggest("asgulo"),
+            suggestion.suggestion_with_dict("asgulo"),
             vec![
                 "আসগুলো",
                 "আশগুলো",
@@ -292,16 +309,16 @@ mod tests {
             ]
         );
         assert_eq!(
-            suggestion.suggest("(as)"),
+            suggestion.suggestion_with_dict("(as)"),
             vec!["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
         );
 
         // Suffix suggestion validation
-        assert_eq!(suggestion.suggest("apn"), vec!["আপন", "আপ্ন"]);
-        assert_eq!(suggestion.suggest("apni"), vec!["আপনি", "আপনই", "আপ্নি"]);
+        assert_eq!(suggestion.suggestion_with_dict("apn"), vec!["আপন", "আপ্ন"]);
+        assert_eq!(suggestion.suggestion_with_dict("apni"), vec!["আপনি", "আপনই", "আপ্নি"]);
 
-        assert_eq!(suggestion.suggest("am"), vec!["আম", "এম"]);
-        assert_eq!(suggestion.suggest("ami"), vec!["আমি", "আমই", "এমই"]);
+        assert_eq!(suggestion.suggestion_with_dict("am"), vec!["আম", "এম"]);
+        assert_eq!(suggestion.suggestion_with_dict("ami"), vec!["আমি", "আমই", "এমই"]);
     }
 
     #[test]

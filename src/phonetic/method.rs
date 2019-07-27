@@ -7,7 +7,7 @@ use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
-use crate::settings::{get_settings_user_phonetic_selection_data, get_settings_enter_closes_preview_window, get_settings_preview_window_horizontal};
+use crate::settings::{get_settings_user_phonetic_selection_data, get_settings_enter_closes_preview_window, get_settings_preview_window_horizontal, get_settings_phonetic_database_on};
 
 pub(crate) struct PhoneticMethod {
     buffer: String,
@@ -42,10 +42,16 @@ impl PhoneticMethod {
 
     /// Returns `Suggestion` struct with suggestions.
     fn create_suggestion(&mut self) -> Suggestion {
-        let suggestions = self.suggestion.suggest(&self.buffer);
-        self.prev_selection = self.suggestion.get_prev_selection(&mut self.selections);
+        if get_settings_phonetic_database_on() {
+            let suggestions = self.suggestion.suggestion_with_dict(&self.buffer);
+            self.prev_selection = self.suggestion.get_prev_selection(&mut self.selections);
 
-        Suggestion::new(self.buffer.clone(), suggestions, self.prev_selection)
+            Suggestion::new(self.buffer.clone(), suggestions, self.prev_selection)
+        } else {
+            let suggestion = self.suggestion.suggestion_only_phonetic(&self.buffer);
+
+            Suggestion::new_lonely(suggestion)
+        }
     }
 
     fn current_suggestion(&self) -> Suggestion {
@@ -599,7 +605,7 @@ impl Method for PhoneticMethod {
 
     fn candidate_committed(&mut self, index: usize) {
         // Check if user has selected a different suggestion
-        if self.selection_changed {
+        if self.selection_changed && get_settings_phonetic_database_on() {
             let suggestion = self.suggestion.suggestions[index].clone();
             self.selections.insert(self.suggestion.buffer.clone(), suggestion);
             write(get_settings_user_phonetic_selection_data(), serde_json::to_string(&self.selections).unwrap()).unwrap();

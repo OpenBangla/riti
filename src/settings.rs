@@ -4,6 +4,7 @@ use std::path::PathBuf;
 pub(crate) const ENV_LAYOUT_FILE: &str = "RITI_LAYOUT_FILE";
 pub(crate) const ENV_ENTER_CLOSES_PREVIEW_WIN: &str = "RITI_ENTER_CLOSES_PREVIEW_WIN";
 pub(crate) const ENV_PREVIEW_WIN_HORIZONTAL: &str = "RITI_PREVIEW_WIN_HORIZONTAL";
+pub(crate) const ENV_PHONETIC_DATABASE_ON: &str = "RITI_PHONETIC_DATABASE_ON";
 pub(crate) const ENV_PHONETIC_DATABASE_DIR: &str = "RITI_PHONETIC_DATABASE_DIR";
 pub(crate) const ENV_LAYOUT_FIXED_VOWEL: &str = "RITI_LAYOUT_FIXED_VOWEL";
 pub(crate) const ENV_LAYOUT_FIXED_CHANDRA: &str = "RITI_LAYOUT_FIXED_CHANDRA";
@@ -24,6 +25,11 @@ pub(crate) fn get_settings_enter_closes_preview_window() -> bool {
 /// Check if the Enter key closes preview window.
 pub(crate) fn get_settings_preview_window_horizontal() -> bool {
     var(ENV_PREVIEW_WIN_HORIZONTAL).unwrap().parse().unwrap()
+}
+
+/// Check if the Dictionary suggestion is on for Phonetic method.
+pub(crate) fn get_settings_phonetic_database_on() -> bool {
+    var(ENV_PHONETIC_DATABASE_ON).unwrap().parse().unwrap()
 }
 
 /// Get the base file path of database directory.
@@ -91,6 +97,7 @@ pub(crate) mod tests {
         set_var(ENV_PHONETIC_DATABASE_DIR, format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"));
         set_var(ENV_ENTER_CLOSES_PREVIEW_WIN, "true");
         set_var(ENV_PREVIEW_WIN_HORIZONTAL, "true");
+        set_var(ENV_PHONETIC_DATABASE_ON, "true");
     }
 
     /// Sets default settings for testing Fixed Method.
