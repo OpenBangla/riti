@@ -8,6 +8,7 @@ edition = "2018"
 crate-type = ["staticlib"]
 
 [dependencies]
+either = "1.5"
 serde_json = "1.0"
 regex = "1.0"
 stringplus = "0.1"
