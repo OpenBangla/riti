@@ -47,10 +47,12 @@ impl PhoneticSuggestion {
                 if let Some(suffix) = self.database.find_suffix(suffix_key) {
                     let key = &middle[0..(middle.len() - suffix_key.len())];
                     if let Some(cache) = self.cache.get(key) {
-                        suffix_found = true;
                         for item in cache {
+                            suffix_found = true;
+
                             let item_rmc = item.chars().last().unwrap(); // Right most character.
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
+                            
                             if item_rmc.is_vowel() && suffix_lmc.is_kar() {
                                 let word = format!("{}{}{}", item, "\u{09DF}", suffix);
                                 list.push(word);
@@ -113,7 +115,6 @@ impl PhoneticSuggestion {
             // Auto Correct
             if let Some(corrected) = self.database.search_corrected(splitted_string.1) {
                 let word = self.phonetic.convert(&corrected);
-                self.suggestions.push(word.clone());
                 // Add it to the cache for adding suffix later.
                 dictionary.push(word);
             }
