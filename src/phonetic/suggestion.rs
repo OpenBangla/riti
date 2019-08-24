@@ -112,32 +112,29 @@ impl PhoneticSuggestion {
 
         if !self.cache.contains_key(splitted_string.1) {
             let mut dictionary = self.database.search_dictionary(splitted_string.1);
-            // Auto Correct
-            if let Some(corrected) = self.database.search_corrected(splitted_string.1) {
-                let word = self.phonetic.convert(&corrected);
-                // Add it to the cache for adding suffix later.
-                dictionary.push(word);
+
+            dictionary.sort_by(|a, b| {
+                let dist1 = edit_distance(&phonetic, a);
+                let dist2 = edit_distance(&phonetic, b);
+
+                if dist1 < dist2 {
+                    Ordering::Less
+                } else if dist1 > dist2 {
+                    Ordering::Greater
+                } else {
+                    Ordering::Equal
+                }
+            });
+
+            if let Some(autocorrect) = self.database.search_corrected(splitted_string.1) {
+                let corrected = self.phonetic.convert(&autocorrect);
+                dictionary.insert(0, corrected);
             }
-            // Cache it.
-            self.cache.insert(splitted_string.1.to_string(), dictionary);
+
+            self.cache.insert(splitted_string.1.to_string(), dictionary.clone());
         }
 
-        let mut suggestions_with_suffix = self.add_suffix_to_suggestions(splitted_string.1);
-
-        suggestions_with_suffix.sort_by(|a, b| {
-            let dist1 = edit_distance(&phonetic, a);
-            let dist2 = edit_distance(&phonetic, b);
-
-            if dist1 < dist2 {
-                Ordering::Less
-            } else if dist1 > dist2 {
-                Ordering::Greater
-            } else {
-                Ordering::Equal
-            }
-        });
-
-        self.suggestions.append(&mut suggestions_with_suffix);
+        self.suggestions = self.add_suffix_to_suggestions(splitted_string.1);
 
         // Last Item: Phonetic. Check if it already contains.
         if !self.suggestions.contains(&phonetic) {
@@ -314,12 +311,16 @@ mod tests {
             vec!["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
         );
 
-        // Suffix suggestion validation
+        // Suffix suggestion validation.
         assert_eq!(suggestion.suggestion_with_dict("apn"), vec!["আপন", "আপ্ন"]);
         assert_eq!(suggestion.suggestion_with_dict("apni"), vec!["আপনি", "আপনই", "আপ্নি"]);
 
         assert_eq!(suggestion.suggestion_with_dict("am"), vec!["আম", "এম"]);
         assert_eq!(suggestion.suggestion_with_dict("ami"), vec!["আমি", "আমই", "এমই"]);
+
+        // Auto Correct suggestion should be the first & Suffix suggestion validation.
+        assert_eq!(suggestion.suggestion_with_dict("atm"), vec!["এটিএম", "আত্ম", "অ্যাটম"]);
+        assert_eq!(suggestion.suggestion_with_dict("atme"), vec!["এটিএমে", "আত্মে", "অ্যাটমে"]);
     }
 
     #[test]
