@@ -36,7 +36,6 @@ impl PhoneticSuggestion {
 
         if middle.len() > 2 {
             let mut suffix_found = false;
-            
             for i in 1..middle.len() {
                 let suffix_key = &middle[i..];
 
@@ -52,7 +51,6 @@ impl PhoneticSuggestion {
 
                             let item_rmc = item.chars().last().unwrap(); // Right most character.
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
-                            
                             if item_rmc.is_vowel() && suffix_lmc.is_kar() {
                                 let word = format!("{}{}{}", item, "\u{09DF}", suffix);
                                 list.push(word);
@@ -94,17 +92,25 @@ impl PhoneticSuggestion {
     /// Make suggestion from given `term` with only phonetic transliteration.
     pub(crate) fn suggestion_only_phonetic(&self, term: &str) -> String {
         let splitted_string = split_string(term);
-        
-        format!("{}{}{}", self.phonetic.convert(splitted_string.0), self.phonetic.convert(splitted_string.1), self.phonetic.convert(splitted_string.2))
-    } 
 
+        format!(
+            "{}{}{}",
+            self.phonetic.convert(splitted_string.0),
+            self.phonetic.convert(splitted_string.1),
+            self.phonetic.convert(splitted_string.2)
+        )
+    }
     /// Make suggestions from the given `term`. This will include dictionary and auto-correct suggestion.
     pub(crate) fn suggestion_with_dict(&mut self, term: &str) -> Vec<String> {
         self.suggestions.clear();
         let splitted_string = split_string(term);
 
         // Convert preceding and trailing meta characters into Bengali(phonetic representation).
-        let splitted_string: (&str, &str, &str) = (&self.phonetic.convert(splitted_string.0), splitted_string.1, &self.phonetic.convert(splitted_string.2));
+        let splitted_string: (&str, &str, &str) = (
+            &self.phonetic.convert(splitted_string.0),
+            splitted_string.1,
+            &self.phonetic.convert(splitted_string.2),
+        );
 
         self.buffer = splitted_string.1.to_string();
 
@@ -131,7 +137,8 @@ impl PhoneticSuggestion {
                 dictionary.insert(0, corrected);
             }
 
-            self.cache.insert(splitted_string.1.to_string(), dictionary.clone());
+            self.cache
+                .insert(splitted_string.1.to_string(), dictionary.clone());
         }
 
         self.suggestions = self.add_suffix_to_suggestions(splitted_string.1);
@@ -175,10 +182,22 @@ impl PhoneticSuggestion {
                         if rmc.is_vowel() && suffix_lmc.is_kar() {
                             selected = format!("{}{}{}", word, '\u{09DF}', suffix); // \u{09DF} = B_Y
                         } else {
-                            if rmc == '\u{09CE}' { // \u{09CE} = ৎ
-                                selected = format!("{}{}{}", word.trim_end_matches('\u{09CE}'), '\u{09A4}', suffix); // \u{09A4} = ত
-                            } else if rmc == '\u{0982}' { // \u{0982} = ঃ
-                                selected = format!("{}{}{}", word.trim_end_matches('\u{0982}'), '\u{0999}', suffix); // \u09a4 = b_NGA
+                            if rmc == '\u{09CE}' {
+                                // \u{09CE} = ৎ
+                                selected = format!(
+                                    "{}{}{}",
+                                    word.trim_end_matches('\u{09CE}'),
+                                    '\u{09A4}',
+                                    suffix
+                                ); // \u{09A4} = ত
+                            } else if rmc == '\u{0982}' {
+                                // \u{0982} = ঃ
+                                selected = format!(
+                                    "{}{}{}",
+                                    word.trim_end_matches('\u{0982}'),
+                                    '\u{0999}',
+                                    suffix
+                                ); // \u09a4 = b_NGA
                             } else {
                                 selected = format!("{}{}", word, suffix);
                             }
@@ -191,7 +210,10 @@ impl PhoneticSuggestion {
             }
         }
 
-        self.suggestions.iter().position(|item| *item == selected).unwrap_or_default()
+        self.suggestions
+            .iter()
+            .position(|item| *item == selected)
+            .unwrap_or_default()
     }
 }
 
@@ -199,7 +221,6 @@ impl PhoneticSuggestion {
 impl Default for PhoneticSuggestion {
     fn default() -> Self {
         let loader = crate::loader::LayoutLoader::load_from_settings();
-        
         PhoneticSuggestion {
             buffer: String::new(),
             suggestions: Vec::with_capacity(10),
@@ -261,8 +282,14 @@ mod tests {
 
         let suggestion = PhoneticSuggestion::default();
 
-        assert_eq!(suggestion.suggestion_only_phonetic("{kotha}"), "{কথা}");
-        assert_eq!(suggestion.suggestion_only_phonetic(",ah,,"), ",আহ্‌");
+        assert_eq!(
+            suggestion.suggestion_only_phonetic("{kotha}"),
+            "{কথা}"
+        );
+        assert_eq!(
+            suggestion.suggestion_only_phonetic(",ah,,"),
+            ",আহ্‌"
+        );
     }
 
     #[test]
@@ -312,15 +339,37 @@ mod tests {
         );
 
         // Suffix suggestion validation.
-        assert_eq!(suggestion.suggestion_with_dict("apn"), vec!["আপন", "আপ্ন"]);
-        assert_eq!(suggestion.suggestion_with_dict("apni"), vec!["আপনি", "আপনই", "আপ্নি"]);
+        assert_eq!(
+            suggestion.suggestion_with_dict("apn"),
+            vec!["আপন", "আপ্ন"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("apni"),
+            vec!["আপনি", "আপনই", "আপ্নি"]
+        );
 
-        assert_eq!(suggestion.suggestion_with_dict("am"), vec!["আম", "এম"]);
-        assert_eq!(suggestion.suggestion_with_dict("ami"), vec!["আমি", "আমই", "এমই"]);
+        assert_eq!(
+            suggestion.suggestion_with_dict("am"),
+            vec!["আম", "এম"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("ami"),
+            vec!["আমি", "আমই", "এমই"]
+        );
 
-        // Auto Correct suggestion should be the first & Suffix suggestion validation.
-        assert_eq!(suggestion.suggestion_with_dict("atm"), vec!["এটিএম", "আত্ম", "অ্যাটম"]);
-        assert_eq!(suggestion.suggestion_with_dict("atme"), vec!["এটিএমে", "আত্মে", "অ্যাটমে"]);
+        // Auto Correct suggestion should be the first one & Suffix suggestion validation.
+        assert_eq!(
+            suggestion.suggestion_with_dict("atm"),
+            vec!["এটিএম", "আত্ম", "অ্যাটম"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("atme"),
+            vec![
+                "এটিএমে",
+                "আত্মে",
+                "অ্যাটমে"
+            ]
+        );
     }
 
     #[test]
@@ -365,7 +414,10 @@ mod tests {
         selections.insert("onno".to_string(), "অন্য".to_string());
 
         suggestion.buffer = "onnogulo".to_string();
-        suggestion.suggestions = vec!["অন্নগুলো".to_string(), "অন্যগুলো".to_string()];
+        suggestion.suggestions = vec![
+            "অন্নগুলো".to_string(),
+            "অন্যগুলো".to_string(),
+        ];
 
         assert_eq!(suggestion.get_prev_selection(&mut selections), 1);
     }
