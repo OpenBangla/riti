@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use crate::context::Method;
-use super::{chars::*, parser::LayoutParser};
+use super::{chars::*, parser::LayoutParser, database::Database};
 use crate::keycodes::*;
 use crate::settings::*;
 use crate::suggestion::Suggestion;
@@ -15,6 +15,7 @@ pub(crate) struct FixedMethod {
     buffer: String,
     handled: bool,
     parser: LayoutParser,
+    database: Database,
 }
 
 impl Method for FixedMethod {
@@ -107,17 +108,23 @@ impl FixedMethod {
         FixedMethod {
             buffer: String::new(),
             handled: false,
-            parser
+            parser,
+            database: Database::new(),
         }
     }
 
     fn create_suggestion(&self) -> Suggestion {
-        Suggestion::new_lonely(self.buffer.clone())
+        if get_settings_fixed_database_on() {
+            let suggestions = self.database.search_dictionary(&self.buffer);
+            Suggestion::new(self.buffer.clone(), suggestions, 0)
+        } else {
+            Suggestion::new_lonely(self.buffer.clone())
+        }
     }
 
     fn current_suggestion(&self) -> Suggestion {
         if !self.buffer.is_empty() {
-            Suggestion::new_lonely(self.buffer.clone())
+            self.create_suggestion()
         } else {
             Suggestion::empty()
         }
@@ -346,7 +353,8 @@ impl Default for FixedMethod {
         FixedMethod {
             buffer: String::new(),
             handled: false,
-            parser
+            parser,
+            database: Database::new(),
         }
     }
 }
@@ -364,6 +372,7 @@ mod tests {
     #[test]
     fn test_backspace() {
         set_defaults_fixed();
+        set_var(settings::ENV_LAYOUT_FIXED_DATABASE_ON, "false");
 
         let mut method = FixedMethod {
             buffer: "আমি".to_string(),

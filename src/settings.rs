@@ -5,7 +5,8 @@ pub(crate) const ENV_LAYOUT_FILE: &str = "RITI_LAYOUT_FILE";
 pub(crate) const ENV_ENTER_CLOSES_PREVIEW_WIN: &str = "RITI_ENTER_CLOSES_PREVIEW_WIN";
 pub(crate) const ENV_PREVIEW_WIN_HORIZONTAL: &str = "RITI_PREVIEW_WIN_HORIZONTAL";
 pub(crate) const ENV_PHONETIC_DATABASE_ON: &str = "RITI_PHONETIC_DATABASE_ON";
-pub(crate) const ENV_PHONETIC_DATABASE_DIR: &str = "RITI_PHONETIC_DATABASE_DIR";
+pub(crate) const ENV_DATABASE_DIR: &str = "RITI_DATABASE_DIR";
+pub(crate) const ENV_LAYOUT_FIXED_DATABASE_ON: &str = "RITI_LAYOUT_FIXED_DATABASE_ON";
 pub(crate) const ENV_LAYOUT_FIXED_VOWEL: &str = "RITI_LAYOUT_FIXED_VOWEL";
 pub(crate) const ENV_LAYOUT_FIXED_CHANDRA: &str = "RITI_LAYOUT_FIXED_CHANDRA";
 pub(crate) const ENV_LAYOUT_FIXED_KAR: &str = "RITI_LAYOUT_FIXED_KAR";
@@ -33,8 +34,8 @@ pub(crate) fn get_settings_phonetic_database_on() -> bool {
 }
 
 /// Get the base file path of database directory.
-pub(crate) fn get_settings_phonetic_database_dir() -> PathBuf {
-    var(ENV_PHONETIC_DATABASE_DIR).unwrap().into()
+pub(crate) fn get_settings_database_dir() -> PathBuf {
+    var(ENV_DATABASE_DIR).unwrap().into()
 }
 
 /// Get file path of user defined Auto Correct file.
@@ -53,6 +54,12 @@ pub(crate) fn get_settings_user_phonetic_selection_data() -> String {
     });
 
     format!("{}{}", base, "/openbangla-keyboard/phonetic-candidate-selection.json")
+}
+
+/// Check if the dictionary suggestion of 
+/// Fixed Keyboard layout method feature is enabled. 
+pub(crate) fn get_settings_fixed_database_on() -> bool {
+    var(ENV_LAYOUT_FIXED_DATABASE_ON).unwrap().parse().unwrap()
 }
 
 /// Check if the Automatic Vowel Forming of 
@@ -94,7 +101,7 @@ pub(crate) mod tests {
             ENV_LAYOUT_FILE,
             format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
         );
-        set_var(ENV_PHONETIC_DATABASE_DIR, format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"));
+        set_var(ENV_DATABASE_DIR, format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"));
         set_var(ENV_ENTER_CLOSES_PREVIEW_WIN, "true");
         set_var(ENV_PREVIEW_WIN_HORIZONTAL, "true");
         set_var(ENV_PHONETIC_DATABASE_ON, "true");
@@ -106,11 +113,13 @@ pub(crate) mod tests {
             ENV_LAYOUT_FILE,
             format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         );
+        set_var(ENV_LAYOUT_FIXED_DATABASE_ON, "true");
         set_var(ENV_LAYOUT_FIXED_VOWEL, "true");
         set_var(ENV_LAYOUT_FIXED_CHANDRA, "true");
         set_var(ENV_LAYOUT_FIXED_KAR, "true");
         set_var(ENV_LAYOUT_FIXED_NUMBERPAD, "true");
         set_var(ENV_LAYOUT_FIXED_OLD_REPH, "true");
+        set_var(ENV_DATABASE_DIR, format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"));
     }
 
     #[test]
