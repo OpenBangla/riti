@@ -1,4 +1,6 @@
+use std::cmp::Ordering;
 use serde_json::Value;
+use edit_distance::edit_distance;
 
 use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::context::Method;
@@ -151,15 +153,30 @@ impl FixedMethod {
 
     fn create_suggestion(&mut self) -> Suggestion {
         if get_settings_fixed_database_on() {
+            let word = self.buffer.clone();
+
             self.suggestions.clear();
-            self.suggestions = self.database.search_dictionary(&self.buffer);
+            self.suggestions = self.database.search_dictionary(&word);
+
+            self.suggestions.sort_unstable_by(|a, b| {
+                let da = edit_distance(&word, a);
+                let db = edit_distance(&word, b);
+
+                if da < db {
+                    Ordering::Less
+                } else if da > db {
+                    Ordering::Greater
+                } else {
+                    Ordering::Equal
+                }
+            });
 
             // Add the user's typed word, if it isn't present.
-            if !self.suggestions.contains(&self.buffer) {
-                self.suggestions.push(self.buffer.clone());
+            if !self.suggestions.contains(&word) {
+                self.suggestions.push(word.clone());
             }
 
-            Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
+            Suggestion::new(word, self.suggestions.clone(), 0)
         } else {
             Suggestion::new_lonely(self.buffer.clone())
         }
