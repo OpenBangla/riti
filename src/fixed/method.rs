@@ -13,6 +13,7 @@ const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
 pub(crate) struct FixedMethod {
     buffer: String,
+    suggestions: Vec<String>,
     handled: bool,
     parser: LayoutParser,
     database: Database,
@@ -141,16 +142,24 @@ impl FixedMethod {
 
         FixedMethod {
             buffer: String::new(),
+            suggestions: Vec::new(),
             handled: false,
             parser,
             database: Database::new(),
         }
     }
 
-    fn create_suggestion(&self) -> Suggestion {
+    fn create_suggestion(&mut self) -> Suggestion {
         if get_settings_fixed_database_on() {
-            let suggestions = self.database.search_dictionary(&self.buffer);
-            Suggestion::new(self.buffer.clone(), suggestions, 0)
+            self.suggestions.clear();
+            self.suggestions = self.database.search_dictionary(&self.buffer);
+
+            // Add the user's typed word, if it isn't present.
+            if !self.suggestions.contains(&self.buffer) {
+                self.suggestions.push(self.buffer.clone());
+            }
+
+            Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
         } else {
             Suggestion::new_lonely(self.buffer.clone())
         }
@@ -158,7 +167,7 @@ impl FixedMethod {
 
     fn current_suggestion(&self) -> Suggestion {
         if !self.buffer.is_empty() {
-            self.create_suggestion()
+            Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
         } else {
             Suggestion::empty()
         }
@@ -386,6 +395,7 @@ impl Default for FixedMethod {
 
         FixedMethod {
             buffer: String::new(),
+            suggestions: Vec::new(),
             handled: false,
             parser,
             database: Database::new(),

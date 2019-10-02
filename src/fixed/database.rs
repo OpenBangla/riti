@@ -82,6 +82,7 @@ impl Database {
             'ড়' => "rr",
             'ঢ়' => "rrh",
             'য়' => "y",
+            'ৎ' => "khandatta",
             _ => panic!("Unknown character!"),
         };
 
@@ -91,7 +92,7 @@ impl Database {
             _ => 5
         };
 
-        let regex = format!("^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়\u{09CD}]{{0,{}}}$", word, need_chars_upto);
+        let regex = format!("^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{}}}$", word, need_chars_upto);
         let rgx = Regex::new(&regex).unwrap();
 
         self.table[table]
