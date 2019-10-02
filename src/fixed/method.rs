@@ -1,13 +1,13 @@
 use serde_json::Value;
 
+use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::context::Method;
-use super::{chars::*, parser::LayoutParser, database::Database};
 use crate::keycodes::*;
+use crate::loader::LayoutLoader;
 use crate::settings::*;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
 use crate::utility::Utility;
-use crate::loader::LayoutLoader;
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
@@ -41,47 +41,55 @@ impl Method for FixedMethod {
             }
         }
 
-        if key == VC_SHIFT || key == VC_CONTROL || key == VC_ALT {
-            if !self.buffer.is_empty() {
-                self.handled = true;
-                return self.create_suggestion();
-            } else {
-                self.handled = false;
-                return Suggestion::empty();
-            }
-        } else if key == VC_BACKSPACE {
-            if !self.buffer.is_empty() {
-                // Remove the last character from buffer.
-                self.internal_backspace();
-                self.handled = true;
-
+        match key {
+            VC_BACKSPACE => {
                 if !self.buffer.is_empty() {
-                    return self.create_suggestion();
+                    // Remove the last character from buffer.
+                    self.internal_backspace();
+                    self.handled = true;
+
+                    if !self.buffer.is_empty() {
+                        return self.create_suggestion();
+                    } else {
+                        // The buffer is now empty, so return empty suggestion.
+                        return Suggestion::empty();
+                    }
                 } else {
-                    // The buffer is now empty, so return empty suggestion.
+                    self.handled = false;
                     return Suggestion::empty();
                 }
-            } else {
-                self.handled = false;
-                return Suggestion::empty();
             }
-        } else if key == VC_ENTER || key == VC_SPACE {
-            self.handled = false;
 
-            let suggestion = self.current_suggestion();
-            self.buffer.clear();
+            VC_SHIFT | VC_CONTROL | VC_ALT => {
+                if !self.buffer.is_empty() {
+                    self.handled = true;
+                    return self.create_suggestion();
+                } else {
+                    self.handled = false;
+                    return Suggestion::empty();
+                }
+            }
 
-            return suggestion;
-        }
+            VC_ENTER | VC_SPACE => {
+                self.handled = false;
 
-        if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
-            self.process_key_value(&value);
-            self.handled = true;
-        } else {
-            self.handled = false;
-            let suggestion = self.current_suggestion();
-            self.buffer.clear();
-            return suggestion;
+                let suggestion = self.current_suggestion();
+                self.buffer.clear();
+
+                return suggestion;
+            }
+
+            key => {
+                if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
+                    self.process_key_value(&value);
+                    self.handled = true;
+                } else {
+                    self.handled = false;
+                    let suggestion = self.current_suggestion();
+                    self.buffer.clear();
+                    return suggestion;
+                }
+            }
         }
 
         self.create_suggestion()
@@ -343,7 +351,7 @@ impl FixedMethod {
 }
 
 // Implement Default trait on FixedMethod for testing convenience.
-// This constructor uses the layout file specified in the 
+// This constructor uses the layout file specified in the
 // environment variable `RITI_LAYOUT_FILE`.
 impl Default for FixedMethod {
     fn default() -> Self {
