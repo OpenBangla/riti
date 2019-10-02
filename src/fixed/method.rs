@@ -60,6 +60,32 @@ impl Method for FixedMethod {
                 }
             }
 
+            VC_RIGHT | VC_LEFT | VC_UP | VC_DOWN => {
+                if !self.buffer.is_empty() && get_settings_fixed_database_on() {
+                    self.handled = if (key == VC_RIGHT || key == VC_LEFT) && get_settings_preview_window_horizontal() {
+                        true
+                    } else if (key == VC_UP || key == VC_DOWN) && !get_settings_preview_window_horizontal() {
+                        true
+                    } else {
+                        false
+                    };
+                } else {
+                    self.handled = false;
+                }
+
+                return self.current_suggestion();
+            }
+
+            VC_TAB => {
+                if !self.buffer.is_empty() && get_settings_fixed_database_on() {
+                    self.handled = true;
+                } else {
+                    self.handled = false;
+                }
+
+                return self.current_suggestion();
+            }
+
             VC_SHIFT | VC_CONTROL | VC_ALT => {
                 if !self.buffer.is_empty() {
                     self.handled = true;
