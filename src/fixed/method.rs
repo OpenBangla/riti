@@ -1,20 +1,24 @@
+use std::cmp::Ordering;
 use serde_json::Value;
+use edit_distance::edit_distance;
 
+use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::context::Method;
-use super::{chars::*, parser::LayoutParser};
 use crate::keycodes::*;
+use crate::loader::LayoutLoader;
 use crate::settings::*;
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
 use crate::utility::Utility;
-use crate::loader::LayoutLoader;
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
 pub(crate) struct FixedMethod {
     buffer: String,
+    suggestions: Vec<String>,
     handled: bool,
     parser: LayoutParser,
+    database: Database,
 }
 
 impl Method for FixedMethod {
@@ -40,47 +44,81 @@ impl Method for FixedMethod {
             }
         }
 
-        if key == VC_SHIFT || key == VC_CONTROL || key == VC_ALT {
-            if !self.buffer.is_empty() {
-                self.handled = true;
-                return self.create_suggestion();
-            } else {
-                self.handled = false;
-                return Suggestion::empty();
-            }
-        } else if key == VC_BACKSPACE {
-            if !self.buffer.is_empty() {
-                // Remove the last character from buffer.
-                self.internal_backspace();
-                self.handled = true;
-
+        match key {
+            VC_BACKSPACE => {
                 if !self.buffer.is_empty() {
-                    return self.create_suggestion();
+                    // Remove the last character from buffer.
+                    self.internal_backspace();
+                    self.handled = true;
+
+                    if !self.buffer.is_empty() {
+                        return self.create_suggestion();
+                    } else {
+                        // The buffer is now empty, so return empty suggestion.
+                        return Suggestion::empty();
+                    }
                 } else {
-                    // The buffer is now empty, so return empty suggestion.
+                    self.handled = false;
                     return Suggestion::empty();
                 }
-            } else {
-                self.handled = false;
-                return Suggestion::empty();
             }
-        } else if key == VC_ENTER || key == VC_SPACE {
-            self.handled = false;
 
-            let suggestion = self.current_suggestion();
-            self.buffer.clear();
+            VC_RIGHT | VC_LEFT | VC_UP | VC_DOWN => {
+                if !self.buffer.is_empty() && get_settings_fixed_database_on() {
+                    self.handled = if (key == VC_RIGHT || key == VC_LEFT) && get_settings_preview_window_horizontal() {
+                        true
+                    } else if (key == VC_UP || key == VC_DOWN) && !get_settings_preview_window_horizontal() {
+                        true
+                    } else {
+                        false
+                    };
+                } else {
+                    self.handled = false;
+                }
 
-            return suggestion;
-        }
+                return self.current_suggestion();
+            }
 
-        if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
-            self.process_key_value(&value);
-            self.handled = true;
-        } else {
-            self.handled = false;
-            let suggestion = self.current_suggestion();
-            self.buffer.clear();
-            return suggestion;
+            VC_TAB => {
+                if !self.buffer.is_empty() && get_settings_fixed_database_on() {
+                    self.handled = true;
+                } else {
+                    self.handled = false;
+                }
+
+                return self.current_suggestion();
+            }
+
+            VC_SHIFT | VC_CONTROL | VC_ALT => {
+                if !self.buffer.is_empty() {
+                    self.handled = true;
+                    return self.create_suggestion();
+                } else {
+                    self.handled = false;
+                    return Suggestion::empty();
+                }
+            }
+
+            VC_ENTER | VC_SPACE => {
+                self.handled = false;
+
+                let suggestion = self.current_suggestion();
+                self.buffer.clear();
+
+                return suggestion;
+            }
+
+            key => {
+                if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
+                    self.process_key_value(&value);
+                    self.handled = true;
+                } else {
+                    self.handled = false;
+                    let suggestion = self.current_suggestion();
+                    self.buffer.clear();
+                    return suggestion;
+                }
+            }
         }
 
         self.create_suggestion()
@@ -106,18 +144,47 @@ impl FixedMethod {
 
         FixedMethod {
             buffer: String::new(),
+            suggestions: Vec::new(),
             handled: false,
-            parser
+            parser,
+            database: Database::new(),
         }
     }
 
-    fn create_suggestion(&self) -> Suggestion {
-        Suggestion::new_lonely(self.buffer.clone())
+    fn create_suggestion(&mut self) -> Suggestion {
+        if get_settings_fixed_database_on() {
+            let word = self.buffer.clone();
+
+            self.suggestions.clear();
+            self.suggestions = self.database.search_dictionary(&word);
+
+            self.suggestions.sort_unstable_by(|a, b| {
+                let da = edit_distance(&word, a);
+                let db = edit_distance(&word, b);
+
+                if da < db {
+                    Ordering::Less
+                } else if da > db {
+                    Ordering::Greater
+                } else {
+                    Ordering::Equal
+                }
+            });
+
+            // Add the user's typed word, if it isn't present.
+            if !self.suggestions.contains(&word) {
+                self.suggestions.push(word.clone());
+            }
+
+            Suggestion::new(word, self.suggestions.clone(), 0)
+        } else {
+            Suggestion::new_lonely(self.buffer.clone())
+        }
     }
 
     fn current_suggestion(&self) -> Suggestion {
         if !self.buffer.is_empty() {
-            Suggestion::new_lonely(self.buffer.clone())
+            Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
         } else {
             Suggestion::empty()
         }
@@ -336,7 +403,7 @@ impl FixedMethod {
 }
 
 // Implement Default trait on FixedMethod for testing convenience.
-// This constructor uses the layout file specified in the 
+// This constructor uses the layout file specified in the
 // environment variable `RITI_LAYOUT_FILE`.
 impl Default for FixedMethod {
     fn default() -> Self {
@@ -345,8 +412,10 @@ impl Default for FixedMethod {
 
         FixedMethod {
             buffer: String::new(),
+            suggestions: Vec::new(),
             handled: false,
-            parser
+            parser,
+            database: Database::new(),
         }
     }
 }
@@ -364,6 +433,7 @@ mod tests {
     #[test]
     fn test_backspace() {
         set_defaults_fixed();
+        set_var(settings::ENV_LAYOUT_FIXED_DATABASE_ON, "false");
 
         let mut method = FixedMethod {
             buffer: "আমি".to_string(),

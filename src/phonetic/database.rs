@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 
 use crate::hashmap;
 use crate::phonetic::regex::PhoneticRegex;
-use crate::settings::{get_settings_phonetic_database_dir, get_settings_user_phonetic_autocorrect};
+use crate::settings::{get_settings_database_dir, get_settings_user_phonetic_autocorrect};
 
 lazy_static::lazy_static! {
     static ref DICTIONARY_TABLE: HashMap<&'static str, Vec<&'static str>> = hashmap! [
@@ -59,9 +59,9 @@ impl Database {
 
         Database {
             regex: PhoneticRegex::new(),
-            table: serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("dictionary.json")).unwrap()).unwrap(),
-            suffix: serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("suffix.json")).unwrap()).unwrap(),
-            autocorrect: serde_json::from_str(&read_to_string(get_settings_phonetic_database_dir().join("autocorrect.json")).unwrap()).unwrap(),
+            table: serde_json::from_str(&read_to_string(get_settings_database_dir().join("dictionary.json")).unwrap()).unwrap(),
+            suffix: serde_json::from_str(&read_to_string(get_settings_database_dir().join("suffix.json")).unwrap()).unwrap(),
+            autocorrect: serde_json::from_str(&read_to_string(get_settings_database_dir().join("autocorrect.json")).unwrap()).unwrap(),
             user_autocorrect,
         }
     }
