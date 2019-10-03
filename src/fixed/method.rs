@@ -305,6 +305,17 @@ impl FixedMethod {
                 self.buffer.push(ZWNJ);
                 return;
             }
+
+            // Zo Fola
+            if character == B_Z && rmc == B_HASANTA {
+                if self.buffer.chars().rev().nth(1).unwrap_or_default() == B_R {
+                    self.internal_backspace();
+                    self.buffer = format!("{}{}{}{}", self.buffer, ZWJ, B_HASANTA, B_Z);
+                } else {
+                    self.buffer.push(B_Z);
+                }
+                return;
+            }
         }
 
         self.buffer.push_str(value);
@@ -543,5 +554,29 @@ mod tests {
         method.buffer = "ক".to_string();
         method.process_key_value(&B_AA_KAR.to_string());
         assert_eq!(method.buffer, "কা".to_string());
+    }
+
+    #[test]
+    fn test_zofola() {
+        set_defaults_fixed();
+        set_var(settings::ENV_LAYOUT_FIXED_DATABASE_ON, "false");
+
+        let mut method = FixedMethod::default();
+
+        method.buffer = "র্".to_string();
+        method.process_key_value("য");
+        assert_eq!(method.buffer, "র‍্য");
+
+        method.buffer = "র".to_string();
+        method.process_key_value("্য");
+        assert_eq!(method.buffer, "র‍্য");
+
+        method.buffer = "খ্".to_string();
+        method.process_key_value("য");
+        assert_eq!(method.buffer, "খ্য");
+
+        method.buffer = "খ".to_string();
+        method.process_key_value("্য");
+        assert_eq!(method.buffer, "খ্য");
     }
 }
