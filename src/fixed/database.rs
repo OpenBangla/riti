@@ -83,7 +83,8 @@ impl Database {
             'ঢ়' => "rrh",
             'য়' => "y",
             'ৎ' => "khandatta",
-            _ => panic!("Unknown character!"),
+            // Otherwise we don't have any suggestions to search from, so return an empty vector.
+            _ => return Vec::new(),
         };
 
         let need_chars_upto = match word.chars().count() {
@@ -121,6 +122,10 @@ mod tests {
         assert_eq!(
             db.search_dictionary("আমা"),
             ["আমা", "আমান", "আমার", "আমায়"]
+        );
+        assert_eq!(
+            db.search_dictionary("1"),
+            Vec::<String>::new()
         );
     }
 }
