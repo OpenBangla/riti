@@ -22,7 +22,7 @@ impl Database {
 
     /// Find words from the dictionary with given word.
     pub(crate) fn search_dictionary(&self, word: &str) -> Vec<String> {
-        let table = match word.chars().nth(0).unwrap() {
+        let table = match word.chars().nth(0).unwrap_or_default() {
             // Kars
             'া' => "aa",
             'ি' => "i",

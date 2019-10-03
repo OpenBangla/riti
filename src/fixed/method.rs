@@ -436,6 +436,19 @@ mod tests {
     use crate::settings::{self, tests::set_defaults_fixed};
 
     #[test]
+    fn test_suggestions() {
+        set_defaults_fixed();
+
+        let mut method = FixedMethod::default();
+
+        method.buffer = "[".to_string();
+        assert_eq!(method.create_suggestion().get_suggestions(), ["["]);
+
+        method.buffer = "[আমি]".to_string();
+        assert_eq!(method.create_suggestion().get_suggestions(), ["[আমি]", "[আমিন]", "[আমির]", "[আমিষ]"]);
+    }
+
+    #[test]
     fn test_backspace() {
         set_defaults_fixed();
         set_var(settings::ENV_LAYOUT_FIXED_DATABASE_ON, "false");
