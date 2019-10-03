@@ -8,8 +8,7 @@ use crate::keycodes::*;
 use crate::loader::LayoutLoader;
 use crate::settings::*;
 use crate::suggestion::Suggestion;
-use crate::utility::get_modifiers;
-use crate::utility::Utility;
+use crate::utility::{Utility, get_modifiers, split_string};
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
@@ -153,7 +152,7 @@ impl FixedMethod {
 
     fn create_suggestion(&mut self) -> Suggestion {
         if get_settings_fixed_database_on() {
-            let word = self.buffer.clone();
+            let (first_part, word, last_part) = split_string(&self.buffer);
 
             self.suggestions.clear();
             self.suggestions = self.database.search_dictionary(&word);
@@ -172,11 +171,17 @@ impl FixedMethod {
             });
 
             // Add the user's typed word, if it isn't present.
-            if !self.suggestions.contains(&word) {
-                self.suggestions.push(word.clone());
+            if !self.suggestions.iter().any(|i| i == word) {
+                self.suggestions.push(word.to_string());
             }
 
-            Suggestion::new(word, self.suggestions.clone(), 0)
+            if !first_part.is_empty() || !last_part.is_empty() {
+                for suggestion in self.suggestions.iter_mut() {
+                    *suggestion = format!("{}{}{}", first_part, suggestion, last_part);
+                }
+            }
+
+            Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
         } else {
             Suggestion::new_lonely(self.buffer.clone())
         }

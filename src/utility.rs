@@ -43,6 +43,43 @@ pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
     (shift, ctrl, alt)
 }
 
+/// Split the string into three parts.
+/// This function splits preceding and trailing meta characters.
+pub(crate) fn split_string(input: &str) -> (&str, &str, &str) {
+    let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,";
+    let mut first_index = 0;
+    let mut last_index = 0;
+    let mut encountered_alpha = false;
+
+    for (index, c) in input.chars().enumerate() {
+        if !meta.contains(c) {
+            first_index = index;
+            encountered_alpha = true;
+            break;
+        }
+    }
+
+    // Corner case: If we haven't yet encountered an alpha or
+    // a numeric character, then the string has no middle part
+    // or last part we need. So return "" for them ;)
+    if !encountered_alpha {
+        return (&input[..], "", "");
+    }
+
+    for (index, c) in input.chars().rev().enumerate() {
+        if !meta.contains(c) {
+            last_index = input.len() - index - 1;
+            break;
+        }
+    }
+
+    let first_part = &input[0..first_index];
+    let middle_part = &input[first_index..=last_index];
+    let last_part = &input[last_index + 1..];
+
+    (first_part, middle_part, last_part)
+}
+
 #[macro_export]
 /// A helper macro for initializing HashMap.
 /// Originally from the `maplit` crate but customized for use with `hashbrown::HashMap`.
@@ -65,8 +102,7 @@ macro_rules! hashmap {
 
 #[cfg(test)]
 mod test {
-    use super::get_modifiers;
-    use super::Utility;
+    use super::{Utility ,get_modifiers, split_string};
     use crate::context::{MODIFIER_ALT, MODIFIER_CTRL, MODIFIER_SHIFT};
     
     #[test]
@@ -87,5 +123,18 @@ mod test {
             get_modifiers(MODIFIER_SHIFT | MODIFIER_CTRL | MODIFIER_ALT),
             (true, true, true)
         );
+    }
+
+    #[test]
+    fn test_split_string() {
+        assert_eq!(split_string("[][][][]"), ("[][][][]", "", ""));
+        assert_eq!(split_string("t*"), ("", "t", "*"));
+        assert_eq!(split_string("1"), ("", "1", ""));
+        assert_eq!(
+            split_string("#\"percent%sign\"#"),
+            ("#\"", "percent%sign", "\"#")
+        );
+        assert_eq!(split_string("text"), ("", "text", ""));
+        assert_eq!(split_string(":)"), ("", ":", ")"));
     }
 }
