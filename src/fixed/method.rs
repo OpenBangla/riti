@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
-use serde_json::Value;
 use edit_distance::edit_distance;
+use serde_json::Value;
+use std::cmp::Ordering;
 
 use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::context::Method;
@@ -8,7 +8,7 @@ use crate::keycodes::*;
 use crate::loader::LayoutLoader;
 use crate::settings::*;
 use crate::suggestion::Suggestion;
-use crate::utility::{Utility, get_modifiers, split_string};
+use crate::utility::{get_modifiers, split_string, Utility};
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
@@ -64,9 +64,13 @@ impl Method for FixedMethod {
 
             VC_RIGHT | VC_LEFT | VC_UP | VC_DOWN => {
                 if !self.buffer.is_empty() && get_settings_fixed_database_on() {
-                    self.handled = if (key == VC_RIGHT || key == VC_LEFT) && get_settings_preview_window_horizontal() {
+                    self.handled = if (key == VC_RIGHT || key == VC_LEFT)
+                        && get_settings_preview_window_horizontal()
+                    {
                         true
-                    } else if (key == VC_UP || key == VC_DOWN) && !get_settings_preview_window_horizontal() {
+                    } else if (key == VC_UP || key == VC_DOWN)
+                        && !get_settings_preview_window_horizontal()
+                    {
                         true
                     } else {
                         false
@@ -152,39 +156,46 @@ impl FixedMethod {
 
     fn create_suggestion(&mut self) -> Suggestion {
         if get_settings_fixed_database_on() {
-            let (first_part, word, last_part) = split_string(&self.buffer);
-
-            self.suggestions.clear();
-            self.suggestions = self.database.search_dictionary(&word);
-
-            self.suggestions.sort_unstable_by(|a, b| {
-                let da = edit_distance(&word, a);
-                let db = edit_distance(&word, b);
-
-                if da < db {
-                    Ordering::Less
-                } else if da > db {
-                    Ordering::Greater
-                } else {
-                    Ordering::Equal
-                }
-            });
-
-            // Add the user's typed word, if it isn't present.
-            if !self.suggestions.iter().any(|i| i == word) {
-                self.suggestions.push(word.to_string());
-            }
-
-            if !first_part.is_empty() || !last_part.is_empty() {
-                for suggestion in self.suggestions.iter_mut() {
-                    *suggestion = format!("{}{}{}", first_part, suggestion, last_part);
-                }
-            }
-
-            Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
+            self.create_dictionary_suggestion()
         } else {
             Suggestion::new_lonely(self.buffer.clone())
         }
+    }
+
+    fn create_dictionary_suggestion(&mut self) -> Suggestion {
+        let (first_part, word, last_part) = split_string(&self.buffer);
+
+        self.suggestions.clear();
+        self.suggestions = self.database.search_dictionary(&word);
+
+        self.suggestions.sort_unstable_by(|a, b| {
+            let da = edit_distance(&word, a);
+            let db = edit_distance(&word, b);
+
+            if da < db {
+                Ordering::Less
+            } else if da > db {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        });
+
+        // Reduce the number of suggestions.
+        self.suggestions.truncate(9);
+
+        // Add the user's typed word, if it isn't present.
+        if !self.suggestions.iter().any(|i| i == word) {
+            self.suggestions.push(word.to_string());
+        }
+
+        if !first_part.is_empty() || !last_part.is_empty() {
+            for suggestion in self.suggestions.iter_mut() {
+                *suggestion = format!("{}{}{}", first_part, suggestion, last_part);
+            }
+        }
+
+        Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
     }
 
     fn current_suggestion(&self) -> Suggestion {
@@ -453,10 +464,16 @@ mod tests {
         let mut method = FixedMethod::default();
 
         method.buffer = "[".to_string();
-        assert_eq!(method.create_suggestion().get_suggestions(), ["["]);
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            ["["]
+        );
 
         method.buffer = "[আমি]".to_string();
-        assert_eq!(method.create_suggestion().get_suggestions(), ["[আমি]", "[আমিন]", "[আমির]", "[আমিষ]"]);
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            ["[আমি]", "[আমিন]", "[আমির]", "[আমিষ]"]
+        );
     }
 
     #[test]

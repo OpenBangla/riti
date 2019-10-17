@@ -1,6 +1,7 @@
 use either::Either;
 
 /// Suggestions which are intend to be shown by the IM's candidate window.
+#[derive(Debug)]
 pub struct Suggestion {
     // Auxiliary text
     auxiliary: String,
