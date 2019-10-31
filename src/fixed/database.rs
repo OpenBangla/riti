@@ -93,7 +93,7 @@ impl Database {
             _ => 5
         };
 
-        let regex = format!("^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{}}}$", word, need_chars_upto);
+        let regex = format!("^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{}}}$", ignore_meta_chars(word), need_chars_upto);
         let rgx = Regex::new(&regex).unwrap();
 
         self.table[table]
@@ -104,9 +104,13 @@ impl Database {
     }
 }
 
+fn ignore_meta_chars(string: &str) -> String {
+    string.chars().filter(|&c| !"|()[]{}^$*+?.~!@#%&-_='\";<>/\\,:`".contains(c)).collect()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::Database;
+    use super::{Database, ignore_meta_chars};
     use crate::settings::tests::set_default_phonetic;
 
     #[test]
@@ -124,8 +128,17 @@ mod tests {
             ["আমা", "আমান", "আমার", "আমায়"]
         );
         assert_eq!(
+            db.search_dictionary("খ(১"),
+            Vec::<String>::new()
+        );
+        assert_eq!(
             db.search_dictionary("1"),
             Vec::<String>::new()
         );
+    }
+
+    #[test]
+    fn test_ignore_meta_chars() {
+        assert_eq!(ignore_meta_chars("Me|t(a)"), "Meta");
     }
 }
