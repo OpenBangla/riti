@@ -35,20 +35,13 @@ impl PhoneticSuggestion {
         let mut list = self.cache.get(middle).cloned().unwrap_or_default();
 
         if middle.len() > 2 {
-            let mut suffix_found = false;
             for i in 1..middle.len() {
                 let suffix_key = &middle[i..];
-
-                if suffix_found {
-                    break;
-                }
-
+                
                 if let Some(suffix) = self.database.find_suffix(suffix_key) {
                     let key = &middle[0..(middle.len() - suffix_key.len())];
                     if let Some(cache) = self.cache.get(key) {
                         for item in cache {
-                            suffix_found = true;
-
                             let item_rmc = item.chars().last().unwrap(); // Right most character.
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
                             if item_rmc.is_vowel() && suffix_lmc.is_kar() {
@@ -298,6 +291,14 @@ mod tests {
         assert_eq!(
             suggestion.suggestion_with_dict("(as)"),
             vec!["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("format"),
+            vec!["ফরম্যাট", "ফরমাত"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("formate"),
+            vec!["ফরম্যাটে", "ফরমাতে"]
         );
 
         // Suffix suggestion validation.
