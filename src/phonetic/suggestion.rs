@@ -7,6 +7,7 @@ use std::cmp::Ordering;
 
 use super::database::Database;
 use crate::utility::{Utility, split_string};
+use crate::settings;
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) buffer: String,
@@ -37,7 +38,7 @@ impl PhoneticSuggestion {
         if middle.len() > 2 {
             for i in 1..middle.len() {
                 let suffix_key = &middle[i..];
-                
+
                 if let Some(suffix) = self.database.find_suffix(suffix_key) {
                     let key = &middle[0..(middle.len() - suffix_key.len())];
                     if let Some(cache) = self.cache.get(key) {
@@ -152,6 +153,11 @@ impl PhoneticSuggestion {
             }
         }
 
+        // Include written English word if the feature is enabled.
+        if settings::get_settings_phonetic_include_english() && !self.suggestions.iter().any(|i| i == term) {
+            self.suggestions.push(term.to_string());
+        }
+
         self.suggestions.clone()
     }
 
@@ -229,7 +235,26 @@ mod tests {
     use rustc_hash::FxHashMap;
 
     use super::PhoneticSuggestion;
-    use crate::settings::tests::set_default_phonetic;
+    use crate::settings::{tests::set_default_phonetic, ENV_PHONETIC_INCLUDE_ENGLISH};
+
+    //#[test] TODO: Enable this test after the environ variable data race issue is mitigated.
+    fn test_suggestion_with_english() {
+        set_default_phonetic();
+        std::env::set_var(ENV_PHONETIC_INCLUDE_ENGLISH, "true");
+
+        let mut suggestion = PhoneticSuggestion::default();
+
+        assert_eq!(suggestion.suggestion_with_dict(":)"), vec![":)", "ঃ)"]);
+        assert_eq!(suggestion.suggestion_with_dict("{a}"), vec![
+            "{আ}",
+            "{আঃ}",
+            "{া}",
+            "{এ}",
+            "{অ্যা}",
+            "{অ্যাঁ}",
+            "{a}"
+        ]);
+    }
 
     #[test]
     fn test_suggestion_only_phonetic() {
