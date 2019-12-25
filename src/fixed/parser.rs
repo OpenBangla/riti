@@ -12,8 +12,7 @@ use LayoutModifiers::*;
 pub(crate) enum LayoutModifiers {
     Normal,
     Shift,
-    AltGr,
-    ShiftAltGr,
+    AltGr { shift: bool },
 }
 
 pub(crate) struct LayoutParser {
@@ -49,25 +48,54 @@ impl LayoutParser {
     pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers) -> Option<String> {
         match (key, modifier) {
             // Numerics
+            (VC_0, AltGr { shift: _ }) => self.layout_get_value("0", AltGr { shift: false }),
             (VC_0, _) => self.layout_get_value("0", Normal),
+            (VC_PAREN_RIGHT, AltGr { shift: _ }) => self.layout_get_value("0", AltGr { shift: true }),
             (VC_PAREN_RIGHT, _) => self.layout_get_value("0", Shift),
+
+            (VC_1, AltGr { shift: _ }) => self.layout_get_value("1", AltGr { shift: false }),
             (VC_1, _) => self.layout_get_value("1", Normal),
+            (VC_EXCLAIM, AltGr { shift: _ }) => self.layout_get_value("1", AltGr { shift: true }),
             (VC_EXCLAIM, _) => self.layout_get_value("1", Shift),
+
+            (VC_2, AltGr { shift: _ }) => self.layout_get_value("2", AltGr { shift: false }),
             (VC_2, _) => self.layout_get_value("2", Normal),
+            (VC_AT, AltGr { shift: _ }) => self.layout_get_value("2", AltGr { shift: true }),
             (VC_AT, _) => self.layout_get_value("2", Shift),
+
+            (VC_3, AltGr { shift: _ }) => self.layout_get_value("3", AltGr { shift: false }),
             (VC_3, _) => self.layout_get_value("3", Normal),
+            (VC_HASH, AltGr { shift: _ }) => self.layout_get_value("3", AltGr { shift: true }),
             (VC_HASH, _) => self.layout_get_value("3", Shift),
+
+            (VC_4, AltGr { shift: _ }) => self.layout_get_value("4", AltGr { shift: false }),
             (VC_4, _) => self.layout_get_value("4", Normal),
+            (VC_DOLLAR, AltGr { shift: _ }) => self.layout_get_value("4", AltGr { shift: true }),
             (VC_DOLLAR, _) => self.layout_get_value("4", Shift),
+
+            (VC_5, AltGr { shift: _ }) => self.layout_get_value("5", AltGr { shift: false }),
             (VC_5, _) => self.layout_get_value("5", Normal),
+            (VC_PERCENT, AltGr { shift: _ }) => self.layout_get_value("5", AltGr { shift: true }),
             (VC_PERCENT, _) => self.layout_get_value("5", Shift),
+
+            (VC_6, AltGr { shift: _ }) => self.layout_get_value("6", AltGr { shift: false }),
             (VC_6, _) => self.layout_get_value("6", Normal),
+            (VC_CIRCUM, AltGr { shift: _ }) => self.layout_get_value("6", AltGr { shift: true }),
             (VC_CIRCUM, _) => self.layout_get_value("6", Shift),
+
+            (VC_7, AltGr { shift: _ }) => self.layout_get_value("7", AltGr { shift: false }),
             (VC_7, _) => self.layout_get_value("7", Normal),
+            (VC_AMPERSAND, AltGr { shift: _ }) => self.layout_get_value("7", AltGr { shift: true }),
             (VC_AMPERSAND, _) => self.layout_get_value("7", Shift),
+
+            (VC_8, AltGr { shift: _ }) => self.layout_get_value("8", AltGr { shift: false }),
             (VC_8, _) => self.layout_get_value("8", Normal),
+            (VC_ASTERISK, AltGr { shift: _ }) => self.layout_get_value("8", AltGr { shift: true }),
             (VC_ASTERISK, _) => self.layout_get_value("8", Shift),
+
+            (VC_9, AltGr { shift: _ }) => self.layout_get_value("9", AltGr { shift: false }),
             (VC_9, _) => self.layout_get_value("9", Normal),
+            (VC_PAREN_LEFT, AltGr { shift: _ }) => self.layout_get_value("9", AltGr { shift: true }),
             (VC_PAREN_LEFT, _) => self.layout_get_value("9", Shift),
             // Alphabets
             (VC_A, modifier) => self.layout_get_value("A", modifier),
@@ -97,27 +125,59 @@ impl LayoutParser {
             (VC_Y, modifier) => self.layout_get_value("Y", modifier),
             (VC_Z, modifier) => self.layout_get_value("Z", modifier),
             // Other characters
+            (VC_GRAVE, AltGr { shift: _ }) => self.layout_get_value("BackQuote", AltGr { shift: false }),
             (VC_GRAVE, _) => self.layout_get_value("BackQuote", Normal),
+            (VC_TILDE, AltGr { shift: _ }) => self.layout_get_value("BackQuote", AltGr { shift: true }),
             (VC_TILDE, _) => self.layout_get_value("BackQuote", Shift),
+
+            (VC_MINUS, AltGr { shift: _ }) => self.layout_get_value("Minus", AltGr { shift: false }),
             (VC_MINUS, _) => self.layout_get_value("Minus", Normal),
+            (VC_UNDERSCORE, AltGr { shift: _ }) => self.layout_get_value("Minus", AltGr { shift: true }),
             (VC_UNDERSCORE, _) => self.layout_get_value("Minus", Shift),
+
+            (VC_EQUALS, AltGr { shift: _ }) => self.layout_get_value("Equals", AltGr { shift: false }),
             (VC_EQUALS, _) => self.layout_get_value("Equals", Normal),
+            (VC_PLUS, AltGr { shift: _ }) => self.layout_get_value("Equals", AltGr { shift: true }),
             (VC_PLUS, _) => self.layout_get_value("Equals", Shift),
+
+            (VC_BRACKET_LEFT, AltGr { shift: _ }) => self.layout_get_value("OpenBracket", AltGr { shift: false }),
             (VC_BRACKET_LEFT, _) => self.layout_get_value("OpenBracket", Normal),
+            (VC_BRACE_LEFT, AltGr { shift: _ }) => self.layout_get_value("OpenBracket", AltGr { shift: true }),
             (VC_BRACE_LEFT, _) => self.layout_get_value("OpenBracket", Shift),
+
+            (VC_BRACKET_RIGHT, AltGr { shift: _ }) => self.layout_get_value("CloseBracket", AltGr { shift: false }),
             (VC_BRACKET_RIGHT, _) => self.layout_get_value("CloseBracket", Normal),
+            (VC_BRACE_RIGHT, AltGr { shift: _ }) => self.layout_get_value("CloseBracket", AltGr { shift: true }),
             (VC_BRACE_RIGHT, _) => self.layout_get_value("CloseBracket", Shift),
+
+            (VC_BACK_SLASH, AltGr { shift: _ }) => self.layout_get_value("BackSlash", AltGr { shift: false }),
             (VC_BACK_SLASH, _) => self.layout_get_value("BackSlash", Normal),
+            (VC_BAR, AltGr { shift: _ }) => self.layout_get_value("BackSlash", AltGr { shift: true }),
             (VC_BAR, _) => self.layout_get_value("BackSlash", Shift),
+
+            (VC_SEMICOLON, AltGr { shift: _ }) => self.layout_get_value("Semicolon", AltGr { shift: false }),
             (VC_SEMICOLON, _) => self.layout_get_value("Semicolon", Normal),
+            (VC_COLON, AltGr { shift: _ }) => self.layout_get_value("Semicolon", AltGr { shift: true }),
             (VC_COLON, _) => self.layout_get_value("Semicolon", Shift),
+
+            (VC_APOSTROPHE, AltGr { shift: _ }) => self.layout_get_value("Quote", AltGr { shift: false }),
             (VC_APOSTROPHE, _) => self.layout_get_value("Quote", Normal),
+            (VC_QUOTE, AltGr { shift: _ }) => self.layout_get_value("Quote", AltGr { shift: true }),
             (VC_QUOTE, _) => self.layout_get_value("Quote", Shift),
+
+            (VC_COMMA, AltGr { shift: _ }) => self.layout_get_value("Comma", AltGr { shift: false }),
             (VC_COMMA, _) => self.layout_get_value("Comma", Normal),
+            (VC_LESS, AltGr { shift: _ }) => self.layout_get_value("Comma", AltGr { shift: true }),
             (VC_LESS, _) => self.layout_get_value("Comma", Shift),
+
+            (VC_PERIOD, AltGr { shift: _ }) => self.layout_get_value("Period", AltGr { shift: false }),
             (VC_PERIOD, _) => self.layout_get_value("Period", Normal),
+            (VC_GREATER, AltGr { shift: _ }) => self.layout_get_value("Period", AltGr { shift: true }),
             (VC_GREATER, _) => self.layout_get_value("Period", Shift),
+
+            (VC_SLASH, AltGr { shift: _ }) => self.layout_get_value("Slash", AltGr { shift: false }),
             (VC_SLASH, _) => self.layout_get_value("Slash", Normal),
+            (VC_QUESTION, AltGr { shift: _ }) => self.layout_get_value("Slash", AltGr { shift: true }),
             (VC_QUESTION, _) => self.layout_get_value("Slash", Shift),
             // NumPad
             (VC_KP_0, _) => self.layout_get_value_numpad("Num0"),
@@ -146,8 +206,8 @@ impl From<Modifiers> for LayoutModifiers {
         match modifiers {
             (false, false, false) => Normal,
             (true, false, false) => Shift,
-            (false, true, true) => AltGr,
-            (true, true, true) => ShiftAltGr,
+            (false, true, true) => AltGr { shift: false },
+            (true, true, true) => AltGr { shift: true },
             _ => panic!("Unknown modifier combination"),
         }
     }
@@ -158,8 +218,8 @@ impl fmt::Display for LayoutModifiers {
         match self {
             Normal => write!(f, "Normal"),
             Shift => write!(f, "Shift"),
-            AltGr => write!(f, "AltGr"),
-            ShiftAltGr => write!(f, "ShiftAltGr"),
+            AltGr { shift: false } => write!(f, "AltGr"),
+            AltGr { shift: true } => write!(f, "ShiftAltGr"),
         }
     }
 }
@@ -187,21 +247,46 @@ mod tests {
             Some("অ".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_A, LayoutModifiers::AltGr),
+            parser.get_char_for_key(VC_A, LayoutModifiers::AltGr { shift: false }),
             Some("ঌ".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_A, LayoutModifiers::ShiftAltGr),
+            parser.get_char_for_key(VC_A, LayoutModifiers::AltGr { shift: true }),
             Some("ৠ".to_string())
         );
 
         assert_eq!(
-            parser.get_char_for_key(VC_1, LayoutModifiers::Normal),
-            Some("১".to_string())
+            parser.get_char_for_key(VC_4, LayoutModifiers::Normal),
+            Some("৪".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_EXCLAIM, LayoutModifiers::Normal),
-            Some("!".to_string())
+            parser.get_char_for_key(VC_4, LayoutModifiers::Shift),
+            Some("৪".to_string())
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_4, LayoutModifiers::AltGr { shift: false }),
+            Some("৷".to_string())
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_4, LayoutModifiers::AltGr { shift: true }),
+            Some("৷".to_string())
+        );
+
+        assert_eq!(
+            parser.get_char_for_key(VC_DOLLAR, LayoutModifiers::Normal),
+            Some("৳".to_string())
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_DOLLAR, LayoutModifiers::Shift),
+            Some("৳".to_string())
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_DOLLAR, LayoutModifiers::AltGr { shift: false }),
+            Some("৲".to_string())
+        );
+        assert_eq!(
+            parser.get_char_for_key(VC_DOLLAR, LayoutModifiers::AltGr { shift: true }),
+            Some("৲".to_string())
         );
 
         assert_eq!(
@@ -230,11 +315,11 @@ mod tests {
         );
         assert_eq!(
             LayoutModifiers::from((false, true, true)),
-            LayoutModifiers::AltGr
+            LayoutModifiers::AltGr { shift: false}
         );
         assert_eq!(
             LayoutModifiers::from((true, true, true)),
-            LayoutModifiers::ShiftAltGr
+            LayoutModifiers::AltGr { shift: true }
         );
     }
 }
