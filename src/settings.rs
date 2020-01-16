@@ -46,68 +46,76 @@ pub(crate) fn get_settings_database_dir() -> PathBuf {
 
 /// Get file path of user defined Auto Correct file.
 pub(crate) fn get_settings_user_phonetic_autocorrect() -> String {
-    let base = var("XDG_DATA_HOME").unwrap_or_else(|_| {
-        format!("{}{}", var("HOME").unwrap(), "/.local/share")
-    });
+    let base = var("XDG_DATA_HOME")
+        .unwrap_or_else(|_| format!("{}{}", var("HOME").unwrap(), "/.local/share"));
 
     format!("{}{}", base, "/openbangla-keyboard/autocorrect.json")
 }
 
 /// Get file path of user defined phonetic candidate selection file.
 pub(crate) fn get_settings_user_phonetic_selection_data() -> String {
-    let base = var("XDG_DATA_HOME").unwrap_or_else(|_| {
-        format!("{}{}", var("HOME").unwrap(), "/.local/share")
-    });
+    let base = var("XDG_DATA_HOME")
+        .unwrap_or_else(|_| format!("{}{}", var("HOME").unwrap(), "/.local/share"));
 
-    format!("{}{}", base, "/openbangla-keyboard/phonetic-candidate-selection.json")
+    format!(
+        "{}{}",
+        base, "/openbangla-keyboard/phonetic-candidate-selection.json"
+    )
 }
 
-/// Check if the dictionary suggestion of 
-/// Fixed Keyboard layout method feature is enabled. 
+/// Check if the dictionary suggestion of
+/// Fixed Keyboard layout method feature is enabled.
 pub(crate) fn get_settings_fixed_database_on() -> bool {
     var(ENV_LAYOUT_FIXED_DATABASE_ON).unwrap().parse().unwrap()
 }
 
-/// Check if the Automatic Vowel Forming of 
-/// Fixed Keyboard layout method feature is enabled. 
+/// Check if the Automatic Vowel Forming of
+/// Fixed Keyboard layout method feature is enabled.
 pub(crate) fn get_settings_fixed_automatic_vowel() -> bool {
     var(ENV_LAYOUT_FIXED_VOWEL).unwrap().parse().unwrap()
 }
 
-/// Check if the Automatic Chandra position of 
-/// Fixed Keyboard layout method feature is enabled. 
+/// Check if the Automatic Chandra position of
+/// Fixed Keyboard layout method feature is enabled.
 pub(crate) fn get_settings_fixed_automatic_chandra() -> bool {
     var(ENV_LAYOUT_FIXED_CHANDRA).unwrap().parse().unwrap()
 }
 
-/// Check if the Traditional Kar Joining of 
-/// Fixed Keyboard layout method feature is enabled. 
+/// Check if the Traditional Kar Joining of
+/// Fixed Keyboard layout method feature is enabled.
 pub(crate) fn get_settings_fixed_traditional_kar() -> bool {
     var(ENV_LAYOUT_FIXED_KAR).unwrap().parse().unwrap()
 }
 
-/// Check if the Old Reph of Fixed Keyboard layout method feature is enabled. 
+/// Check if the Old Reph of Fixed Keyboard layout method feature is enabled.
 pub(crate) fn get_settings_fixed_old_reph() -> bool {
     var(ENV_LAYOUT_FIXED_OLD_REPH).unwrap().parse().unwrap()
 }
 
-/// Check if the NumberPad of Fixed Keyboard layout method feature is enabled. 
+/// Check if the NumberPad of Fixed Keyboard layout method feature is enabled.
 pub(crate) fn get_settings_fixed_numberpad() -> bool {
     var(ENV_LAYOUT_FIXED_NUMBERPAD).unwrap().parse().unwrap()
 }
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use std::env::set_var;
     use super::*;
+    use std::env::set_var;
 
     /// Sets default settings for testing Phonetic Method.
     pub(crate) fn set_default_phonetic() {
         set_var(
             ENV_LAYOUT_FILE,
-            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/avrophonetic.json"),
+            format!(
+                "{}{}",
+                env!("CARGO_MANIFEST_DIR"),
+                "/data/avrophonetic.json"
+            ),
         );
-        set_var(ENV_DATABASE_DIR, format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"));
+        set_var(
+            ENV_DATABASE_DIR,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"),
+        );
         set_var(ENV_ENTER_CLOSES_PREVIEW_WIN, "true");
         set_var(ENV_PREVIEW_WIN_HORIZONTAL, "true");
         set_var(ENV_PHONETIC_DATABASE_ON, "true");
@@ -126,7 +134,10 @@ pub(crate) mod tests {
         set_var(ENV_LAYOUT_FIXED_KAR, "true");
         set_var(ENV_LAYOUT_FIXED_NUMBERPAD, "true");
         set_var(ENV_LAYOUT_FIXED_OLD_REPH, "true");
-        set_var(ENV_DATABASE_DIR, format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"));
+        set_var(
+            ENV_DATABASE_DIR,
+            format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"),
+        );
     }
 
     #[test]

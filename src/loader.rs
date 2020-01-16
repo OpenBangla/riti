@@ -7,7 +7,7 @@ use std::str::FromStr;
 use crate::settings::get_settings_layout_file;
 
 /// Layout Loader
-/// 
+///
 /// This struct is used to load the specified layout file and
 /// to give access to it's contents.
 pub(crate) struct LayoutLoader {
@@ -38,7 +38,11 @@ impl LayoutLoader {
 
     /// Return layout's type.
     pub(crate) fn layout_type(&self) -> LayoutType {
-        self.layout["info"]["type"].as_str().unwrap().parse().unwrap()
+        self.layout["info"]["type"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap()
     }
 
     /// Checks if the layout path had changed.

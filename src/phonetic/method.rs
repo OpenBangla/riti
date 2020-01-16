@@ -1,13 +1,16 @@
 // Phonetic Method
-use std::fs::{read_to_string, write};
 use rustc_hash::FxHashMap;
+use std::fs::{read_to_string, write};
 
 use crate::context::Method;
 use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
+use crate::settings::{
+    get_settings_enter_closes_preview_window, get_settings_phonetic_database_on,
+    get_settings_preview_window_horizontal, get_settings_user_phonetic_selection_data,
+};
 use crate::suggestion::Suggestion;
 use crate::utility::get_modifiers;
-use crate::settings::{get_settings_user_phonetic_selection_data, get_settings_enter_closes_preview_window, get_settings_preview_window_horizontal, get_settings_phonetic_database_on};
 
 pub(crate) struct PhoneticMethod {
     buffer: String,
@@ -24,11 +27,12 @@ pub(crate) struct PhoneticMethod {
 impl PhoneticMethod {
     /// Creates a new `PhoneticMethod` struct.
     pub(crate) fn new(layout: &serde_json::Value) -> Self {
-        let selections = if let Ok(file) = read_to_string(get_settings_user_phonetic_selection_data()) {
-            serde_json::from_str(&file).unwrap()
-        } else {
-            FxHashMap::default()
-        };
+        let selections =
+            if let Ok(file) = read_to_string(get_settings_user_phonetic_selection_data()) {
+                serde_json::from_str(&file).unwrap()
+            } else {
+                FxHashMap::default()
+            };
 
         PhoneticMethod {
             buffer: String::new(),
@@ -57,7 +61,11 @@ impl PhoneticMethod {
     fn current_suggestion(&self) -> Suggestion {
         if !self.buffer.is_empty() {
             if get_settings_phonetic_database_on() {
-                Suggestion::new(self.buffer.clone(), self.suggestion.suggestions.clone(), self.prev_selection)
+                Suggestion::new(
+                    self.buffer.clone(),
+                    self.suggestion.suggestions.clone(),
+                    self.prev_selection,
+                )
             } else {
                 Suggestion::new_lonely(self.suggestion.suggestion_only_phonetic(&self.buffer))
             }
@@ -551,7 +559,11 @@ impl Method for PhoneticMethod {
                 return self.current_suggestion();
             }
             (VC_ENTER, _) | (VC_SPACE, _) => {
-                if key == VC_ENTER && get_settings_enter_closes_preview_window() && get_settings_phonetic_database_on() && !self.buffer.is_empty() {
+                if key == VC_ENTER
+                    && get_settings_enter_closes_preview_window()
+                    && get_settings_phonetic_database_on()
+                    && !self.buffer.is_empty()
+                {
                     self.handled = true;
                 } else {
                     self.handled = false;
@@ -564,7 +576,10 @@ impl Method for PhoneticMethod {
             }
 
             (VC_RIGHT, _) | (VC_LEFT, _) => {
-                if !self.buffer.is_empty() && get_settings_preview_window_horizontal() && get_settings_phonetic_database_on() {
+                if !self.buffer.is_empty()
+                    && get_settings_preview_window_horizontal()
+                    && get_settings_phonetic_database_on()
+                {
                     self.selection_changed = true;
                     self.handled = true;
                 } else {
@@ -575,7 +590,10 @@ impl Method for PhoneticMethod {
             }
 
             (VC_UP, _) | (VC_DOWN, _) => {
-                if !self.buffer.is_empty() && !get_settings_preview_window_horizontal() && get_settings_phonetic_database_on() {
+                if !self.buffer.is_empty()
+                    && !get_settings_preview_window_horizontal()
+                    && get_settings_phonetic_database_on()
+                {
                     self.selection_changed = true;
                     self.handled = true;
                 } else {
@@ -611,8 +629,13 @@ impl Method for PhoneticMethod {
         // Check if user has selected a different suggestion
         if self.selection_changed && get_settings_phonetic_database_on() {
             let suggestion = self.suggestion.suggestions[index].clone();
-            self.selections.insert(self.suggestion.buffer.clone(), suggestion);
-            write(get_settings_user_phonetic_selection_data(), serde_json::to_string(&self.selections).unwrap()).unwrap();
+            self.selections
+                .insert(self.suggestion.buffer.clone(), suggestion);
+            write(
+                get_settings_user_phonetic_selection_data(),
+                serde_json::to_string(&self.selections).unwrap(),
+            )
+            .unwrap();
         }
 
         // Reset to defaults

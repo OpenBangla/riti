@@ -4,8 +4,8 @@ use serde_json::{Map, Value};
 use std::fmt;
 
 use crate::keycodes::*;
-use crate::utility::Modifiers;
 use crate::settings::get_settings_fixed_numberpad;
+use crate::utility::Modifiers;
 use LayoutModifiers::*;
 
 #[derive(Debug, PartialEq)]
@@ -50,7 +50,9 @@ impl LayoutParser {
             // Numerics
             (VC_0, AltGr { shift: _ }) => self.layout_get_value("0", AltGr { shift: false }),
             (VC_0, _) => self.layout_get_value("0", Normal),
-            (VC_PAREN_RIGHT, AltGr { shift: _ }) => self.layout_get_value("0", AltGr { shift: true }),
+            (VC_PAREN_RIGHT, AltGr { shift: _ }) => {
+                self.layout_get_value("0", AltGr { shift: true })
+            }
             (VC_PAREN_RIGHT, _) => self.layout_get_value("0", Shift),
 
             (VC_1, AltGr { shift: _ }) => self.layout_get_value("1", AltGr { shift: false }),
@@ -95,7 +97,9 @@ impl LayoutParser {
 
             (VC_9, AltGr { shift: _ }) => self.layout_get_value("9", AltGr { shift: false }),
             (VC_9, _) => self.layout_get_value("9", Normal),
-            (VC_PAREN_LEFT, AltGr { shift: _ }) => self.layout_get_value("9", AltGr { shift: true }),
+            (VC_PAREN_LEFT, AltGr { shift: _ }) => {
+                self.layout_get_value("9", AltGr { shift: true })
+            }
             (VC_PAREN_LEFT, _) => self.layout_get_value("9", Shift),
             // Alphabets
             (VC_A, modifier) => self.layout_get_value("A", modifier),
@@ -125,59 +129,97 @@ impl LayoutParser {
             (VC_Y, modifier) => self.layout_get_value("Y", modifier),
             (VC_Z, modifier) => self.layout_get_value("Z", modifier),
             // Other characters
-            (VC_GRAVE, AltGr { shift: _ }) => self.layout_get_value("BackQuote", AltGr { shift: false }),
+            (VC_GRAVE, AltGr { shift: _ }) => {
+                self.layout_get_value("BackQuote", AltGr { shift: false })
+            }
             (VC_GRAVE, _) => self.layout_get_value("BackQuote", Normal),
-            (VC_TILDE, AltGr { shift: _ }) => self.layout_get_value("BackQuote", AltGr { shift: true }),
+            (VC_TILDE, AltGr { shift: _ }) => {
+                self.layout_get_value("BackQuote", AltGr { shift: true })
+            }
             (VC_TILDE, _) => self.layout_get_value("BackQuote", Shift),
 
-            (VC_MINUS, AltGr { shift: _ }) => self.layout_get_value("Minus", AltGr { shift: false }),
+            (VC_MINUS, AltGr { shift: _ }) => {
+                self.layout_get_value("Minus", AltGr { shift: false })
+            }
             (VC_MINUS, _) => self.layout_get_value("Minus", Normal),
-            (VC_UNDERSCORE, AltGr { shift: _ }) => self.layout_get_value("Minus", AltGr { shift: true }),
+            (VC_UNDERSCORE, AltGr { shift: _ }) => {
+                self.layout_get_value("Minus", AltGr { shift: true })
+            }
             (VC_UNDERSCORE, _) => self.layout_get_value("Minus", Shift),
 
-            (VC_EQUALS, AltGr { shift: _ }) => self.layout_get_value("Equals", AltGr { shift: false }),
+            (VC_EQUALS, AltGr { shift: _ }) => {
+                self.layout_get_value("Equals", AltGr { shift: false })
+            }
             (VC_EQUALS, _) => self.layout_get_value("Equals", Normal),
             (VC_PLUS, AltGr { shift: _ }) => self.layout_get_value("Equals", AltGr { shift: true }),
             (VC_PLUS, _) => self.layout_get_value("Equals", Shift),
 
-            (VC_BRACKET_LEFT, AltGr { shift: _ }) => self.layout_get_value("OpenBracket", AltGr { shift: false }),
+            (VC_BRACKET_LEFT, AltGr { shift: _ }) => {
+                self.layout_get_value("OpenBracket", AltGr { shift: false })
+            }
             (VC_BRACKET_LEFT, _) => self.layout_get_value("OpenBracket", Normal),
-            (VC_BRACE_LEFT, AltGr { shift: _ }) => self.layout_get_value("OpenBracket", AltGr { shift: true }),
+            (VC_BRACE_LEFT, AltGr { shift: _ }) => {
+                self.layout_get_value("OpenBracket", AltGr { shift: true })
+            }
             (VC_BRACE_LEFT, _) => self.layout_get_value("OpenBracket", Shift),
 
-            (VC_BRACKET_RIGHT, AltGr { shift: _ }) => self.layout_get_value("CloseBracket", AltGr { shift: false }),
+            (VC_BRACKET_RIGHT, AltGr { shift: _ }) => {
+                self.layout_get_value("CloseBracket", AltGr { shift: false })
+            }
             (VC_BRACKET_RIGHT, _) => self.layout_get_value("CloseBracket", Normal),
-            (VC_BRACE_RIGHT, AltGr { shift: _ }) => self.layout_get_value("CloseBracket", AltGr { shift: true }),
+            (VC_BRACE_RIGHT, AltGr { shift: _ }) => {
+                self.layout_get_value("CloseBracket", AltGr { shift: true })
+            }
             (VC_BRACE_RIGHT, _) => self.layout_get_value("CloseBracket", Shift),
 
-            (VC_BACK_SLASH, AltGr { shift: _ }) => self.layout_get_value("BackSlash", AltGr { shift: false }),
+            (VC_BACK_SLASH, AltGr { shift: _ }) => {
+                self.layout_get_value("BackSlash", AltGr { shift: false })
+            }
             (VC_BACK_SLASH, _) => self.layout_get_value("BackSlash", Normal),
-            (VC_BAR, AltGr { shift: _ }) => self.layout_get_value("BackSlash", AltGr { shift: true }),
+            (VC_BAR, AltGr { shift: _ }) => {
+                self.layout_get_value("BackSlash", AltGr { shift: true })
+            }
             (VC_BAR, _) => self.layout_get_value("BackSlash", Shift),
 
-            (VC_SEMICOLON, AltGr { shift: _ }) => self.layout_get_value("Semicolon", AltGr { shift: false }),
+            (VC_SEMICOLON, AltGr { shift: _ }) => {
+                self.layout_get_value("Semicolon", AltGr { shift: false })
+            }
             (VC_SEMICOLON, _) => self.layout_get_value("Semicolon", Normal),
-            (VC_COLON, AltGr { shift: _ }) => self.layout_get_value("Semicolon", AltGr { shift: true }),
+            (VC_COLON, AltGr { shift: _ }) => {
+                self.layout_get_value("Semicolon", AltGr { shift: true })
+            }
             (VC_COLON, _) => self.layout_get_value("Semicolon", Shift),
 
-            (VC_APOSTROPHE, AltGr { shift: _ }) => self.layout_get_value("Quote", AltGr { shift: false }),
+            (VC_APOSTROPHE, AltGr { shift: _ }) => {
+                self.layout_get_value("Quote", AltGr { shift: false })
+            }
             (VC_APOSTROPHE, _) => self.layout_get_value("Quote", Normal),
             (VC_QUOTE, AltGr { shift: _ }) => self.layout_get_value("Quote", AltGr { shift: true }),
             (VC_QUOTE, _) => self.layout_get_value("Quote", Shift),
 
-            (VC_COMMA, AltGr { shift: _ }) => self.layout_get_value("Comma", AltGr { shift: false }),
+            (VC_COMMA, AltGr { shift: _ }) => {
+                self.layout_get_value("Comma", AltGr { shift: false })
+            }
             (VC_COMMA, _) => self.layout_get_value("Comma", Normal),
             (VC_LESS, AltGr { shift: _ }) => self.layout_get_value("Comma", AltGr { shift: true }),
             (VC_LESS, _) => self.layout_get_value("Comma", Shift),
 
-            (VC_PERIOD, AltGr { shift: _ }) => self.layout_get_value("Period", AltGr { shift: false }),
+            (VC_PERIOD, AltGr { shift: _ }) => {
+                self.layout_get_value("Period", AltGr { shift: false })
+            }
             (VC_PERIOD, _) => self.layout_get_value("Period", Normal),
-            (VC_GREATER, AltGr { shift: _ }) => self.layout_get_value("Period", AltGr { shift: true }),
+            (VC_GREATER, AltGr { shift: _ }) => {
+                self.layout_get_value("Period", AltGr { shift: true })
+            }
             (VC_GREATER, _) => self.layout_get_value("Period", Shift),
 
-            (VC_SLASH, AltGr { shift: _ }) => self.layout_get_value("Slash", AltGr { shift: false }),
+            (VC_SLASH, AltGr { shift: _ }) => {
+                self.layout_get_value("Slash", AltGr { shift: false })
+            }
             (VC_SLASH, _) => self.layout_get_value("Slash", Normal),
-            (VC_QUESTION, AltGr { shift: _ }) => self.layout_get_value("Slash", AltGr { shift: true }),
+            (VC_QUESTION, AltGr { shift: _ }) => {
+                self.layout_get_value("Slash", AltGr { shift: true })
+            }
             (VC_QUESTION, _) => self.layout_get_value("Slash", Shift),
             // NumPad
             (VC_KP_0, _) => self.layout_get_value_numpad("Num0"),
@@ -315,7 +357,7 @@ mod tests {
         );
         assert_eq!(
             LayoutModifiers::from((false, true, true)),
-            LayoutModifiers::AltGr { shift: false}
+            LayoutModifiers::AltGr { shift: false }
         );
         assert_eq!(
             LayoutModifiers::from((true, true, true)),

@@ -1,12 +1,12 @@
 #![allow(dead_code)]
 #![allow(non_snake_case)]
 
-mod phonetic;
-mod fixed;
 pub mod context;
-mod settings;
+mod ffi;
+mod fixed;
 mod keycodes;
+mod loader;
+mod phonetic;
+mod settings;
 pub mod suggestion;
 mod utility;
-mod ffi;
-mod loader;

@@ -6,8 +6,8 @@ use rustc_hash::FxHashMap;
 use std::cmp::Ordering;
 
 use super::database::Database;
-use crate::utility::{Utility, split_string};
 use crate::settings;
+use crate::utility::{split_string, Utility};
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) buffer: String,
@@ -154,7 +154,9 @@ impl PhoneticSuggestion {
         }
 
         // Include written English word if the feature is enabled.
-        if settings::get_settings_phonetic_include_english() && !self.suggestions.iter().any(|i| i == term) {
+        if settings::get_settings_phonetic_include_english()
+            && !self.suggestions.iter().any(|i| i == term)
+        {
             self.suggestions.push(term.to_string());
         }
 
@@ -179,7 +181,8 @@ impl PhoneticSuggestion {
                         let suffix_lmc = suffix.chars().nth(0).unwrap();
 
                         if rmc.is_vowel() && suffix_lmc.is_kar() {
-                            selected = format!("{}{}{}", word, '\u{09DF}', suffix); // \u{09DF} = B_Y
+                            selected = format!("{}{}{}", word, '\u{09DF}', suffix);
+                        // \u{09DF} = B_Y
                         } else {
                             if rmc == '\u{09CE}' {
                                 // \u{09CE} = ৎ
@@ -245,15 +248,10 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
 
         assert_eq!(suggestion.suggestion_with_dict(":)"), vec![":)", "ঃ)"]);
-        assert_eq!(suggestion.suggestion_with_dict("{a}"), vec![
-            "{আ}",
-            "{আঃ}",
-            "{া}",
-            "{এ}",
-            "{অ্যা}",
-            "{অ্যাঁ}",
-            "{a}"
-        ]);
+        assert_eq!(
+            suggestion.suggestion_with_dict("{a}"),
+            vec!["{আ}", "{আঃ}", "{া}", "{এ}", "{অ্যা}", "{অ্যাঁ}", "{a}"]
+        );
     }
 
     #[test]
@@ -262,14 +260,8 @@ mod tests {
 
         let suggestion = PhoneticSuggestion::default();
 
-        assert_eq!(
-            suggestion.suggestion_only_phonetic("{kotha}"),
-            "{কথা}"
-        );
-        assert_eq!(
-            suggestion.suggestion_only_phonetic(",ah,,"),
-            ",আহ্‌"
-        );
+        assert_eq!(suggestion.suggestion_only_phonetic("{kotha}"), "{কথা}");
+        assert_eq!(suggestion.suggestion_only_phonetic(",ah,,"), ",আহ্‌");
     }
 
     #[test]
@@ -290,14 +282,7 @@ mod tests {
 
         assert_eq!(
             suggestion.suggestion_with_dict("a"),
-            vec![
-                "আ",
-                "আঃ",
-                "া",
-                "এ",
-                "অ্যা",
-                "অ্যাঁ"
-            ]
+            vec!["আ", "আঃ", "া", "এ", "অ্যা", "অ্যাঁ"]
         );
         assert_eq!(
             suggestion.suggestion_with_dict("as"),
@@ -305,13 +290,7 @@ mod tests {
         );
         assert_eq!(
             suggestion.suggestion_with_dict("asgulo"),
-            vec![
-                "আসগুলো",
-                "আশগুলো",
-                "এসগুলো",
-                "আঁশগুলো",
-                "আসগুল"
-            ]
+            vec!["আসগুলো", "আশগুলো", "এসগুলো", "আঁশগুলো", "আসগুল"]
         );
         assert_eq!(
             suggestion.suggestion_with_dict("(as)"),
@@ -327,19 +306,13 @@ mod tests {
         );
 
         // Suffix suggestion validation.
-        assert_eq!(
-            suggestion.suggestion_with_dict("apn"),
-            vec!["আপন", "আপ্ন"]
-        );
+        assert_eq!(suggestion.suggestion_with_dict("apn"), vec!["আপন", "আপ্ন"]);
         assert_eq!(
             suggestion.suggestion_with_dict("apni"),
             vec!["আপনি", "আপনই", "আপ্নি"]
         );
 
-        assert_eq!(
-            suggestion.suggestion_with_dict("am"),
-            vec!["আম", "এম"]
-        );
+        assert_eq!(suggestion.suggestion_with_dict("am"), vec!["আম", "এম"]);
         assert_eq!(
             suggestion.suggestion_with_dict("ami"),
             vec!["আমি", "আমই", "এমই"]
@@ -352,11 +325,7 @@ mod tests {
         );
         assert_eq!(
             suggestion.suggestion_with_dict("atme"),
-            vec![
-                "এটিএমে",
-                "আত্মে",
-                "অ্যাটমে"
-            ]
+            vec!["এটিএমে", "আত্মে", "অ্যাটমে"]
         );
     }
 
@@ -365,10 +334,7 @@ mod tests {
         set_default_phonetic();
 
         let mut cache = FxHashMap::default();
-        cache.insert(
-            "computer".to_string(),
-            vec!["কম্পিউটার".to_string()],
-        );
+        cache.insert("computer".to_string(), vec!["কম্পিউটার".to_string()]);
         cache.insert("ebong".to_string(), vec!["এবং".to_string()]);
 
         let suggestion = PhoneticSuggestion {
@@ -402,10 +368,7 @@ mod tests {
         selections.insert("onno".to_string(), "অন্য".to_string());
 
         suggestion.buffer = "onnogulo".to_string();
-        suggestion.suggestions = vec![
-            "অন্নগুলো".to_string(),
-            "অন্যগুলো".to_string(),
-        ];
+        suggestion.suggestions = vec!["অন্নগুলো".to_string(), "অন্যগুলো".to_string()];
 
         assert_eq!(suggestion.get_prev_selection(&mut selections), 1);
     }

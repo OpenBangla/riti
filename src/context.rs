@@ -1,9 +1,9 @@
 use std::cell::RefCell;
 
-use crate::suggestion::Suggestion;
-use crate::phonetic::method::PhoneticMethod;
 use crate::fixed::method::FixedMethod;
 use crate::loader::{LayoutLoader, LayoutType};
+use crate::phonetic::method::PhoneticMethod;
+use crate::suggestion::Suggestion;
 
 /// Context handle used for libRiti IM APIs
 pub struct RitiContext {
@@ -34,7 +34,7 @@ impl RitiContext {
     }
 
     /// A candidate of the suggestion list was committed.
-    /// 
+    ///
     /// `index`: index of the candidate.
     pub fn candidate_committed(&self, index: usize) {
         self.method.borrow_mut().candidate_committed(index)
@@ -52,8 +52,12 @@ impl RitiContext {
             self.loader = LayoutLoader::load_from_settings();
 
             match self.loader.layout_type() {
-                LayoutType::Phonetic => self.method.replace(Box::new(PhoneticMethod::new(self.loader.layout()))),
-                LayoutType::Fixed => self.method.replace(Box::new(FixedMethod::new(self.loader.layout())))
+                LayoutType::Phonetic => self
+                    .method
+                    .replace(Box::new(PhoneticMethod::new(self.loader.layout()))),
+                LayoutType::Fixed => self
+                    .method
+                    .replace(Box::new(FixedMethod::new(self.loader.layout()))),
             };
         } else {
             self.method.borrow_mut().update_engine();

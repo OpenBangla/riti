@@ -13,8 +13,7 @@ impl Database {
     pub(crate) fn new() -> Database {
         Database {
             table: serde_json::from_str(
-                &read_to_string(get_settings_database_dir().join("dictionary.json"))
-                    .unwrap(),
+                &read_to_string(get_settings_database_dir().join("dictionary.json")).unwrap(),
             )
             .unwrap(),
         }
@@ -90,10 +89,14 @@ impl Database {
         let need_chars_upto = match word.chars().count() {
             1 => 0,
             2..=3 => 1,
-            _ => 5
+            _ => 5,
         };
 
-        let regex = format!("^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{}}}$", ignore_meta_chars(word), need_chars_upto);
+        let regex = format!(
+            "^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{}}}$",
+            ignore_meta_chars(word),
+            need_chars_upto
+        );
         let rgx = Regex::new(&regex).unwrap();
 
         self.table[table]
@@ -105,12 +108,15 @@ impl Database {
 }
 
 fn ignore_meta_chars(string: &str) -> String {
-    string.chars().filter(|&c| !"|()[]{}^$*+?.~!@#%&-_='\";<>/\\,:`".contains(c)).collect()
+    string
+        .chars()
+        .filter(|&c| !"|()[]{}^$*+?.~!@#%&-_='\";<>/\\,:`".contains(c))
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Database, ignore_meta_chars};
+    use super::{ignore_meta_chars, Database};
     use crate::settings::tests::set_default_phonetic;
 
     #[test]
@@ -119,22 +125,10 @@ mod tests {
 
         let db = Database::new();
 
-        assert_eq!(
-            db.search_dictionary("ই"),
-            ["ই"]
-        );
-        assert_eq!(
-            db.search_dictionary("আমা"),
-            ["আমা", "আমান", "আমার", "আমায়"]
-        );
-        assert_eq!(
-            db.search_dictionary("খ(১"),
-            Vec::<String>::new()
-        );
-        assert_eq!(
-            db.search_dictionary("1"),
-            Vec::<String>::new()
-        );
+        assert_eq!(db.search_dictionary("ই"), ["ই"]);
+        assert_eq!(db.search_dictionary("আমা"), ["আমা", "আমান", "আমার", "আমায়"]);
+        assert_eq!(db.search_dictionary("খ(১"), Vec::<String>::new());
+        assert_eq!(db.search_dictionary("1"), Vec::<String>::new());
     }
 
     #[test]

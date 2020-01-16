@@ -102,9 +102,9 @@ macro_rules! hashmap {
 
 #[cfg(test)]
 mod test {
-    use super::{Utility ,get_modifiers, split_string};
+    use super::{get_modifiers, split_string, Utility};
     use crate::context::{MODIFIER_ALT, MODIFIER_CTRL, MODIFIER_SHIFT};
-    
+
     #[test]
     fn test_utilities() {
         assert!('আ'.is_vowel());

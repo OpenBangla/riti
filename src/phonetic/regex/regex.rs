@@ -2,7 +2,7 @@
 use std::cmp::Ordering;
 use stringplus::StringPlus;
 
-use super::patterns::{Type, Scope, PATTERNS, MAX_PATTERN_LEN, VOWELS, CONSONANT, IGNORE};
+use super::patterns::{Scope, Type, CONSONANT, IGNORE, MAX_PATTERN_LEN, PATTERNS, VOWELS};
 
 /// Parse `input` string containing phonetic text and return a regex string.
 pub(crate) fn parse(input: &str) -> String {
@@ -50,31 +50,37 @@ pub(crate) fn parse(input: &str) -> String {
 
                                     // Beginning
                                     match scope {
-                                        Scope::Punctuation => if ((chk < 0 && (_type == Type::Prefix))
-                                            || (chk >= len as i32 && (_type == Type::Suffix))
-                                            || is_punctuation(fixed.at(chk as usize)))
-                                            == is_negative
-                                        {
-                                            replace = false;
-                                            break;
-                                        },
-                                        Scope::Vowel => if (((chk >= 0 && (_type == Type::Prefix))
-                                            || (chk < len as i32 && (_type == Type::Suffix)))
-                                            && is_vowel(fixed.at(chk as usize)))
-                                            == is_negative
-                                        {
-                                            replace = false;
-                                            break;
-                                        },
+                                        Scope::Punctuation => {
+                                            if ((chk < 0 && (_type == Type::Prefix))
+                                                || (chk >= len as i32 && (_type == Type::Suffix))
+                                                || is_punctuation(fixed.at(chk as usize)))
+                                                == is_negative
+                                            {
+                                                replace = false;
+                                                break;
+                                            }
+                                        }
+                                        Scope::Vowel => {
+                                            if (((chk >= 0 && (_type == Type::Prefix))
+                                                || (chk < len as i32 && (_type == Type::Suffix)))
+                                                && is_vowel(fixed.at(chk as usize)))
+                                                == is_negative
+                                            {
+                                                replace = false;
+                                                break;
+                                            }
+                                        }
 
-                                        Scope::Consonant => if (((chk >= 0 && (_type == Type::Prefix))
-                                            || (chk < len as i32 && (_type == Type::Suffix)))
-                                            && is_consonant(fixed.at(chk as usize)))
-                                            == is_negative
-                                        {
-                                            replace = false;
-                                            break;
-                                        },
+                                        Scope::Consonant => {
+                                            if (((chk >= 0 && (_type == Type::Prefix))
+                                                || (chk < len as i32 && (_type == Type::Suffix)))
+                                                && is_consonant(fixed.at(chk as usize)))
+                                                == is_negative
+                                            {
+                                                replace = false;
+                                                break;
+                                            }
+                                        }
 
                                         Scope::Exact => {
                                             let mut s: i32 = 0;
@@ -87,8 +93,7 @@ pub(crate) fn parse(input: &str) -> String {
                                                 s = start - value.len() as i32;
                                                 e = start;
                                             }
-                                            if !is_exact(value, &fixed, s, e, is_negative)
-                                            {
+                                            if !is_exact(value, &fixed, s, e, is_negative) {
                                                 replace = false;
                                                 break;
                                             }
@@ -160,8 +165,10 @@ fn is_ignore(character: char) -> bool {
 }
 
 fn is_exact(needle: &str, heystack: &str, start: i32, end: i32, not: bool) -> bool {
-    (start >= 0 && end < heystack.len() as i32
-        && (&heystack[start as usize..end as usize] == needle)) != not
+    (start >= 0
+        && end < heystack.len() as i32
+        && (&heystack[start as usize..end as usize] == needle))
+        != not
 }
 
 fn is_punctuation(character: &str) -> bool {
