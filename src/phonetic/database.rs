@@ -5,7 +5,7 @@ use regex::Regex;
 use rustc_hash::FxHashMap;
 
 use crate::hashmap;
-use crate::phonetic::regex::PhoneticRegex;
+use crate::phonetic::regex::parse;
 use crate::settings::{get_settings_database_dir, get_settings_user_phonetic_autocorrect};
 
 lazy_static::lazy_static! {
@@ -40,7 +40,6 @@ lazy_static::lazy_static! {
 }
 
 pub(crate) struct Database {
-    regex: PhoneticRegex,
     table: HashMap<String, Vec<String>>,
     suffix: FxHashMap<String, String>,
     autocorrect: FxHashMap<String, String>,
@@ -58,7 +57,6 @@ impl Database {
         };
 
         Database {
-            regex: PhoneticRegex::new(),
             table: serde_json::from_str(&read_to_string(get_settings_database_dir().join("dictionary.json")).unwrap()).unwrap(),
             suffix: serde_json::from_str(&read_to_string(get_settings_database_dir().join("suffix.json")).unwrap()).unwrap(),
             autocorrect: serde_json::from_str(&read_to_string(get_settings_database_dir().join("autocorrect.json")).unwrap()).unwrap(),
@@ -68,7 +66,7 @@ impl Database {
 
     /// Find words from the dictionary with given word.
     pub(crate) fn search_dictionary(&self, word: &str) -> Vec<String> {
-        let rgx = Regex::new(&self.regex.parse(word)).unwrap();
+        let rgx = Regex::new(&parse(word)).unwrap();
 
         DICTIONARY_TABLE
             .get(word.get(0..1).unwrap_or_default())

@@ -82,7 +82,7 @@ pub(crate) fn split_string(input: &str) -> (&str, &str, &str) {
 
 #[macro_export]
 /// A helper macro for initializing HashMap.
-/// Originally from the `maplit` crate but customized for use with `hashbrown::HashMap`.
+/// Originally from the `maplit` crate but customized for using with `hashbrown::HashMap`.
 macro_rules! hashmap {
     (@single $($x:tt)*) => (());
     (@count $($rest:expr),*) => (<[()]>::len(&[$(hashmap!(@single $rest)),*]));
