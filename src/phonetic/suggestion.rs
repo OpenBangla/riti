@@ -94,6 +94,7 @@ impl PhoneticSuggestion {
             self.phonetic.convert(splitted_string.2)
         )
     }
+
     /// Make suggestions from the given `term`. This will include dictionary and auto-correct suggestion.
     pub(crate) fn suggestion_with_dict(&mut self, term: &str) -> Vec<String> {
         self.suggestions.clear();
@@ -132,7 +133,7 @@ impl PhoneticSuggestion {
             }
 
             self.cache
-                .insert(splitted_string.1.to_string(), dictionary.clone());
+                .insert(splitted_string.1.to_string(), dictionary);
         }
 
         self.suggestions = self.add_suffix_to_suggestions(splitted_string.1);
@@ -164,17 +165,18 @@ impl PhoneticSuggestion {
     }
 
     pub(crate) fn get_prev_selection(&self, selections: &mut FxHashMap<String, String>) -> usize {
+        let splitted_string = split_string(&self.buffer);
         let mut selected = String::new();
-        let len = self.buffer.len();
+        let len = splitted_string.1.len();
 
-        if let Some(item) = selections.get(&self.buffer) {
+        if let Some(item) = selections.get(splitted_string.1) {
             selected = item.clone();
         } else if len >= 2 {
             for i in 1..len {
-                let test = &self.buffer[len - i..len];
+                let test = &splitted_string.1[len - i..len];
 
                 if let Some(suffix) = self.database.find_suffix(test) {
-                    let key = &self.buffer[0..len - test.len()];
+                    let key = &splitted_string.1[0..len - test.len()];
 
                     if let Some(word) = selections.get(key) {
                         let rmc = word.chars().last().unwrap();
@@ -206,7 +208,7 @@ impl PhoneticSuggestion {
                         }
 
                         // Save this for future reuse.
-                        selections.insert(self.buffer.clone(), selected.to_string());
+                        selections.insert(splitted_string.1.to_string(), selected.to_string());
                     }
                 }
             }
@@ -214,7 +216,7 @@ impl PhoneticSuggestion {
 
         self.suggestions
             .iter()
-            .position(|item| *item == selected)
+            .position(|item| *item == format!("{}{}{}", splitted_string.0, selected, splitted_string.2))
             .unwrap_or_default()
     }
 }
@@ -362,14 +364,20 @@ mod tests {
 
     #[test]
     fn test_prev_selected() {
-        let mut suggestion = PhoneticSuggestion::default();
+        set_default_phonetic();
 
+        let mut suggestion = PhoneticSuggestion::default();
         let mut selections = FxHashMap::default();
         selections.insert("onno".to_string(), "অন্য".to_string());
 
-        suggestion.buffer = "onnogulo".to_string();
-        suggestion.suggestions = vec!["অন্নগুলো".to_string(), "অন্যগুলো".to_string()];
+        // Avoid meta characters
+        suggestion.buffer = "*onno?!".to_string();
+        suggestion.suggestions = vec!["*অন্ন?!".to_string(), "*অন্য?!".to_string()];
+        assert_eq!(suggestion.get_prev_selection(&mut selections), 1);
 
+        // With Suffix + Avoid meta characters
+        suggestion.buffer = "*onnogulo?!".to_string();
+        suggestion.suggestions = vec!["*অন্নগুলো?!".to_string(), "*অন্যগুলো?!".to_string()];
         assert_eq!(suggestion.get_prev_selection(&mut selections), 1);
     }
 }
