@@ -214,9 +214,11 @@ impl PhoneticSuggestion {
             }
         }
 
+        selected = format!("{}{}{}", splitted_string.0, selected, splitted_string.2);
+
         self.suggestions
             .iter()
-            .position(|item| *item == format!("{}{}{}", splitted_string.0, selected, splitted_string.2))
+            .position(|item| *item == selected)
             .unwrap_or_default()
     }
 }
