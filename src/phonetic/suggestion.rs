@@ -164,8 +164,8 @@ impl PhoneticSuggestion {
         self.suggestions.clone()
     }
 
-    pub(crate) fn get_prev_selection(&self, selections: &mut FxHashMap<String, String>) -> usize {
-        let splitted_string = split_string(&self.buffer);
+    pub(crate) fn get_prev_selection(&self, buffer: &str, selections: &mut FxHashMap<String, String>) -> usize {
+        let splitted_string = split_string(buffer);
         let mut selected = String::new();
         let len = splitted_string.1.len();
 
@@ -371,13 +371,11 @@ mod tests {
         selections.insert("onno".to_string(), "অন্য".to_string());
 
         // Avoid meta characters
-        suggestion.buffer = "*onno?!".to_string();
         suggestion.suggestions = vec!["*অন্ন?!".to_string(), "*অন্য?!".to_string()];
-        assert_eq!(suggestion.get_prev_selection(&mut selections), 1);
+        assert_eq!(suggestion.get_prev_selection("*onno?!", &mut selections), 1);
 
         // With Suffix + Avoid meta characters
-        suggestion.buffer = "*onnogulo?!".to_string();
         suggestion.suggestions = vec!["*অন্নগুলো?!".to_string(), "*অন্যগুলো?!".to_string()];
-        assert_eq!(suggestion.get_prev_selection(&mut selections), 1);
+        assert_eq!(suggestion.get_prev_selection("*onnogulo?!", &mut selections), 1);
     }
 }

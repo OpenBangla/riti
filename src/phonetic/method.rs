@@ -48,7 +48,7 @@ impl PhoneticMethod {
     fn create_suggestion(&mut self) -> Suggestion {
         if get_settings_phonetic_database_on() {
             let suggestions = self.suggestion.suggestion_with_dict(&self.buffer);
-            self.prev_selection = self.suggestion.get_prev_selection(&mut self.selections);
+            self.prev_selection = self.suggestion.get_prev_selection(&self.buffer, &mut self.selections);
 
             Suggestion::new(self.buffer.clone(), suggestions, self.prev_selection)
         } else {
