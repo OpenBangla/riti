@@ -1,4 +1,5 @@
 //! Key codes
+#![allow(non_upper_case_globals)]
 
 // Begin Alphanumeric Zone
 pub const VC_GRAVE: u16 = 0x0029; // '`'
@@ -33,6 +34,33 @@ pub const VC_EQUALS: u16 = 0x000D; // '='
 pub const VC_BACKSPACE: u16 = 0x000E;
 
 pub const VC_TAB: u16 = 0x000F;
+
+pub const VC_a: u16 = 0xA096;
+pub const VC_b: u16 = 0xA097;
+pub const VC_c: u16 = 0xA098;
+pub const VC_d: u16 = 0xA099;
+pub const VC_e: u16 = 0xA09A;
+pub const VC_f: u16 = 0xA09B;
+pub const VC_g: u16 = 0xA09C;
+pub const VC_h: u16 = 0xA09D;
+pub const VC_i: u16 = 0xA09E;
+pub const VC_j: u16 = 0xA09F;
+pub const VC_k: u16 = 0xA0A0;
+pub const VC_l: u16 = 0xA0A1;
+pub const VC_m: u16 = 0xA0A2;
+pub const VC_n: u16 = 0xA0A3;
+pub const VC_o: u16 = 0xA0A4;
+pub const VC_p: u16 = 0xA0A5;
+pub const VC_q: u16 = 0xA0A6;
+pub const VC_r: u16 = 0xA0A7;
+pub const VC_s: u16 = 0xA0A8;
+pub const VC_t: u16 = 0xA0A9;
+pub const VC_u: u16 = 0xA0AA;
+pub const VC_v: u16 = 0xA0AB;
+pub const VC_w: u16 = 0xA0AC;
+pub const VC_x: u16 = 0xA0AD;
+pub const VC_y: u16 = 0xA0AE;
+pub const VC_z: u16 = 0xA0AF;
 
 pub const VC_A: u16 = 0xA0B4;
 pub const VC_B: u16 = 0xA0B5;
