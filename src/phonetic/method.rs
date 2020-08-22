@@ -77,13 +77,7 @@ impl PhoneticMethod {
 
 impl Method for PhoneticMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion {
-        let (_, ctrl, alt) = get_modifiers(modifier);
-
-        // Reject key which has ctrl, alt combinations.
-        if ctrl || alt {
-            self.handled = false;
-            return Suggestion::empty();
-        }
+        let (shift, _) = get_modifiers(modifier);
 
         match key {
             // Alphanumeric keys

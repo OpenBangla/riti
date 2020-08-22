@@ -23,25 +23,6 @@ pub(crate) struct FixedMethod {
 impl Method for FixedMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion {
         let modifier = get_modifiers(modifier);
-        let (_, ctrl, alt) = modifier;
-        // Don't catch Ctrl or Alt without AltGr combination.
-        if (ctrl && !alt) || (!ctrl && alt) {
-            // Handle edge cases
-            if key == VC_SHIFT || key == VC_ALT {
-                if !self.buffer.is_empty() {
-                    self.handled = true;
-                    return self.create_suggestion();
-                } else {
-                    self.handled = false;
-                    return Suggestion::empty();
-                }
-            } else {
-                self.handled = false;
-                let suggestion = self.current_suggestion();
-                self.buffer.clear();
-                return suggestion;
-            }
-        }
 
         match key {
             VC_BACKSPACE => {

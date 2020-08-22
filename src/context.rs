@@ -76,11 +76,7 @@ pub(crate) trait Method {
 ///
 /// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
 pub const MODIFIER_SHIFT: u8 = 1 << 0;
-/// Ctrl modifier key.
+/// AltGr modifier key.
 ///
 /// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
-pub const MODIFIER_CTRL: u8 = 1 << 1;
-/// Alt modifier key.
-///
-/// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
-pub const MODIFIER_ALT: u8 = 1 << 2;
+pub const MODIFIER_ALT_GR: u8 = 1 << 1;
