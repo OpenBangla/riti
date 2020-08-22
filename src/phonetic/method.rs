@@ -10,7 +10,7 @@ use crate::settings::{
     get_settings_preview_window_horizontal, get_settings_user_phonetic_selection_data,
 };
 use crate::suggestion::Suggestion;
-use crate::utility::get_modifiers;
+use crate::utility::{split_string, get_modifiers};
 
 pub(crate) struct PhoneticMethod {
     buffer: String,
@@ -528,22 +528,7 @@ impl Method for PhoneticMethod {
             }
 
             // Special Key
-            VC_BACKSPACE => {
-                if !self.buffer.is_empty() {
-                    // Remove the last character.
-                    self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
-                    self.handled = true;
-
-                    if self.buffer.is_empty() {
-                        // The buffer is now empty, so return empty suggestion.
-                        return Suggestion::empty();
-                    }
-                } else {
-                    self.handled = false;
-                    return Suggestion::empty();
-                }
-            }
-            VC_SHIFT | VC_CONTROL => {
+            (VC_SHIFT, _) | (VC_CONTROL, _) => {
                 if !self.buffer.is_empty() {
                     self.handled = true;
                 } else {
@@ -624,7 +609,7 @@ impl Method for PhoneticMethod {
         if self.selection_changed && get_settings_phonetic_database_on() {
             let suggestion = self.suggestion.suggestions[index].clone();
             self.selections
-                .insert(self.suggestion.buffer.clone(), suggestion);
+                .insert(split_string(&self.buffer).1.to_string(), suggestion);
             write(
                 get_settings_user_phonetic_selection_data(),
                 serde_json::to_string(&self.selections).unwrap(),
@@ -644,6 +629,25 @@ impl Method for PhoneticMethod {
 
     fn update_engine(&mut self) {
         self.suggestion.database.update();
+    }
+
+    fn ongoing_input_session(&self) -> bool {
+        !self.buffer.is_empty()
+    }
+
+    fn finish_input_session(&mut self) {
+        self.buffer.clear();
+    }
+
+    fn backspace_event(&mut self) -> bool {
+        if !self.buffer.is_empty() {
+            // Remove the last character.
+            self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
+
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -667,7 +671,6 @@ impl Default for PhoneticMethod {
 mod tests {
     use super::PhoneticMethod;
     use crate::context::Method;
-    use crate::keycodes::VC_BACKSPACE;
     use crate::settings::tests::set_default_phonetic;
 
     #[test]
@@ -679,13 +682,8 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty());
-        assert!(method.key_handled());
-
-        assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty());
-        assert!(method.key_handled());
-
-        assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty());
-        assert!(!method.key_handled());
+        assert!(method.backspace_event()); // a
+        assert!(method.backspace_event()); // " "
+        assert!(!method.backspace_event()); // Empty
     }
 }

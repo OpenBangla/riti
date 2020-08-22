@@ -10,7 +10,6 @@ use crate::settings;
 use crate::utility::{split_string, Utility};
 
 pub(crate) struct PhoneticSuggestion {
-    pub(crate) buffer: String,
     pub(crate) suggestions: Vec<String>,
     pub(crate) database: Database,
     // Cache for storing dictionary searches.
@@ -21,7 +20,6 @@ pub(crate) struct PhoneticSuggestion {
 impl PhoneticSuggestion {
     pub(crate) fn new(layout: &serde_json::Value) -> Self {
         PhoneticSuggestion {
-            buffer: String::new(),
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
             cache: FxHashMap::default(),
@@ -106,8 +104,6 @@ impl PhoneticSuggestion {
             splitted_string.1,
             &self.phonetic.convert(splitted_string.2),
         );
-
-        self.buffer = splitted_string.1.to_string();
 
         let phonetic = self.phonetic.convert(splitted_string.1);
 
@@ -228,7 +224,6 @@ impl Default for PhoneticSuggestion {
     fn default() -> Self {
         let loader = crate::loader::LayoutLoader::load_from_settings();
         PhoneticSuggestion {
-            buffer: String::new(),
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
             cache: FxHashMap::default(),

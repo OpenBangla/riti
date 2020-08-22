@@ -25,24 +25,6 @@ impl Method for FixedMethod {
         let modifier = get_modifiers(modifier);
 
         match key {
-            VC_BACKSPACE => {
-                if !self.buffer.is_empty() {
-                    // Remove the last character from buffer.
-                    self.internal_backspace();
-                    self.handled = true;
-
-                    if !self.buffer.is_empty() {
-                        return self.create_suggestion();
-                    } else {
-                        // The buffer is now empty, so return empty suggestion.
-                        return Suggestion::empty();
-                    }
-                } else {
-                    self.handled = false;
-                    return Suggestion::empty();
-                }
-            }
-
             VC_RIGHT | VC_LEFT | VC_UP | VC_DOWN => {
                 if !self.buffer.is_empty() && get_settings_fixed_database_on() {
                     self.handled = if (key == VC_RIGHT || key == VC_LEFT)
@@ -118,6 +100,25 @@ impl Method for FixedMethod {
 
     fn update_engine(&mut self) {
         //
+    }
+
+    fn ongoing_input_session(&self) -> bool {
+        !self.buffer.is_empty()
+    }
+
+    fn finish_input_session(&mut self) {
+        self.buffer.clear();
+    }
+
+    fn backspace_event(&mut self) -> bool {
+        if !self.buffer.is_empty() {
+            // Remove the last character from buffer.
+            self.internal_backspace();
+
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -439,7 +440,6 @@ mod tests {
     use super::FixedMethod;
     use crate::context::Method;
     use crate::fixed::chars::*;
-    use crate::keycodes::*;
     use crate::settings::{self, tests::set_defaults_fixed};
 
     #[test]
@@ -471,9 +471,10 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আম
-        assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আ
-        assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // Empty
+        assert!(method.backspace_event()); // আম
+        assert!(method.backspace_event()); // আ
+        assert!(method.backspace_event()); // " "
+        assert!(!method.backspace_event()); // Empty
     }
 
     #[test]

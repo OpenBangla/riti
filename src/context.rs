@@ -63,6 +63,26 @@ impl RitiContext {
             self.method.borrow_mut().update_engine();
         }
     }
+
+    /// Checks if there is an onging input session.         
+    pub fn ongoing_input_session(&self) -> bool {
+        self.method.borrow().ongoing_input_session()
+    }
+
+    /// Finish the ongoing input session if any.
+    pub fn finish_input_session(&self) {
+        self.method.borrow_mut().finish_input_session();
+    }
+
+    /// A BackSpace event.
+    ///
+    /// Returns if the input method has handled the event.
+    ///
+    /// If the internal buffer becomes empty, this function will
+    /// end the ongoing input session.
+    pub fn backspace_event(&self) -> bool {
+        self.method.borrow_mut().backspace_event()
+    }
 }
 
 pub(crate) trait Method {
@@ -70,6 +90,9 @@ pub(crate) trait Method {
     fn candidate_committed(&mut self, index: usize);
     fn key_handled(&self) -> bool;
     fn update_engine(&mut self);
+    fn ongoing_input_session(&self) -> bool;
+    fn finish_input_session(&mut self);
+    fn backspace_event(&mut self) -> bool;
 }
 
 /// Shift modifier key.
