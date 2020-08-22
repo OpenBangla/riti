@@ -77,7 +77,7 @@ impl PhoneticMethod {
 
 impl Method for PhoneticMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion {
-        let (shift, ctrl, alt) = get_modifiers(modifier);
+        let (_, ctrl, alt) = get_modifiers(modifier);
 
         // Reject key which has ctrl, alt combinations.
         if ctrl || alt {
@@ -85,456 +85,456 @@ impl Method for PhoneticMethod {
             return Suggestion::empty();
         }
 
-        match (key, shift) {
+        match key {
             // Alphanumeric keys
-            (VC_GRAVE, _) => {
+            VC_GRAVE => {
                 self.buffer.push('`');
                 self.handled = true;
             }
-            (VC_TILDE, _) => {
+            VC_TILDE => {
                 self.buffer.push('~');
                 self.handled = true;
             }
-            (VC_0, _) => {
+            VC_0 => {
                 self.buffer.push('0');
                 self.handled = true;
             }
-            (VC_PAREN_RIGHT, _) => {
+            VC_PAREN_RIGHT => {
                 self.buffer.push(')');
                 self.handled = true;
             }
-            (VC_1, _) => {
+            VC_1 => {
                 self.buffer.push('1');
                 self.handled = true;
             }
-            (VC_EXCLAIM, _) => {
+            VC_EXCLAIM => {
                 self.buffer.push('!');
                 self.handled = true;
             }
-            (VC_2, _) => {
+            VC_2 => {
                 self.buffer.push('2');
                 self.handled = true;
             }
-            (VC_AT, _) => {
+            VC_AT => {
                 self.buffer.push('@');
                 self.handled = true;
             }
-            (VC_3, _) => {
+            VC_3 => {
                 self.buffer.push('3');
                 self.handled = true;
             }
-            (VC_HASH, _) => {
+            VC_HASH => {
                 self.buffer.push('#');
                 self.handled = true;
             }
-            (VC_4, _) => {
+            VC_4 => {
                 self.buffer.push('4');
                 self.handled = true;
             }
-            (VC_DOLLAR, _) => {
+            VC_DOLLAR => {
                 self.buffer.push('$');
                 self.handled = true;
             }
-            (VC_5, _) => {
+            VC_5 => {
                 self.buffer.push('5');
                 self.handled = true;
             }
-            (VC_PERCENT, _) => {
+            VC_PERCENT => {
                 self.buffer.push('%');
                 self.handled = true;
             }
-            (VC_6, _) => {
+            VC_6 => {
                 self.buffer.push('6');
                 self.handled = true;
             }
-            (VC_CIRCUM, true) => {
+            VC_CIRCUM => {
                 self.buffer.push('^');
                 self.handled = true;
             }
-            (VC_7, _) => {
+            VC_7 => {
                 self.buffer.push('7');
                 self.handled = true;
             }
-            (VC_AMPERSAND, _) => {
+            VC_AMPERSAND => {
                 self.buffer.push('&');
                 self.handled = true;
             }
-            (VC_8, _) => {
+            VC_8 => {
                 self.buffer.push('8');
                 self.handled = true;
             }
-            (VC_ASTERISK, _) => {
+            VC_ASTERISK => {
                 self.buffer.push('*');
                 self.handled = true;
             }
-            (VC_9, _) => {
+            VC_9 => {
                 self.buffer.push('9');
                 self.handled = true;
             }
-            (VC_PAREN_LEFT, _) => {
+            VC_PAREN_LEFT => {
                 self.buffer.push('(');
                 self.handled = true;
             }
 
             // Alphabet Keys
-            (VC_Q, true) => {
+            VC_Q_SHIFT => {
                 self.buffer.push('Q');
                 self.handled = true;
             }
-            (VC_Q, false) => {
+            VC_Q => {
                 self.buffer.push('q');
                 self.handled = true;
             }
-            (VC_W, true) => {
+            VC_W_SHIFT => {
                 self.buffer.push('W');
                 self.handled = true;
             }
-            (VC_W, false) => {
+            VC_W => {
                 self.buffer.push('w');
                 self.handled = true;
             }
-            (VC_E, true) => {
+            VC_E_SHIFT => {
                 self.buffer.push('E');
                 self.handled = true;
             }
-            (VC_E, false) => {
+            VC_E => {
                 self.buffer.push('e');
                 self.handled = true;
             }
-            (VC_R, true) => {
+            VC_R_SHIFT => {
                 self.buffer.push('R');
                 self.handled = true;
             }
-            (VC_R, false) => {
+            VC_R => {
                 self.buffer.push('r');
                 self.handled = true;
             }
-            (VC_T, true) => {
+            VC_T_SHIFT => {
                 self.buffer.push('T');
                 self.handled = true;
             }
-            (VC_T, false) => {
+            VC_T => {
                 self.buffer.push('t');
                 self.handled = true;
             }
-            (VC_Y, true) => {
+            VC_Y_SHIFT => {
                 self.buffer.push('Y');
                 self.handled = true;
             }
-            (VC_Y, false) => {
+            VC_Y => {
                 self.buffer.push('y');
                 self.handled = true;
             }
-            (VC_U, true) => {
+            VC_U_SHIFT => {
                 self.buffer.push('U');
                 self.handled = true;
             }
-            (VC_U, false) => {
+            VC_U => {
                 self.buffer.push('u');
                 self.handled = true;
             }
-            (VC_I, true) => {
+            VC_I_SHIFT => {
                 self.buffer.push('I');
                 self.handled = true;
             }
-            (VC_I, false) => {
+            VC_I => {
                 self.buffer.push('i');
                 self.handled = true;
             }
-            (VC_O, true) => {
+            VC_O_SHIFT => {
                 self.buffer.push('O');
                 self.handled = true;
             }
-            (VC_O, false) => {
+            VC_O => {
                 self.buffer.push('o');
                 self.handled = true;
             }
-            (VC_P, true) => {
+            VC_P_SHIFT => {
                 self.buffer.push('P');
                 self.handled = true;
             }
-            (VC_P, false) => {
+            VC_P => {
                 self.buffer.push('p');
                 self.handled = true;
             }
-            (VC_A, true) => {
+            VC_A_SHIFT => {
                 self.buffer.push('A');
                 self.handled = true;
             }
-            (VC_A, false) => {
+            VC_A => {
                 self.buffer.push('a');
                 self.handled = true;
             }
-            (VC_S, true) => {
+            VC_S_SHIFT => {
                 self.buffer.push('S');
                 self.handled = true;
             }
-            (VC_S, false) => {
+            VC_S => {
                 self.buffer.push('s');
                 self.handled = true;
             }
-            (VC_D, true) => {
+            VC_D_SHIFT => {
                 self.buffer.push('D');
                 self.handled = true;
             }
-            (VC_D, false) => {
+            VC_D => {
                 self.buffer.push('d');
                 self.handled = true;
             }
-            (VC_F, true) => {
+            VC_F_SHIFT => {
                 self.buffer.push('F');
                 self.handled = true;
             }
-            (VC_F, false) => {
+            VC_F => {
                 self.buffer.push('f');
                 self.handled = true;
             }
-            (VC_G, true) => {
+            VC_G_SHIFT => {
                 self.buffer.push('G');
                 self.handled = true;
             }
-            (VC_G, false) => {
+            VC_G => {
                 self.buffer.push('g');
                 self.handled = true;
             }
-            (VC_H, true) => {
+            VC_H_SHIFT => {
                 self.buffer.push('H');
                 self.handled = true;
             }
-            (VC_H, false) => {
+            VC_H => {
                 self.buffer.push('h');
                 self.handled = true;
             }
-            (VC_J, true) => {
+            VC_J_SHIFT => {
                 self.buffer.push('J');
                 self.handled = true;
             }
-            (VC_J, false) => {
+            VC_J => {
                 self.buffer.push('j');
                 self.handled = true;
             }
-            (VC_K, true) => {
+            VC_K_SHIFT => {
                 self.buffer.push('K');
                 self.handled = true;
             }
-            (VC_K, false) => {
+            VC_K => {
                 self.buffer.push('k');
                 self.handled = true;
             }
-            (VC_L, true) => {
+            VC_L_SHIFT => {
                 self.buffer.push('L');
                 self.handled = true;
             }
-            (VC_L, false) => {
+            VC_L => {
                 self.buffer.push('l');
                 self.handled = true;
             }
-            (VC_Z, true) => {
+            VC_Z_SHIFT => {
                 self.buffer.push('Z');
                 self.handled = true;
             }
-            (VC_Z, false) => {
+            VC_Z => {
                 self.buffer.push('z');
                 self.handled = true;
             }
-            (VC_X, true) => {
+            VC_X_SHIFT => {
                 self.buffer.push('X');
                 self.handled = true;
             }
-            (VC_X, false) => {
+            VC_X => {
                 self.buffer.push('x');
                 self.handled = true;
             }
-            (VC_C, true) => {
+            VC_C_SHIFT => {
                 self.buffer.push('C');
                 self.handled = true;
             }
-            (VC_C, false) => {
+            VC_C => {
                 self.buffer.push('c');
                 self.handled = true;
             }
-            (VC_V, true) => {
+            VC_V_SHIFT => {
                 self.buffer.push('V');
                 self.handled = true;
             }
-            (VC_V, false) => {
+            VC_V => {
                 self.buffer.push('v');
                 self.handled = true;
             }
-            (VC_B, true) => {
+            VC_B_SHIFT => {
                 self.buffer.push('B');
                 self.handled = true;
             }
-            (VC_B, false) => {
+            VC_B => {
                 self.buffer.push('b');
                 self.handled = true;
             }
-            (VC_N, true) => {
+            VC_N_SHIFT => {
                 self.buffer.push('N');
                 self.handled = true;
             }
-            (VC_N, false) => {
+            VC_N => {
                 self.buffer.push('n');
                 self.handled = true;
             }
-            (VC_M, true) => {
+            VC_M_SHIFT => {
                 self.buffer.push('M');
                 self.handled = true;
             }
-            (VC_M, false) => {
+            VC_M => {
                 self.buffer.push('m');
                 self.handled = true;
             }
 
-            (VC_MINUS, _) => {
+            VC_MINUS => {
                 self.buffer.push('-');
                 self.handled = true;
             }
-            (VC_UNDERSCORE, _) => {
+            VC_UNDERSCORE => {
                 self.buffer.push('_');
                 self.handled = true;
             }
-            (VC_EQUALS, _) => {
+            VC_EQUALS => {
                 self.buffer.push('=');
                 self.handled = true;
             }
-            (VC_PLUS, _) => {
+            VC_PLUS => {
                 self.buffer.push('+');
                 self.handled = true;
             }
 
-            (VC_BRACKET_LEFT, _) => {
+            VC_BRACKET_LEFT => {
                 self.buffer.push('[');
                 self.handled = true;
             }
-            (VC_BRACKET_RIGHT, _) => {
+            VC_BRACKET_RIGHT => {
                 self.buffer.push(']');
                 self.handled = true;
             }
-            (VC_BRACE_LEFT, _) => {
+            VC_BRACE_LEFT => {
                 self.buffer.push('{');
                 self.handled = true;
             }
-            (VC_BRACE_RIGHT, _) => {
+            VC_BRACE_RIGHT => {
                 self.buffer.push('}');
                 self.handled = true;
             }
-            (VC_BACK_SLASH, _) => {
+            VC_BACK_SLASH => {
                 self.buffer.push('\\');
                 self.handled = true;
             }
-            (VC_BAR, _) => {
+            VC_BAR => {
                 self.buffer.push('|');
                 self.handled = true;
             }
 
-            (VC_SEMICOLON, _) => {
+            VC_SEMICOLON => {
                 self.buffer.push(';');
                 self.handled = true;
             }
-            (VC_COLON, _) => {
+            VC_COLON => {
                 self.buffer.push(':');
                 self.handled = true;
             }
-            (VC_APOSTROPHE, _) => {
+            VC_APOSTROPHE => {
                 self.buffer.push('\'');
                 self.handled = true;
             }
-            (VC_QUOTE, _) => {
+            VC_QUOTE => {
                 self.buffer.push('\"');
                 self.handled = true;
             }
 
-            (VC_COMMA, _) => {
+            VC_COMMA => {
                 self.buffer.push(',');
                 self.handled = true;
             }
-            (VC_LESS, _) => {
+            VC_LESS => {
                 self.buffer.push('<');
                 self.handled = true;
             }
-            (VC_PERIOD, _) => {
+            VC_PERIOD => {
                 self.buffer.push('.');
                 self.handled = true;
             }
-            (VC_GREATER, _) => {
+            VC_GREATER => {
                 self.buffer.push('>');
                 self.handled = true;
             }
-            (VC_SLASH, _) => {
+            VC_SLASH => {
                 self.buffer.push('/');
                 self.handled = true;
             }
-            (VC_QUESTION, _) => {
+            VC_QUESTION => {
                 self.buffer.push('?');
                 self.handled = true;
             }
 
             // Keypad keys
-            (VC_KP_0, _) => {
+            VC_KP_0 => {
                 self.buffer.push('0');
                 self.handled = true;
             }
-            (VC_KP_1, _) => {
+            VC_KP_1 => {
                 self.buffer.push('1');
                 self.handled = true;
             }
-            (VC_KP_2, _) => {
+            VC_KP_2 => {
                 self.buffer.push('2');
                 self.handled = true;
             }
-            (VC_KP_3, _) => {
+            VC_KP_3 => {
                 self.buffer.push('3');
                 self.handled = true;
             }
-            (VC_KP_4, _) => {
+            VC_KP_4 => {
                 self.buffer.push('4');
                 self.handled = true;
             }
-            (VC_KP_5, _) => {
+            VC_KP_5 => {
                 self.buffer.push('5');
                 self.handled = true;
             }
-            (VC_KP_6, _) => {
+            VC_KP_6 => {
                 self.buffer.push('6');
                 self.handled = true;
             }
-            (VC_KP_7, _) => {
+            VC_KP_7 => {
                 self.buffer.push('7');
                 self.handled = true;
             }
-            (VC_KP_8, _) => {
+            VC_KP_8 => {
                 self.buffer.push('8');
                 self.handled = true;
             }
-            (VC_KP_9, _) => {
+            VC_KP_9 => {
                 self.buffer.push('9');
                 self.handled = true;
             }
 
-            (VC_KP_DIVIDE, _) => {
+            VC_KP_DIVIDE => {
                 self.buffer.push('/');
                 self.handled = true;
             }
-            (VC_KP_MULTIPLY, _) => {
+            VC_KP_MULTIPLY => {
                 self.buffer.push('*');
                 self.handled = true;
             }
-            (VC_KP_SUBTRACT, _) => {
+            VC_KP_SUBTRACT => {
                 self.buffer.push('-');
                 self.handled = true;
             }
-            (VC_KP_ADD, _) => {
+            VC_KP_ADD => {
                 self.buffer.push('+');
                 self.handled = true;
             }
-            (VC_KP_DECIMAL, _) => {
+            VC_KP_DECIMAL => {
                 self.buffer.push('.');
                 self.handled = true;
             }
 
             // Special Key
-            (VC_BACKSPACE, _) => {
+            VC_BACKSPACE => {
                 if !self.buffer.is_empty() {
                     // Remove the last character.
                     self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
@@ -549,7 +549,7 @@ impl Method for PhoneticMethod {
                     return Suggestion::empty();
                 }
             }
-            (VC_SHIFT, _) | (VC_CONTROL, _) => {
+            VC_SHIFT | VC_CONTROL => {
                 if !self.buffer.is_empty() {
                     self.handled = true;
                 } else {
@@ -558,7 +558,7 @@ impl Method for PhoneticMethod {
 
                 return self.current_suggestion();
             }
-            (VC_ENTER, _) | (VC_SPACE, _) => {
+            VC_ENTER | VC_SPACE => {
                 if key == VC_ENTER
                     && get_settings_enter_closes_preview_window()
                     && get_settings_phonetic_database_on()
@@ -575,7 +575,7 @@ impl Method for PhoneticMethod {
                 return suggestion;
             }
 
-            (VC_RIGHT, _) | (VC_LEFT, _) => {
+            VC_RIGHT | VC_LEFT => {
                 if !self.buffer.is_empty()
                     && get_settings_preview_window_horizontal()
                     && get_settings_phonetic_database_on()
@@ -589,7 +589,7 @@ impl Method for PhoneticMethod {
                 return self.current_suggestion();
             }
 
-            (VC_UP, _) | (VC_DOWN, _) => {
+            VC_UP | VC_DOWN => {
                 if !self.buffer.is_empty()
                     && !get_settings_preview_window_horizontal()
                     && get_settings_phonetic_database_on()
@@ -603,7 +603,7 @@ impl Method for PhoneticMethod {
                 return self.current_suggestion();
             }
 
-            (VC_TAB, _) => {
+            VC_TAB => {
                 if !self.buffer.is_empty() && get_settings_phonetic_database_on() {
                     self.handled = true;
                     self.selection_changed = true;

@@ -1,7 +1,5 @@
 // Fixed keyboard layout parser.
 
-#![allow(non_upper_case_globals)]
-
 use serde_json::{Map, Value};
 use std::fmt;
 
@@ -80,59 +78,59 @@ impl LayoutParser {
             (VC_PAREN_LEFT, modifier) => self.layout_get_value("ParenLeft", modifier),
 
             // Alphabets
-            (VC_a, modifier) => self.layout_get_value("a", modifier),
-            (VC_b, modifier) => self.layout_get_value("b", modifier),
-            (VC_c, modifier) => self.layout_get_value("c", modifier),
-            (VC_d, modifier) => self.layout_get_value("d", modifier),
-            (VC_e, modifier) => self.layout_get_value("e", modifier),
-            (VC_f, modifier) => self.layout_get_value("f", modifier),
-            (VC_g, modifier) => self.layout_get_value("g", modifier),
-            (VC_h, modifier) => self.layout_get_value("h", modifier),
-            (VC_i, modifier) => self.layout_get_value("i", modifier),
-            (VC_j, modifier) => self.layout_get_value("j", modifier),
-            (VC_k, modifier) => self.layout_get_value("k", modifier),
-            (VC_l, modifier) => self.layout_get_value("l", modifier),
-            (VC_m, modifier) => self.layout_get_value("m", modifier),
-            (VC_n, modifier) => self.layout_get_value("n", modifier),
-            (VC_o, modifier) => self.layout_get_value("o", modifier),
-            (VC_p, modifier) => self.layout_get_value("p", modifier),
-            (VC_q, modifier) => self.layout_get_value("q", modifier),
-            (VC_r, modifier) => self.layout_get_value("r", modifier),
-            (VC_s, modifier) => self.layout_get_value("s", modifier),
-            (VC_t, modifier) => self.layout_get_value("t", modifier),
-            (VC_u, modifier) => self.layout_get_value("u", modifier),
-            (VC_v, modifier) => self.layout_get_value("v", modifier),
-            (VC_w, modifier) => self.layout_get_value("w", modifier),
-            (VC_x, modifier) => self.layout_get_value("x", modifier),
-            (VC_y, modifier) => self.layout_get_value("y", modifier),
-            (VC_z, modifier) => self.layout_get_value("z", modifier),
+            (VC_A, modifier) => self.layout_get_value("a", modifier),
+            (VC_B, modifier) => self.layout_get_value("b", modifier),
+            (VC_C, modifier) => self.layout_get_value("c", modifier),
+            (VC_D, modifier) => self.layout_get_value("d", modifier),
+            (VC_E, modifier) => self.layout_get_value("e", modifier),
+            (VC_F, modifier) => self.layout_get_value("f", modifier),
+            (VC_G, modifier) => self.layout_get_value("g", modifier),
+            (VC_H, modifier) => self.layout_get_value("h", modifier),
+            (VC_I, modifier) => self.layout_get_value("i", modifier),
+            (VC_J, modifier) => self.layout_get_value("j", modifier),
+            (VC_K, modifier) => self.layout_get_value("k", modifier),
+            (VC_L, modifier) => self.layout_get_value("l", modifier),
+            (VC_M, modifier) => self.layout_get_value("m", modifier),
+            (VC_N, modifier) => self.layout_get_value("n", modifier),
+            (VC_O, modifier) => self.layout_get_value("o", modifier),
+            (VC_P, modifier) => self.layout_get_value("p", modifier),
+            (VC_Q, modifier) => self.layout_get_value("q", modifier),
+            (VC_R, modifier) => self.layout_get_value("r", modifier),
+            (VC_S, modifier) => self.layout_get_value("s", modifier),
+            (VC_T, modifier) => self.layout_get_value("t", modifier),
+            (VC_U, modifier) => self.layout_get_value("u", modifier),
+            (VC_V, modifier) => self.layout_get_value("v", modifier),
+            (VC_W, modifier) => self.layout_get_value("w", modifier),
+            (VC_X, modifier) => self.layout_get_value("x", modifier),
+            (VC_Y, modifier) => self.layout_get_value("y", modifier),
+            (VC_Z, modifier) => self.layout_get_value("z", modifier),
 
-            (VC_A, modifier) => self.layout_get_value("A", modifier),
-            (VC_B, modifier) => self.layout_get_value("B", modifier),
-            (VC_C, modifier) => self.layout_get_value("C", modifier),
-            (VC_D, modifier) => self.layout_get_value("D", modifier),
-            (VC_E, modifier) => self.layout_get_value("E", modifier),
-            (VC_F, modifier) => self.layout_get_value("F", modifier),
-            (VC_G, modifier) => self.layout_get_value("G", modifier),
-            (VC_H, modifier) => self.layout_get_value("H", modifier),
-            (VC_I, modifier) => self.layout_get_value("I", modifier),
-            (VC_J, modifier) => self.layout_get_value("J", modifier),
-            (VC_K, modifier) => self.layout_get_value("K", modifier),
-            (VC_L, modifier) => self.layout_get_value("L", modifier),
-            (VC_M, modifier) => self.layout_get_value("M", modifier),
-            (VC_N, modifier) => self.layout_get_value("N", modifier),
-            (VC_O, modifier) => self.layout_get_value("O", modifier),
-            (VC_P, modifier) => self.layout_get_value("P", modifier),
-            (VC_Q, modifier) => self.layout_get_value("Q", modifier),
-            (VC_R, modifier) => self.layout_get_value("R", modifier),
-            (VC_S, modifier) => self.layout_get_value("S", modifier),
-            (VC_T, modifier) => self.layout_get_value("T", modifier),
-            (VC_U, modifier) => self.layout_get_value("U", modifier),
-            (VC_V, modifier) => self.layout_get_value("V", modifier),
-            (VC_W, modifier) => self.layout_get_value("W", modifier),
-            (VC_X, modifier) => self.layout_get_value("X", modifier),
-            (VC_Y, modifier) => self.layout_get_value("Y", modifier),
-            (VC_Z, modifier) => self.layout_get_value("Z", modifier),
+            (VC_A_SHIFT, modifier) => self.layout_get_value("A", modifier),
+            (VC_B_SHIFT, modifier) => self.layout_get_value("B", modifier),
+            (VC_C_SHIFT, modifier) => self.layout_get_value("C", modifier),
+            (VC_D_SHIFT, modifier) => self.layout_get_value("D", modifier),
+            (VC_E_SHIFT, modifier) => self.layout_get_value("E", modifier),
+            (VC_F_SHIFT, modifier) => self.layout_get_value("F", modifier),
+            (VC_G_SHIFT, modifier) => self.layout_get_value("G", modifier),
+            (VC_H_SHIFT, modifier) => self.layout_get_value("H", modifier),
+            (VC_I_SHIFT, modifier) => self.layout_get_value("I", modifier),
+            (VC_J_SHIFT, modifier) => self.layout_get_value("J", modifier),
+            (VC_K_SHIFT, modifier) => self.layout_get_value("K", modifier),
+            (VC_L_SHIFT, modifier) => self.layout_get_value("L", modifier),
+            (VC_M_SHIFT, modifier) => self.layout_get_value("M", modifier),
+            (VC_N_SHIFT, modifier) => self.layout_get_value("N", modifier),
+            (VC_O_SHIFT, modifier) => self.layout_get_value("O", modifier),
+            (VC_P_SHIFT, modifier) => self.layout_get_value("P", modifier),
+            (VC_Q_SHIFT, modifier) => self.layout_get_value("Q", modifier),
+            (VC_R_SHIFT, modifier) => self.layout_get_value("R", modifier),
+            (VC_S_SHIFT, modifier) => self.layout_get_value("S", modifier),
+            (VC_T_SHIFT, modifier) => self.layout_get_value("T", modifier),
+            (VC_U_SHIFT, modifier) => self.layout_get_value("U", modifier),
+            (VC_V_SHIFT, modifier) => self.layout_get_value("V", modifier),
+            (VC_W_SHIFT, modifier) => self.layout_get_value("W", modifier),
+            (VC_X_SHIFT, modifier) => self.layout_get_value("X", modifier),
+            (VC_Y_SHIFT, modifier) => self.layout_get_value("Y", modifier),
+            (VC_Z_SHIFT, modifier) => self.layout_get_value("Z", modifier),
 
             // Other characters
             (VC_GRAVE, modifier) => self.layout_get_value("Grave", modifier),
@@ -224,19 +222,19 @@ mod tests {
         let parser = LayoutParser::new(layout);
 
         assert_eq!(
-            parser.get_char_for_key(VC_a, LayoutModifiers::Normal),
+            parser.get_char_for_key(VC_A, LayoutModifiers::Normal),
             Some("া".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_A, LayoutModifiers::Normal),
+            parser.get_char_for_key(VC_A_SHIFT, LayoutModifiers::Normal),
             Some("অ".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_a, LayoutModifiers::AltGr),
+            parser.get_char_for_key(VC_A, LayoutModifiers::AltGr),
             Some("ঌ".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_A, LayoutModifiers::AltGr),
+            parser.get_char_for_key(VC_A_SHIFT, LayoutModifiers::AltGr),
             Some("ৠ".to_string())
         );
 
@@ -453,162 +451,6 @@ mod tests {
             .get_char_for_key(VC_EQUALS, LayoutModifiers::AltGr)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_a, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_a, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_b, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_b, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_c, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_c, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_d, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_d, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_e, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_e, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_f, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_f, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_g, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_g, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_h, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_h, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_i, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_i, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_j, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_j, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_k, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_k, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_l, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_l, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_m, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_m, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_n, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_n, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_o, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_o, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_p, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_p, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_q, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_q, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_r, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_r, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_s, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_s, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_t, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_t, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_u, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_u, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_v, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_v, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_w, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_w, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_x, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_x, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_y, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_y, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_z, LayoutModifiers::Normal)
-            .is_some());
-        assert!(parser
-            .get_char_for_key(VC_z, LayoutModifiers::AltGr)
-            .is_some());
-        assert!(parser
             .get_char_for_key(VC_A, LayoutModifiers::Normal)
             .is_some());
         assert!(parser
@@ -763,6 +605,162 @@ mod tests {
             .is_some());
         assert!(parser
             .get_char_for_key(VC_Z, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_A_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_A_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_B_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_B_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_C_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_C_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_D_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_D_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_E_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_E_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_F_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_F_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_G_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_G_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_H_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_H_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_I_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_I_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_J_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_J_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_K_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_K_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_L_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_L_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_M_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_M_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_N_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_N_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_O_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_O_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_P_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_P_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_Q_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_Q_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_R_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_R_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_S_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_S_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_T_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_T_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_U_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_U_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_V_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_V_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_W_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_W_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_X_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_X_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_Y_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_Y_SHIFT, LayoutModifiers::AltGr)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_Z_SHIFT, LayoutModifiers::Normal)
+            .is_some());
+        assert!(parser
+            .get_char_for_key(VC_Z_SHIFT, LayoutModifiers::AltGr)
             .is_some());
         assert!(parser
             .get_char_for_key(VC_BRACKET_LEFT, LayoutModifiers::Normal)
