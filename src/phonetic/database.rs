@@ -8,38 +8,8 @@ use crate::hashmap;
 use crate::phonetic::regex::parse;
 use crate::settings::{get_settings_database_dir, get_settings_user_phonetic_autocorrect};
 
-lazy_static::lazy_static! {
-    static ref DICTIONARY_TABLE: HashMap<&'static str, Vec<&'static str>> = hashmap! [
-        "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
-        "b" => vec!["b", "bh"],
-        "c" => vec!["c", "ch", "k"],
-        "d" => vec!["d", "dh", "dd", "ddh"],
-        "e" => vec!["i", "ii", "e", "y"],
-        "f" => vec!["ph"],
-        "g" => vec!["g", "gh", "j"],
-        "h" => vec!["h"],
-        "i" => vec!["i", "ii", "y"],
-        "j" => vec!["j", "jh", "z"],
-        "k" => vec!["k", "kh"],
-        "l" => vec!["l"],
-        "m" => vec!["h", "m"],
-        "n" => vec!["n", "nya", "nga", "nn"],
-        "o" => vec!["a", "u", "uu", "oi", "o", "ou", "y"],
-        "p" => vec!["p", "ph"],
-        "q" => vec!["k"],
-        "r" => vec!["rri", "h", "r", "rr", "rrh"],
-        "s" => vec!["s", "sh", "ss"],
-        "t" => vec!["t", "th", "tt", "tth", "khandatta"],
-        "u" => vec!["u", "uu", "y"],
-        "v" => vec!["bh"],
-        "w" => vec!["o"],
-        "x" => vec!["e", "k"],
-        "y" => vec!["i", "y"],
-        "z" => vec!["h", "j", "jh", "z"]
-    ];
-}
-
 pub(crate) struct Database {
+    map: HashMap<&'static str, Vec<&'static str>>,
     table: HashMap<String, Vec<String>>,
     suffix: FxHashMap<String, String>,
     autocorrect: FxHashMap<String, String>,
@@ -57,7 +27,37 @@ impl Database {
                 FxHashMap::default()
             };
 
+        let map = hashmap! [
+            "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
+            "b" => vec!["b", "bh"],
+            "c" => vec!["c", "ch", "k"],
+            "d" => vec!["d", "dh", "dd", "ddh"],
+            "e" => vec!["i", "ii", "e", "y"],
+            "f" => vec!["ph"],
+            "g" => vec!["g", "gh", "j"],
+            "h" => vec!["h"],
+            "i" => vec!["i", "ii", "y"],
+            "j" => vec!["j", "jh", "z"],
+            "k" => vec!["k", "kh"],
+            "l" => vec!["l"],
+            "m" => vec!["h", "m"],
+            "n" => vec!["n", "nya", "nga", "nn"],
+            "o" => vec!["a", "u", "uu", "oi", "o", "ou", "y"],
+            "p" => vec!["p", "ph"],
+            "q" => vec!["k"],
+            "r" => vec!["rri", "h", "r", "rr", "rrh"],
+            "s" => vec!["s", "sh", "ss"],
+            "t" => vec!["t", "th", "tt", "tth", "khandatta"],
+            "u" => vec!["u", "uu", "y"],
+            "v" => vec!["bh"],
+            "w" => vec!["o"],
+            "x" => vec!["e", "k"],
+            "y" => vec!["i", "y"],
+            "z" => vec!["h", "j", "jh", "z"]
+        ];
+
         Database {
+            map,
             table: serde_json::from_str(
                 &read_to_string(get_settings_database_dir().join("dictionary.json")).unwrap(),
             )
@@ -78,7 +78,7 @@ impl Database {
     pub(crate) fn search_dictionary(&self, word: &str) -> Vec<String> {
         let rgx = Regex::new(&parse(word)).unwrap();
 
-        DICTIONARY_TABLE
+        self.map
             .get(word.get(0..1).unwrap_or_default())
             .unwrap_or(&Vec::new())
             .par_iter()
