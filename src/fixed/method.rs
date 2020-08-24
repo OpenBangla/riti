@@ -200,7 +200,11 @@ impl FixedMethod {
 
     fn current_suggestion(&self) -> Suggestion {
         if !self.buffer.is_empty() {
-            Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
+            if get_settings_fixed_database_on() {
+                Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
+            } else {
+                Suggestion::new_lonely(self.buffer.clone())
+            }
         } else {
             Suggestion::empty()
         }
