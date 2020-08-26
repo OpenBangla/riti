@@ -4,7 +4,6 @@ use std::cmp::Ordering;
 
 use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::context::Method;
-use crate::keycodes::*;
 use crate::loader::LayoutLoader;
 use crate::settings::*;
 use crate::suggestion::Suggestion;
@@ -24,67 +23,14 @@ impl Method for FixedMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion {
         let modifier = get_modifiers(modifier);
 
-        match key {
-            VC_RIGHT | VC_LEFT | VC_UP | VC_DOWN => {
-                if !self.buffer.is_empty() && get_settings_fixed_database_on() {
-                    self.handled = if (key == VC_RIGHT || key == VC_LEFT)
-                        && get_settings_preview_window_horizontal()
-                    {
-                        true
-                    } else if (key == VC_UP || key == VC_DOWN)
-                        && !get_settings_preview_window_horizontal()
-                    {
-                        true
-                    } else {
-                        false
-                    };
-                } else {
-                    self.handled = false;
-                }
-
-                return self.current_suggestion();
-            }
-
-            VC_TAB => {
-                if !self.buffer.is_empty() && get_settings_fixed_database_on() {
-                    self.handled = true;
-                } else {
-                    self.handled = false;
-                }
-
-                return self.current_suggestion();
-            }
-
-            VC_SHIFT | VC_CONTROL | VC_ALT => {
-                if !self.buffer.is_empty() {
-                    self.handled = true;
-                    return self.create_suggestion();
-                } else {
-                    self.handled = false;
-                    return Suggestion::empty();
-                }
-            }
-
-            VC_ENTER | VC_SPACE => {
-                self.handled = false;
-
-                let suggestion = self.current_suggestion();
-                self.buffer.clear();
-
-                return suggestion;
-            }
-
-            key => {
-                if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
-                    self.process_key_value(&value);
-                    self.handled = true;
-                } else {
-                    self.handled = false;
-                    let suggestion = self.current_suggestion();
-                    self.buffer.clear();
-                    return suggestion;
-                }
-            }
+        if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
+            self.process_key_value(&value);
+            self.handled = true;
+        } else {
+            self.handled = false;
+            let suggestion = self.current_suggestion();
+            self.buffer.clear();
+            return suggestion;
         }
 
         self.create_suggestion()

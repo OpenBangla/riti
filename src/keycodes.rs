@@ -30,9 +30,6 @@ pub const VC_PLUS: u16 = 0x0058;
 
 pub const VC_MINUS: u16 = 0x000C; // '-'
 pub const VC_EQUALS: u16 = 0x000D; // '='
-pub const VC_BACKSPACE: u16 = 0x000E;
-
-pub const VC_TAB: u16 = 0x000F;
 
 pub const VC_A: u16 = 0xA096;
 pub const VC_B: u16 = 0xA097;
@@ -98,7 +95,6 @@ pub const VC_BAR: u16 = 0x005D; // '|'
 
 pub const VC_SEMICOLON: u16 = 0x0027; // ';'
 pub const VC_APOSTROPHE: u16 = 0x0028; // '''
-pub const VC_ENTER: u16 = 0x001C;
 
 pub const VC_COMMA: u16 = 0x0033; // ','
 pub const VC_PERIOD: u16 = 0x0034; // '.'
@@ -109,27 +105,7 @@ pub const VC_QUOTE: u16 = 0x0064; // '"'
 pub const VC_LESS: u16 = 0x0065; // '<'
 pub const VC_GREATER: u16 = 0x0066; // '>'
 pub const VC_QUESTION: u16 = 0x0067; // '?'
-
-pub const VC_SPACE: u16 = 0x0039;
 // End Alphanumeric Zone
-
-pub const VC_UNKNOWN: u16 = 0x0046;
-
-// Begin Edit Key Zone
-pub const VC_INSERT: u16 = 0x0E52;
-pub const VC_DELETE: u16 = 0x0E53;
-pub const VC_HOME: u16 = 0x0E47;
-pub const VC_END: u16 = 0x0E4F;
-pub const VC_PAGE_UP: u16 = 0x0E49;
-pub const VC_PAGE_DOWN: u16 = 0x0E51;
-// End Edit Key Zone
-
-// Begin Cursor Key Zone
-pub const VC_UP: u16 = 0xE048;
-pub const VC_LEFT: u16 = 0xE04B;
-pub const VC_RIGHT: u16 = 0xE04D;
-pub const VC_DOWN: u16 = 0xE050;
-// End Cursor Key Zone
 
 // Begin Numeric Zone
 pub const VC_KP_DIVIDE: u16 = 0x0E35;
@@ -151,7 +127,3 @@ pub const VC_KP_8: u16 = 0x0048;
 pub const VC_KP_9: u16 = 0x0049;
 pub const VC_KP_0: u16 = 0x0052;
 // End Numeric Zone
-
-pub const VC_SHIFT: u16 = 0x002A;
-pub const VC_CONTROL: u16 = 0x001D;
-pub const VC_ALT: u16 = 0x0038;

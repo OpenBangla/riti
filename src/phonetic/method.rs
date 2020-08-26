@@ -6,11 +6,10 @@ use crate::context::Method;
 use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::settings::{
-    get_settings_enter_closes_preview_window, get_settings_phonetic_database_on,
-    get_settings_preview_window_horizontal, get_settings_user_phonetic_selection_data,
+    get_settings_phonetic_database_on, get_settings_user_phonetic_selection_data,
 };
 use crate::suggestion::Suggestion;
-use crate::utility::{split_string, get_modifiers};
+use crate::utility::split_string;
 
 pub(crate) struct PhoneticMethod {
     buffer: String,
@@ -76,9 +75,7 @@ impl PhoneticMethod {
 }
 
 impl Method for PhoneticMethod {
-    fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion {
-        let (shift, _) = get_modifiers(modifier);
-
+    fn get_suggestion(&mut self, key: u16, _modifier: u8) -> Suggestion {
         match key {
             // Alphanumeric keys
             VC_GRAVE => {
@@ -525,72 +522,6 @@ impl Method for PhoneticMethod {
             VC_KP_DECIMAL => {
                 self.buffer.push('.');
                 self.handled = true;
-            }
-
-            // Special Key
-            (VC_SHIFT, _) | (VC_CONTROL, _) => {
-                if !self.buffer.is_empty() {
-                    self.handled = true;
-                } else {
-                    self.handled = false;
-                }
-
-                return self.current_suggestion();
-            }
-            VC_ENTER | VC_SPACE => {
-                if key == VC_ENTER
-                    && get_settings_enter_closes_preview_window()
-                    && get_settings_phonetic_database_on()
-                    && !self.buffer.is_empty()
-                {
-                    self.handled = true;
-                } else {
-                    self.handled = false;
-                }
-
-                let suggestion = self.current_suggestion();
-                self.buffer.clear();
-
-                return suggestion;
-            }
-
-            VC_RIGHT | VC_LEFT => {
-                if !self.buffer.is_empty()
-                    && get_settings_preview_window_horizontal()
-                    && get_settings_phonetic_database_on()
-                {
-                    self.selection_changed = true;
-                    self.handled = true;
-                } else {
-                    self.handled = false;
-                }
-
-                return self.current_suggestion();
-            }
-
-            VC_UP | VC_DOWN => {
-                if !self.buffer.is_empty()
-                    && !get_settings_preview_window_horizontal()
-                    && get_settings_phonetic_database_on()
-                {
-                    self.selection_changed = true;
-                    self.handled = true;
-                } else {
-                    self.handled = false;
-                }
-
-                return self.current_suggestion();
-            }
-
-            VC_TAB => {
-                if !self.buffer.is_empty() && get_settings_phonetic_database_on() {
-                    self.handled = true;
-                    self.selection_changed = true;
-                } else {
-                    self.handled = false;
-                }
-
-                return self.current_suggestion();
             }
 
             _ => {
