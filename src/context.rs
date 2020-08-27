@@ -36,6 +36,8 @@ impl RitiContext {
     /// A candidate of the suggestion list was committed.
     ///
     /// `index`: index of the candidate.
+    ///
+    /// This function will end the ongoing input session.
     pub fn candidate_committed(&self, index: usize) {
         self.method.borrow_mut().candidate_committed(index)
     }
@@ -76,7 +78,7 @@ impl RitiContext {
 
     /// A BackSpace event.
     ///
-    /// Returns if the input method has handled the event.
+    /// Returns `true` if the input method has handled the event.
     ///
     /// If the internal buffer becomes empty, this function will
     /// end the ongoing input session.

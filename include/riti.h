@@ -265,11 +265,28 @@ struct Suggestion;
 extern "C" {
 
 /*
+ A BackSpace event.
+
+ Returns `true` if the input method has handled the event.
+
+ If the internal buffer becomes empty, this function will
+ end the ongoing input session.
+ */
+bool riti_context_backspace_event(RitiContext *ptr);
+
+/*
  A candidate of the suggestion list was committed.
 
  `index`: index of the candidate.
+
+ This function will end the ongoing input session.
  */
 void riti_context_candidate_committed(RitiContext *ptr, uintptr_t index);
+
+/*
+ Finish the ongoing input session if any.
+ */
+void riti_context_finish_input_session(RitiContext *ptr);
 
 void riti_context_free(RitiContext *ptr);
 
@@ -279,6 +296,11 @@ void riti_context_free(RitiContext *ptr);
 bool riti_context_key_handled(RitiContext *ptr);
 
 RitiContext *riti_context_new();
+
+/*
+ Checks if there is an onging input session.
+ */
+bool riti_context_ongoing_input_session(RitiContext *ptr);
 
 /*
  Update the suggestion making engine. This would also look for changes
