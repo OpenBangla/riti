@@ -99,18 +99,20 @@ pub extern "C" fn riti_context_finish_input_session(ptr: *mut RitiContext) {
 
 /// A BackSpace event.
 ///
-/// Returns `true` if the input method has handled the event.
+/// Returns a new `suggestion` after applying the BackSpace event.
 ///
 /// If the internal buffer becomes empty, this function will
 /// end the ongoing input session.
 #[no_mangle]
-pub extern "C" fn riti_context_backspace_event(ptr: *mut RitiContext) -> bool {
+pub extern "C" fn riti_context_backspace_event(ptr: *mut RitiContext) -> *mut Suggestion {
     let context = unsafe {
         assert!(!ptr.is_null());
         &*ptr
     };
 
-    context.backspace_event()
+    let suggestion = context.backspace_event();
+
+    Box::into_raw(Box::new(suggestion))
 }
 
 // FFI functions for handling the `Suggestion` structure.

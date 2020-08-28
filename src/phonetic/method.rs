@@ -570,14 +570,19 @@ impl Method for PhoneticMethod {
         self.buffer.clear();
     }
 
-    fn backspace_event(&mut self) -> bool {
+    fn backspace_event(&mut self) -> Suggestion {
         if !self.buffer.is_empty() {
             // Remove the last character.
             self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
 
-            true
+            if self.buffer.is_empty() {
+                // The buffer is now empty, so return empty suggestion.
+                return Suggestion::empty();
+            }
+
+            return self.create_suggestion();
         } else {
-            false
+            return Suggestion::empty();
         }
     }
 }
@@ -613,8 +618,7 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(method.backspace_event()); // a
-        assert!(method.backspace_event()); // " "
-        assert!(!method.backspace_event()); // Empty
+        assert!(!method.backspace_event().is_empty()); // a
+        assert!(method.backspace_event().is_empty()); // Empty
     }
 }

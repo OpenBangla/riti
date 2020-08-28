@@ -78,11 +78,11 @@ impl RitiContext {
 
     /// A BackSpace event.
     ///
-    /// Returns `true` if the input method has handled the event.
+    /// Returns a new `suggestion` after applying the BackSpace event.
     ///
     /// If the internal buffer becomes empty, this function will
     /// end the ongoing input session.
-    pub fn backspace_event(&self) -> bool {
+    pub fn backspace_event(&self) -> Suggestion {
         self.method.borrow_mut().backspace_event()
     }
 }
@@ -94,7 +94,7 @@ pub(crate) trait Method {
     fn update_engine(&mut self);
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);
-    fn backspace_event(&mut self) -> bool;
+    fn backspace_event(&mut self) -> Suggestion;
 }
 
 /// Shift modifier key.

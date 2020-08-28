@@ -56,14 +56,19 @@ impl Method for FixedMethod {
         self.buffer.clear();
     }
 
-    fn backspace_event(&mut self) -> bool {
+    fn backspace_event(&mut self) -> Suggestion {
         if !self.buffer.is_empty() {
             // Remove the last character from buffer.
             self.internal_backspace();
 
-            true
+            if self.buffer.is_empty() {
+                // The buffer is now empty, so return empty suggestion.
+                return Suggestion::empty();
+            }
+
+            return self.create_suggestion();
         } else {
-            false
+            return Suggestion::empty();
         }
     }
 }
@@ -417,10 +422,9 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(method.backspace_event()); // আম
-        assert!(method.backspace_event()); // আ
-        assert!(method.backspace_event()); // " "
-        assert!(!method.backspace_event()); // Empty
+        assert!(!method.backspace_event().is_empty()); // আম
+        assert!(!method.backspace_event().is_empty()); // আ
+        assert!(method.backspace_event().is_empty()); // Empty
     }
 
     #[test]

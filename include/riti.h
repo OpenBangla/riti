@@ -267,12 +267,12 @@ extern "C" {
 /*
  A BackSpace event.
 
- Returns `true` if the input method has handled the event.
+ Returns a new `suggestion` after applying the BackSpace event.
 
  If the internal buffer becomes empty, this function will
  end the ongoing input session.
  */
-bool riti_context_backspace_event(RitiContext *ptr);
+Suggestion *riti_context_backspace_event(RitiContext *ptr);
 
 /*
  A candidate of the suggestion list was committed.
