@@ -14,7 +14,6 @@ const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 pub(crate) struct FixedMethod {
     buffer: String,
     suggestions: Vec<String>,
-    handled: bool,
     parser: LayoutParser,
     database: Database,
 }
@@ -25,9 +24,7 @@ impl Method for FixedMethod {
 
         if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
             self.process_key_value(&value);
-            self.handled = true;
         } else {
-            self.handled = false;
             let suggestion = self.current_suggestion();
             self.buffer.clear();
             return suggestion;
@@ -38,10 +35,6 @@ impl Method for FixedMethod {
 
     fn candidate_committed(&mut self, _index: usize) {
         self.buffer.clear();
-    }
-
-    fn key_handled(&self) -> bool {
-        self.handled
     }
 
     fn update_engine(&mut self) {
@@ -81,7 +74,6 @@ impl FixedMethod {
         FixedMethod {
             buffer: String::new(),
             suggestions: Vec::new(),
-            handled: false,
             parser,
             database: Database::new(),
         }
@@ -377,7 +369,6 @@ impl Default for FixedMethod {
         FixedMethod {
             buffer: String::new(),
             suggestions: Vec::new(),
-            handled: false,
             parser,
             database: Database::new(),
         }

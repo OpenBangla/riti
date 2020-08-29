@@ -42,11 +42,6 @@ impl RitiContext {
         self.method.borrow_mut().candidate_committed(index)
     }
 
-    /// Returns `true` if the key was handled, `false` otherwise.
-    pub fn key_handled(&self) -> bool {
-        self.method.borrow().key_handled()
-    }
-
     /// Update the suggestion making engine. This would also look for changes
     /// in layout selection and AutoCorrect database.
     pub fn update_engine(&mut self) {
@@ -90,7 +85,6 @@ impl RitiContext {
 pub(crate) trait Method {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion;
     fn candidate_committed(&mut self, index: usize);
-    fn key_handled(&self) -> bool;
     fn update_engine(&mut self);
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);

@@ -52,17 +52,6 @@ pub extern "C" fn riti_context_candidate_committed(ptr: *mut RitiContext, index:
     context.candidate_committed(index)
 }
 
-/// Returns `true` if the key was handled, `false` otherwise.
-#[no_mangle]
-pub extern "C" fn riti_context_key_handled(ptr: *mut RitiContext) -> bool {
-    let context = unsafe {
-        assert!(!ptr.is_null());
-        &*ptr
-    };
-
-    context.key_handled()
-}
-
 /// Update the suggestion making engine. This would also look for changes
 /// in layout selection and AutoCorrect database.
 #[no_mangle]
