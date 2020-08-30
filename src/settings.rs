@@ -2,8 +2,6 @@ use std::env::var;
 use std::path::PathBuf;
 
 pub(crate) const ENV_LAYOUT_FILE: &str = "RITI_LAYOUT_FILE";
-pub(crate) const ENV_ENTER_CLOSES_PREVIEW_WIN: &str = "RITI_ENTER_CLOSES_PREVIEW_WIN";
-pub(crate) const ENV_PREVIEW_WIN_HORIZONTAL: &str = "RITI_PREVIEW_WIN_HORIZONTAL";
 pub(crate) const ENV_PHONETIC_DATABASE_ON: &str = "RITI_PHONETIC_DATABASE_ON";
 pub(crate) const ENV_PHONETIC_INCLUDE_ENGLISH: &str = "RITI_PHONETIC_INCLUDE_ENGLISH";
 pub(crate) const ENV_DATABASE_DIR: &str = "RITI_DATABASE_DIR";
@@ -17,16 +15,6 @@ pub(crate) const ENV_LAYOUT_FIXED_NUMBERPAD: &str = "RITI_LAYOUT_FIXED_NUMBERPAD
 /// Get file path of the selected layout.
 pub(crate) fn get_settings_layout_file() -> String {
     var(ENV_LAYOUT_FILE).unwrap()
-}
-
-/// Check if the Enter key closes preview window.
-pub(crate) fn get_settings_enter_closes_preview_window() -> bool {
-    var(ENV_ENTER_CLOSES_PREVIEW_WIN).unwrap().parse().unwrap()
-}
-
-/// Check if the Enter key closes preview window.
-pub(crate) fn get_settings_preview_window_horizontal() -> bool {
-    var(ENV_PREVIEW_WIN_HORIZONTAL).unwrap().parse().unwrap()
 }
 
 /// Check if the Dictionary suggestion is on for Phonetic method.
@@ -116,8 +104,6 @@ pub(crate) mod tests {
             ENV_DATABASE_DIR,
             format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data"),
         );
-        set_var(ENV_ENTER_CLOSES_PREVIEW_WIN, "true");
-        set_var(ENV_PREVIEW_WIN_HORIZONTAL, "true");
         set_var(ENV_PHONETIC_DATABASE_ON, "true");
         set_var(ENV_PHONETIC_INCLUDE_ENGLISH, "false");
     }
