@@ -36,13 +36,10 @@ impl RitiContext {
     /// A candidate of the suggestion list was committed.
     ///
     /// `index`: index of the candidate.
+    ///
+    /// This function will end the ongoing input session.
     pub fn candidate_committed(&self, index: usize) {
         self.method.borrow_mut().candidate_committed(index)
-    }
-
-    /// Returns `true` if the key was handled, `false` otherwise.
-    pub fn key_handled(&self) -> bool {
-        self.method.borrow().key_handled()
     }
 
     /// Update the suggestion making engine. This would also look for changes
@@ -63,24 +60,42 @@ impl RitiContext {
             self.method.borrow_mut().update_engine();
         }
     }
+
+    /// Checks if there is an onging input session.         
+    pub fn ongoing_input_session(&self) -> bool {
+        self.method.borrow().ongoing_input_session()
+    }
+
+    /// Finish the ongoing input session if any.
+    pub fn finish_input_session(&self) {
+        self.method.borrow_mut().finish_input_session();
+    }
+
+    /// A BackSpace event.
+    ///
+    /// Returns a new `suggestion` after applying the BackSpace event.
+    ///
+    /// If the internal buffer becomes empty, this function will
+    /// end the ongoing input session.
+    pub fn backspace_event(&self) -> Suggestion {
+        self.method.borrow_mut().backspace_event()
+    }
 }
 
 pub(crate) trait Method {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion;
     fn candidate_committed(&mut self, index: usize);
-    fn key_handled(&self) -> bool;
     fn update_engine(&mut self);
+    fn ongoing_input_session(&self) -> bool;
+    fn finish_input_session(&mut self);
+    fn backspace_event(&mut self) -> Suggestion;
 }
 
 /// Shift modifier key.
 ///
 /// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
 pub const MODIFIER_SHIFT: u8 = 1 << 0;
-/// Ctrl modifier key.
+/// AltGr modifier key.
 ///
 /// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
-pub const MODIFIER_CTRL: u8 = 1 << 1;
-/// Alt modifier key.
-///
-/// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
-pub const MODIFIER_ALT: u8 = 1 << 2;
+pub const MODIFIER_ALT_GR: u8 = 1 << 1;

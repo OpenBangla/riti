@@ -1,4 +1,4 @@
-use crate::context::{MODIFIER_ALT, MODIFIER_CTRL, MODIFIER_SHIFT};
+use crate::context::{MODIFIER_ALT_GR, MODIFIER_SHIFT};
 
 /// Some utility functions which we implement on the `char` type.
 pub(crate) trait Utility {
@@ -30,17 +30,16 @@ impl Utility for char {
 
 /// Tuple of modifier keys.
 ///
-/// First  is Shift, second is Ctrl and third is Alt.
-pub(crate) type Modifiers = (bool, bool, bool);
+/// First  is Shift, second is AltGr.
+pub(crate) type Modifiers = (bool, bool);
 
 /// Returns boolean tuples of the modifiers from the bit masked integer `modifier`.
 /// First  is Shift, second is Ctrl and third is Alt.
 pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
     let shift = (modifier & MODIFIER_SHIFT) == MODIFIER_SHIFT;
-    let ctrl = (modifier & MODIFIER_CTRL) == MODIFIER_CTRL;
-    let alt = (modifier & MODIFIER_ALT) == MODIFIER_ALT;
+    let alt_gr = (modifier & MODIFIER_ALT_GR) == MODIFIER_ALT_GR;
 
-    (shift, ctrl, alt)
+    (shift, alt_gr)
 }
 
 /// Split the string into three parts.
@@ -103,7 +102,7 @@ macro_rules! hashmap {
 #[cfg(test)]
 mod test {
     use super::{get_modifiers, split_string, Utility};
-    use crate::context::{MODIFIER_ALT, MODIFIER_CTRL, MODIFIER_SHIFT};
+    use crate::context::{MODIFIER_ALT_GR, MODIFIER_SHIFT};
 
     #[test]
     fn test_utilities() {
@@ -116,12 +115,11 @@ mod test {
 
     #[test]
     fn test_get_modifiers() {
-        assert_eq!(get_modifiers(MODIFIER_SHIFT), (true, false, false));
-        assert_eq!(get_modifiers(MODIFIER_CTRL), (false, true, false));
-        assert_eq!(get_modifiers(MODIFIER_ALT), (false, false, true));
+        assert_eq!(get_modifiers(MODIFIER_SHIFT), (true, false));
+        assert_eq!(get_modifiers(MODIFIER_ALT_GR), (false, true));
         assert_eq!(
-            get_modifiers(MODIFIER_SHIFT | MODIFIER_CTRL | MODIFIER_ALT),
-            (true, true, true)
+            get_modifiers(MODIFIER_SHIFT | MODIFIER_ALT_GR),
+            (true, true)
         );
     }
 

@@ -191,9 +191,8 @@ impl LayoutParser {
 impl From<Modifiers> for LayoutModifiers {
     fn from(modifiers: Modifiers) -> Self {
         match modifiers {
-            (_, false, false) => Normal,
-            (_, true, true) => AltGr,
-            _ => panic!("Unknown modifier combination"),
+            (_, false) => Normal,
+            (_, true) => AltGr,
         }
     }
 }
@@ -269,19 +268,19 @@ mod tests {
     #[test]
     fn test_modifiers() {
         assert_eq!(
-            LayoutModifiers::from((false, false, false)),
+            LayoutModifiers::from((false, false)),
             LayoutModifiers::Normal
         );
         assert_eq!(
-            LayoutModifiers::from((true, false, false)),
+            LayoutModifiers::from((true, false)),
             LayoutModifiers::Normal
         );
         assert_eq!(
-            LayoutModifiers::from((false, true, true)),
+            LayoutModifiers::from((false, true)),
             LayoutModifiers::AltGr
         );
         assert_eq!(
-            LayoutModifiers::from((true, true, true)),
+            LayoutModifiers::from((true, true)),
             LayoutModifiers::AltGr
         );
     }

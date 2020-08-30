@@ -4,6 +4,8 @@ use std::os::raw::c_char;
 use crate::context::RitiContext;
 use crate::suggestion::Suggestion;
 
+// FFI functions for handling the `RitiContext` structure.
+
 #[no_mangle]
 pub extern "C" fn riti_context_new() -> *mut RitiContext {
     Box::into_raw(Box::new(RitiContext::new()))
@@ -35,19 +37,11 @@ pub extern "C" fn riti_get_suggestion_for_key(
     Box::into_raw(Box::new(suggestion))
 }
 
-#[no_mangle]
-pub extern "C" fn riti_suggestion_free(ptr: *mut Suggestion) {
-    if ptr.is_null() {
-        return;
-    }
-    unsafe {
-        Box::from_raw(ptr);
-    }
-}
-
 /// A candidate of the suggestion list was committed.
 ///
 /// `index`: index of the candidate.
+///
+/// This function will end the ongoing input session.
 #[no_mangle]
 pub extern "C" fn riti_context_candidate_committed(ptr: *mut RitiContext, index: usize) {
     let context = unsafe {
@@ -56,17 +50,6 @@ pub extern "C" fn riti_context_candidate_committed(ptr: *mut RitiContext, index:
     };
 
     context.candidate_committed(index)
-}
-
-/// Returns `true` if the key was handled, `false` otherwise.
-#[no_mangle]
-pub extern "C" fn riti_context_key_handled(ptr: *mut RitiContext) -> bool {
-    let context = unsafe {
-        assert!(!ptr.is_null());
-        &*ptr
-    };
-
-    context.key_handled()
 }
 
 /// Update the suggestion making engine. This would also look for changes
@@ -79,6 +62,58 @@ pub extern "C" fn riti_context_update_engine(ptr: *mut RitiContext) {
     };
 
     context.update_engine()
+}
+
+/// Checks if there is an onging input session.
+#[no_mangle]
+pub extern "C" fn riti_context_ongoing_input_session(ptr: *mut RitiContext) -> bool {
+    let context = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    context.ongoing_input_session()
+}
+
+/// Finish the ongoing input session if any.
+#[no_mangle]
+pub extern "C" fn riti_context_finish_input_session(ptr: *mut RitiContext) {
+    let context = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    context.finish_input_session()
+}
+
+/// A BackSpace event.
+///
+/// Returns a new `suggestion` after applying the BackSpace event.
+///
+/// If the internal buffer becomes empty, this function will
+/// end the ongoing input session.
+#[no_mangle]
+pub extern "C" fn riti_context_backspace_event(ptr: *mut RitiContext) -> *mut Suggestion {
+    let context = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    let suggestion = context.backspace_event();
+
+    Box::into_raw(Box::new(suggestion))
+}
+
+// FFI functions for handling the `Suggestion` structure.
+
+#[no_mangle]
+pub extern "C" fn riti_suggestion_free(ptr: *mut Suggestion) {
+    if ptr.is_null() {
+        return;
+    }
+    unsafe {
+        Box::from_raw(ptr);
+    }
 }
 
 #[no_mangle]

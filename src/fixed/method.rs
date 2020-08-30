@@ -4,7 +4,6 @@ use std::cmp::Ordering;
 
 use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::context::Method;
-use crate::keycodes::*;
 use crate::loader::LayoutLoader;
 use crate::settings::*;
 use crate::suggestion::Suggestion;
@@ -15,7 +14,6 @@ const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 pub(crate) struct FixedMethod {
     buffer: String,
     suggestions: Vec<String>,
-    handled: bool,
     parser: LayoutParser,
     database: Database,
 }
@@ -23,105 +21,13 @@ pub(crate) struct FixedMethod {
 impl Method for FixedMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion {
         let modifier = get_modifiers(modifier);
-        let (_, ctrl, alt) = modifier;
-        // Don't catch Ctrl or Alt without AltGr combination.
-        if (ctrl && !alt) || (!ctrl && alt) {
-            // Handle edge cases
-            if key == VC_SHIFT || key == VC_ALT {
-                if !self.buffer.is_empty() {
-                    self.handled = true;
-                    return self.create_suggestion();
-                } else {
-                    self.handled = false;
-                    return Suggestion::empty();
-                }
-            } else {
-                self.handled = false;
-                let suggestion = self.current_suggestion();
-                self.buffer.clear();
-                return suggestion;
-            }
-        }
 
-        match key {
-            VC_BACKSPACE => {
-                if !self.buffer.is_empty() {
-                    // Remove the last character from buffer.
-                    self.internal_backspace();
-                    self.handled = true;
-
-                    if !self.buffer.is_empty() {
-                        return self.create_suggestion();
-                    } else {
-                        // The buffer is now empty, so return empty suggestion.
-                        return Suggestion::empty();
-                    }
-                } else {
-                    self.handled = false;
-                    return Suggestion::empty();
-                }
-            }
-
-            VC_RIGHT | VC_LEFT | VC_UP | VC_DOWN => {
-                if !self.buffer.is_empty() && get_settings_fixed_database_on() {
-                    self.handled = if (key == VC_RIGHT || key == VC_LEFT)
-                        && get_settings_preview_window_horizontal()
-                    {
-                        true
-                    } else if (key == VC_UP || key == VC_DOWN)
-                        && !get_settings_preview_window_horizontal()
-                    {
-                        true
-                    } else {
-                        false
-                    };
-                } else {
-                    self.handled = false;
-                }
-
-                return self.current_suggestion();
-            }
-
-            VC_TAB => {
-                if !self.buffer.is_empty() && get_settings_fixed_database_on() {
-                    self.handled = true;
-                } else {
-                    self.handled = false;
-                }
-
-                return self.current_suggestion();
-            }
-
-            VC_SHIFT | VC_CONTROL | VC_ALT => {
-                if !self.buffer.is_empty() {
-                    self.handled = true;
-                    return self.create_suggestion();
-                } else {
-                    self.handled = false;
-                    return Suggestion::empty();
-                }
-            }
-
-            VC_ENTER | VC_SPACE => {
-                self.handled = false;
-
-                let suggestion = self.current_suggestion();
-                self.buffer.clear();
-
-                return suggestion;
-            }
-
-            key => {
-                if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
-                    self.process_key_value(&value);
-                    self.handled = true;
-                } else {
-                    self.handled = false;
-                    let suggestion = self.current_suggestion();
-                    self.buffer.clear();
-                    return suggestion;
-                }
-            }
+        if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
+            self.process_key_value(&value);
+        } else {
+            let suggestion = self.current_suggestion();
+            self.buffer.clear();
+            return suggestion;
         }
 
         self.create_suggestion()
@@ -131,12 +37,32 @@ impl Method for FixedMethod {
         self.buffer.clear();
     }
 
-    fn key_handled(&self) -> bool {
-        self.handled
-    }
-
     fn update_engine(&mut self) {
         //
+    }
+
+    fn ongoing_input_session(&self) -> bool {
+        !self.buffer.is_empty()
+    }
+
+    fn finish_input_session(&mut self) {
+        self.buffer.clear();
+    }
+
+    fn backspace_event(&mut self) -> Suggestion {
+        if !self.buffer.is_empty() {
+            // Remove the last character from buffer.
+            self.internal_backspace();
+
+            if self.buffer.is_empty() {
+                // The buffer is now empty, so return empty suggestion.
+                return Suggestion::empty();
+            }
+
+            return self.create_suggestion();
+        } else {
+            return Suggestion::empty();
+        }
     }
 }
 
@@ -148,7 +74,6 @@ impl FixedMethod {
         FixedMethod {
             buffer: String::new(),
             suggestions: Vec::new(),
-            handled: false,
             parser,
             database: Database::new(),
         }
@@ -444,7 +369,6 @@ impl Default for FixedMethod {
         FixedMethod {
             buffer: String::new(),
             suggestions: Vec::new(),
-            handled: false,
             parser,
             database: Database::new(),
         }
@@ -458,7 +382,6 @@ mod tests {
     use super::FixedMethod;
     use crate::context::Method;
     use crate::fixed::chars::*;
-    use crate::keycodes::*;
     use crate::settings::{self, tests::set_defaults_fixed};
 
     #[test]
@@ -490,9 +413,9 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আম
-        assert!(!method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // আ
-        assert!(method.get_suggestion(VC_BACKSPACE, 0).is_empty()); // Empty
+        assert!(!method.backspace_event().is_empty()); // আম
+        assert!(!method.backspace_event().is_empty()); // আ
+        assert!(method.backspace_event().is_empty()); // Empty
     }
 
     #[test]
