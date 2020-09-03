@@ -1,6 +1,5 @@
 use edit_distance::edit_distance;
 use serde_json::Value;
-use std::cmp::Ordering;
 
 use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::context::Method;
@@ -93,18 +92,8 @@ impl FixedMethod {
         self.suggestions.clear();
         self.suggestions = self.database.search_dictionary(&word);
 
-        self.suggestions.sort_unstable_by(|a, b| {
-            let da = edit_distance(&word, a);
-            let db = edit_distance(&word, b);
-
-            if da < db {
-                Ordering::Less
-            } else if da > db {
-                Ordering::Greater
-            } else {
-                Ordering::Equal
-            }
-        });
+        self.suggestions
+            .sort_unstable_by(|a, b| edit_distance(&word, a).cmp(&edit_distance(&word, b)));
 
         // Reduce the number of suggestions.
         self.suggestions.truncate(9);

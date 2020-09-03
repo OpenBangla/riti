@@ -3,7 +3,6 @@
 use edit_distance::edit_distance;
 use rupantor::parser::PhoneticParser;
 use rustc_hash::FxHashMap;
-use std::cmp::Ordering;
 
 use super::database::Database;
 use crate::settings;
@@ -110,17 +109,8 @@ impl PhoneticSuggestion {
         if !self.cache.contains_key(splitted_string.1) {
             let mut dictionary = self.database.search_dictionary(splitted_string.1);
 
-            dictionary.sort_by(|a, b| {
-                let dist1 = edit_distance(&phonetic, a);
-                let dist2 = edit_distance(&phonetic, b);
-
-                if dist1 < dist2 {
-                    Ordering::Less
-                } else if dist1 > dist2 {
-                    Ordering::Greater
-                } else {
-                    Ordering::Equal
-                }
+            dictionary.sort_unstable_by(|a, b| {
+                edit_distance(&phonetic, a).cmp(&edit_distance(&phonetic, b))
             });
 
             if let Some(autocorrect) = self.database.search_corrected(splitted_string.1) {
@@ -128,8 +118,7 @@ impl PhoneticSuggestion {
                 dictionary.insert(0, corrected);
             }
 
-            self.cache
-                .insert(splitted_string.1.to_string(), dictionary);
+            self.cache.insert(splitted_string.1.to_string(), dictionary);
         }
 
         self.suggestions = self.add_suffix_to_suggestions(splitted_string.1);
@@ -160,7 +149,11 @@ impl PhoneticSuggestion {
         self.suggestions.clone()
     }
 
-    pub(crate) fn get_prev_selection(&self, buffer: &str, selections: &mut FxHashMap<String, String>) -> usize {
+    pub(crate) fn get_prev_selection(
+        &self,
+        buffer: &str,
+        selections: &mut FxHashMap<String, String>,
+    ) -> usize {
         let splitted_string = split_string(buffer);
         let mut selected = String::new();
         let len = splitted_string.1.len();
@@ -373,6 +366,9 @@ mod tests {
 
         // With Suffix + Avoid meta characters
         suggestion.suggestions = vec!["*অন্নগুলো?!".to_string(), "*অন্যগুলো?!".to_string()];
-        assert_eq!(suggestion.get_prev_selection("*onnogulo?!", &mut selections), 1);
+        assert_eq!(
+            suggestion.get_prev_selection("*onnogulo?!", &mut selections),
+            1
+        );
     }
 }
