@@ -24,9 +24,7 @@ impl Method for FixedMethod {
         if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
             self.process_key_value(&value);
         } else {
-            let suggestion = self.current_suggestion();
-            self.buffer.clear();
-            return suggestion;
+            return self.current_suggestion();
         }
 
         self.create_suggestion()

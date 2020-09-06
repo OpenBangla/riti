@@ -30,18 +30,16 @@ impl LayoutParser {
             .unwrap()
             .as_str()
             .map(|s| s.to_string())
+            .filter(|s| !s.is_empty())
     }
 
     fn layout_get_value_numpad(&self, key: &str) -> Option<String> {
-        if get_settings_fixed_numberpad() {
-            self.layout
-                .get(key)
-                .unwrap()
-                .as_str()
-                .map(|s| s.to_string())
-        } else {
-            None
-        }
+        self.layout
+            .get(key)
+            .unwrap()
+            .as_str()
+            .map(|s| s.to_string())
+            .filter(|s| get_settings_fixed_numberpad() && !s.is_empty())
     }
 
     pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers) -> Option<String> {
@@ -275,14 +273,8 @@ mod tests {
             LayoutModifiers::from((true, false)),
             LayoutModifiers::Normal
         );
-        assert_eq!(
-            LayoutModifiers::from((false, true)),
-            LayoutModifiers::AltGr
-        );
-        assert_eq!(
-            LayoutModifiers::from((true, true)),
-            LayoutModifiers::AltGr
-        );
+        assert_eq!(LayoutModifiers::from((false, true)), LayoutModifiers::AltGr);
+        assert_eq!(LayoutModifiers::from((true, true)), LayoutModifiers::AltGr);
     }
 
     #[test]
