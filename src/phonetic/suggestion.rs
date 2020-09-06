@@ -28,9 +28,10 @@ impl PhoneticSuggestion {
 
     /// Add suffix(গুলো, মালা...etc) to the dictionary suggestions and return them.
     /// This function gets the suggestion list from the stored cache.
-    fn add_suffix_to_suggestions(&self, middle: &str) -> Vec<String> {
+    fn add_suffix_to_suggestions(&mut self, middle: &str) -> Vec<String> {
         // Fill up the list with what we have from dictionary.
         let mut list = self.cache.get(middle).cloned().unwrap_or_default();
+        dbg!(middle, list.len());
 
         if middle.len() > 2 {
             for i in 1..middle.len() {
@@ -38,7 +39,7 @@ impl PhoneticSuggestion {
 
                 if let Some(suffix) = self.database.find_suffix(suffix_key) {
                     let key = &middle[0..(middle.len() - suffix_key.len())];
-                    if let Some(cache) = self.cache.get(key) {
+                    if let Some(cache) = dbg!(self.cache.get(key)) {
                         for item in cache {
                             let item_rmc = item.chars().last().unwrap(); // Right most character.
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
@@ -75,8 +76,9 @@ impl PhoneticSuggestion {
             }
         }
 
-        // Remove duplicates.
-        list.dedup();
+        list.dedup(); // Remove duplicates.
+        self.cache.insert(middle.to_string(), list.clone());
+
         list
     }
 
@@ -141,7 +143,7 @@ impl PhoneticSuggestion {
 
         // Include written English word if the feature is enabled.
         if settings::get_settings_phonetic_include_english()
-            && !self.suggestions.iter().any(|i| i == term)
+            && !self.suggestions.iter().any(|i| i == term) // Check for emoticons
         {
             self.suggestions.push(term.to_string());
         }
@@ -310,6 +312,10 @@ mod tests {
             vec!["আমি", "আমই", "এমই"]
         );
 
+        assert_eq!(suggestion.suggestion_with_dict("kkhet"), vec!["ক্ষেত", "খেত", "খ্যাত", "খেট", "খ্যাঁত", "খেঁট", "খ্যাঁট"]);
+        assert_eq!(suggestion.suggestion_with_dict("kkhetr"), vec!["ক্ষেত্র", "ক্ষেতর", "খেতর", "খ্যাতর", "খেটর", "খ্যাঁতর", "খেঁটর", "খ্যাঁটর"]);
+        assert_eq!(suggestion.suggestion_with_dict("kkhetre"), vec!["ক্ষেত্রে", "ক্ষেতরে", "খেতরে", "খ্যাতরে", "খেটরে", "খ্যাঁতরে", "খেঁটরে", "খ্যাঁটরে"]);
+
         // Auto Correct suggestion should be the first one & Suffix suggestion validation.
         assert_eq!(
             suggestion.suggestion_with_dict("atm"),
@@ -329,7 +335,7 @@ mod tests {
         cache.insert("computer".to_string(), vec!["কম্পিউটার".to_string()]);
         cache.insert("ebong".to_string(), vec!["এবং".to_string()]);
 
-        let suggestion = PhoneticSuggestion {
+        let mut suggestion = PhoneticSuggestion {
             cache,
             ..Default::default()
         };
