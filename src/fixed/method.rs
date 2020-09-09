@@ -88,18 +88,22 @@ impl FixedMethod {
         let (first_part, word, last_part) = split_string(&self.buffer);
 
         self.suggestions.clear();
-        self.suggestions = self.database.search_dictionary(&word);
 
+        // Add the user's typed word.
+        self.suggestions.push(word.to_string());
+        // Add suggestions from the dictionary.
+        self.suggestions
+            .append(&mut self.database.search_dictionary(&word));
+
+        // Sort the suggestions.
         self.suggestions
             .sort_unstable_by(|a, b| edit_distance(&word, a).cmp(&edit_distance(&word, b)));
 
+        // Remove the duplicates if present.
+        self.suggestions.dedup();
+
         // Reduce the number of suggestions.
         self.suggestions.truncate(9);
-
-        // Add the user's typed word, if it isn't present.
-        if !self.suggestions.iter().any(|i| i == word) {
-            self.suggestions.push(word.to_string());
-        }
 
         if !first_part.is_empty() || !last_part.is_empty() {
             for suggestion in self.suggestions.iter_mut() {
@@ -387,6 +391,13 @@ mod tests {
         assert_eq!(
             method.create_dictionary_suggestion().get_suggestions(),
             ["[আমি]", "[আমিন]", "[আমির]", "[আমিষ]"]
+        );
+
+        // User written word should be the first one.
+        method.buffer = "কম্পিউ".to_string();
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            ["কম্পিউ", "কম্পিউটার", "কম্পিউটিং", "কম্পিউটেশন", "কম্পিউটার্স"]
         );
     }
 
