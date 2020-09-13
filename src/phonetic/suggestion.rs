@@ -2,7 +2,7 @@
 
 use edit_distance::edit_distance;
 use rupantor::parser::PhoneticParser;
-use rustc_hash::FxHashMap;
+use hashbrown::HashMap;
 
 use super::database::Database;
 use crate::settings;
@@ -12,7 +12,7 @@ pub(crate) struct PhoneticSuggestion {
     pub(crate) suggestions: Vec<String>,
     pub(crate) database: Database,
     // Cache for storing dictionary searches.
-    cache: FxHashMap<String, Vec<String>>,
+    cache: HashMap<String, Vec<String>>,
     phonetic: PhoneticParser,
 }
 
@@ -21,7 +21,7 @@ impl PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
-            cache: FxHashMap::default(),
+            cache: HashMap::new(),
             phonetic: PhoneticParser::new(layout),
         }
     }
@@ -152,7 +152,7 @@ impl PhoneticSuggestion {
     pub(crate) fn get_prev_selection(
         &self,
         buffer: &str,
-        selections: &mut FxHashMap<String, String>,
+        selections: &mut HashMap<String, String>,
     ) -> usize {
         let splitted_string = split_string(buffer);
         let mut selected = String::new();
@@ -219,7 +219,7 @@ impl Default for PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
-            cache: FxHashMap::default(),
+            cache: HashMap::new(),
             phonetic: PhoneticParser::new(loader.layout()),
         }
     }
@@ -227,7 +227,7 @@ impl Default for PhoneticSuggestion {
 
 #[cfg(test)]
 mod tests {
-    use rustc_hash::FxHashMap;
+    use hashbrown::HashMap;
 
     use super::PhoneticSuggestion;
     use crate::settings::{tests::set_default_phonetic, ENV_PHONETIC_INCLUDE_ENGLISH};
@@ -325,7 +325,7 @@ mod tests {
     fn test_suffix() {
         set_default_phonetic();
 
-        let mut cache = FxHashMap::default();
+        let mut cache = HashMap::new();
         cache.insert("computer".to_string(), vec!["কম্পিউটার".to_string()]);
         cache.insert("ebong".to_string(), vec!["এবং".to_string()]);
 
@@ -357,7 +357,7 @@ mod tests {
         set_default_phonetic();
 
         let mut suggestion = PhoneticSuggestion::default();
-        let mut selections = FxHashMap::default();
+        let mut selections = HashMap::new();
         selections.insert("onno".to_string(), "অন্য".to_string());
 
         // Avoid meta characters

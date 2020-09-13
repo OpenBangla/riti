@@ -1,7 +1,6 @@
 use hashbrown::HashMap;
 use rayon::prelude::*;
 use regex::Regex;
-use rustc_hash::FxHashMap;
 use std::fs::read_to_string;
 
 use crate::hashmap;
@@ -11,10 +10,10 @@ use crate::settings::{get_settings_database_dir, get_settings_user_phonetic_auto
 pub(crate) struct Database {
     map: HashMap<&'static str, Vec<&'static str>>,
     table: HashMap<String, Vec<String>>,
-    suffix: FxHashMap<String, String>,
-    autocorrect: FxHashMap<String, String>,
+    suffix: HashMap<String, String>,
+    autocorrect: HashMap<String, String>,
     // The user's auto-correct entries.
-    user_autocorrect: FxHashMap<String, String>,
+    user_autocorrect: HashMap<String, String>,
 }
 
 impl Database {
@@ -24,7 +23,7 @@ impl Database {
             if let Ok(file) = read_to_string(get_settings_user_phonetic_autocorrect()) {
                 serde_json::from_str(&file).unwrap()
             } else {
-                FxHashMap::default()
+                HashMap::new()
             };
 
         let map = hashmap! [
@@ -111,7 +110,7 @@ impl Database {
             if let Ok(file) = read_to_string(get_settings_user_phonetic_autocorrect()) {
                 serde_json::from_str(&file).unwrap()
             } else {
-                FxHashMap::default()
+                HashMap::new()
             };
     }
 }

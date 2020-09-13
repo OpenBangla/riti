@@ -1,5 +1,5 @@
 // Phonetic Method
-use rustc_hash::FxHashMap;
+use hashbrown::HashMap;
 use std::fs::{read_to_string, write};
 
 use crate::context::Method;
@@ -15,7 +15,7 @@ pub(crate) struct PhoneticMethod {
     buffer: String,
     suggestion: PhoneticSuggestion,
     // Candidate selections.
-    selections: FxHashMap<String, String>,
+    selections: HashMap<String, String>,
     // Previously selected candidate index of the current suggestion list.
     prev_selection: usize,
 }
@@ -27,7 +27,7 @@ impl PhoneticMethod {
             if let Ok(file) = read_to_string(get_settings_user_phonetic_selection_data()) {
                 serde_json::from_str(&file).unwrap()
             } else {
-                FxHashMap::default()
+                HashMap::new()
             };
 
         PhoneticMethod {
@@ -238,7 +238,7 @@ impl Default for PhoneticMethod {
         PhoneticMethod {
             buffer: String::new(),
             suggestion: PhoneticSuggestion::new(loader.layout()),
-            selections: FxHashMap::default(),
+            selections: HashMap::new(),
             prev_selection: 0,
         }
     }
