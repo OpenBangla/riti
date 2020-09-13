@@ -131,9 +131,11 @@ impl FixedMethod {
     fn process_key_value(&mut self, value: &str) {
         let rmc = self.buffer.chars().last().unwrap_or_default(); // Right most character
 
-        // Zo fola insertion
+        // Zo-fola insertion
         if value == "\u{09CD}\u{09AF}" {
-            if rmc == B_R {
+            // Check if র is not a part of a Ro-fola, if its not then add an ZWJ before
+            // the Zo-fola to have the র‍্য form.
+            if rmc == B_R && self.buffer.chars().rev().nth(1).unwrap_or_default() != B_HASANTA {
                 self.buffer = format!("{}{}{}", self.buffer, ZWJ, value);
                 return;
             } else {
@@ -234,17 +236,6 @@ impl FixedMethod {
             // Hasanta
             if character == B_HASANTA && rmc == B_HASANTA {
                 self.buffer.push(ZWNJ);
-                return;
-            }
-
-            // Zo Fola
-            if character == B_Z && rmc == B_HASANTA {
-                if self.buffer.chars().rev().nth(1).unwrap_or_default() == B_R {
-                    self.internal_backspace();
-                    self.buffer = format!("{}{}{}{}", self.buffer, ZWJ, B_HASANTA, B_Z);
-                } else {
-                    self.buffer.push(B_Z);
-                }
                 return;
             }
         }
@@ -499,7 +490,7 @@ mod tests {
     }
 
     #[test]
-    fn test_zofola() {
+    fn test_z_zofola() {
         set_defaults_fixed();
         set_var(settings::ENV_LAYOUT_FIXED_DATABASE_ON, "false");
 
@@ -507,11 +498,16 @@ mod tests {
 
         method.buffer = "র্".to_string();
         method.process_key_value("য");
-        assert_eq!(method.buffer, "র‍্য");
+        assert_eq!(method.buffer, "র্য");
 
         method.buffer = "র".to_string();
         method.process_key_value("্য");
         assert_eq!(method.buffer, "র‍্য");
+
+        // When the last characters constitute the Ro-fola
+        method.buffer = "ক্র".to_string();
+        method.process_key_value("্য");
+        assert_eq!(method.buffer, "ক্র্য");
 
         method.buffer = "খ্".to_string();
         method.process_key_value("য");
