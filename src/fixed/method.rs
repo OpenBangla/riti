@@ -144,9 +144,9 @@ impl FixedMethod {
             }
         }
 
-        // Reph insertion
+        // Old style Reph insertion
         if value == "\u{09B0}\u{09CD}" && get_settings_fixed_old_reph() {
-            self.insert_reph();
+            self.insert_old_style_reph();
             return;
         }
 
@@ -246,22 +246,20 @@ impl FixedMethod {
     /// Checks if the Reph is moveable by the Reph insertion algorithm.
     ///
     /// `rmc`: Right most character.
-    ///
-    /// `len`: length of the text.
     #[rustfmt::skip]
-    fn is_reph_moveable(&self, rmc: char, len: usize) -> bool {
+    fn is_reph_moveable(&self, rmc: char) -> bool {
         if rmc.is_pure_consonant() {
             return true;
         } else if rmc.is_vowel()
-            && self.buffer.chars().skip(len - 2).nth(0).unwrap_or_default().is_pure_consonant()
+            && self.buffer.chars().rev().nth(1).unwrap_or_default().is_pure_consonant()
         {
             return true;
         } else if rmc == B_CHANDRA {
-            if self.buffer.chars().skip(len - 2).nth(0).unwrap_or_default().is_pure_consonant()
+            if self.buffer.chars().rev().nth(1).unwrap_or_default().is_pure_consonant()
             {
                 return true;
-            } else if self.buffer.chars().skip(len - 2).nth(0).unwrap_or_default().is_vowel()
-                && self.buffer.chars().skip(len - 3).nth(0).unwrap_or_default().is_pure_consonant()
+            } else if self.buffer.chars().rev().nth(1).unwrap_or_default().is_vowel()
+                && self.buffer.chars().rev().nth(2).unwrap_or_default().is_pure_consonant()
             {
                 return true;
             }
@@ -270,40 +268,40 @@ impl FixedMethod {
         false
     }
 
-    /// Inserts Reph into the buffer.
-    fn insert_reph(&mut self) {
+    /// Inserts Reph into the buffer in old style.
+    fn insert_old_style_reph(&mut self) {
         let rmc = self.buffer.chars().last().unwrap();
-        let len = self.buffer.chars().count();
-        let reph_moveable = self.is_reph_moveable(rmc, len);
+        let len = self.buffer.chars().count();   
+        let reph_moveable = self.is_reph_moveable(rmc);
 
-        let mut encountered_constant = false;
-        let mut encountered_vowel = false;
-        let mut encountered_hasanta = false;
-        let mut encountered_chandra = false;
+        let mut constant = false;
+        let mut vowel = false;
+        let mut hasanta = false;
+        let mut chandra = false;
 
         if reph_moveable {
             let mut step = 0;
 
             for (index, character) in self.buffer.chars().rev().enumerate() {
                 if character.is_pure_consonant() {
-                    if encountered_constant && !encountered_hasanta {
+                    if constant && !hasanta {
                         break;
                     }
-                    encountered_constant = true;
-                    encountered_hasanta = false; // reset
+                    constant = true;
+                    hasanta = false; // reset
                     step += 1;
                     continue;
                 } else if character == B_HASANTA {
-                    encountered_hasanta = true;
+                    hasanta = true;
                     step += 1;
                     continue;
                 } else if character.is_vowel() {
-                    if encountered_vowel {
+                    if vowel {
                         break;
                     }
 
-                    if index == 0 || encountered_chandra {
-                        encountered_vowel = true;
+                    if index == 0 || chandra {
+                        vowel = true;
                         step += 1;
                         continue;
                     }
@@ -311,7 +309,7 @@ impl FixedMethod {
                     break;
                 } else if character == B_CHANDRA {
                     if index == 0 {
-                        encountered_chandra = true;
+                        chandra = true;
                         step += 1;
                         continue;
                     }
@@ -414,28 +412,32 @@ mod tests {
         let mut method = FixedMethod::default();
 
         method.buffer = "অক".to_string();
-        method.insert_reph();
+        method.insert_old_style_reph();
         assert_eq!(method.buffer, "অর্ক".to_string());
 
         method.buffer = "ক".to_string();
-        method.insert_reph();
+        method.insert_old_style_reph();
         assert_eq!(method.buffer, "র্ক".to_string());
 
         method.buffer = "কত".to_string();
-        method.insert_reph();
+        method.insert_old_style_reph();
         assert_eq!(method.buffer, "কর্ত".to_string());
 
         method.buffer = "অক্কা".to_string();
-        method.insert_reph();
+        method.insert_old_style_reph();
         assert_eq!(method.buffer, "অর্ক্কা".to_string());
 
         method.buffer = "কক্ষ্ম".to_string();
-        method.insert_reph();
+        method.insert_old_style_reph();
         assert_eq!(method.buffer, "কর্ক্ষ্ম".to_string());
 
         method.buffer = "কব্যা".to_string();
-        method.insert_reph();
+        method.insert_old_style_reph();
         assert_eq!(method.buffer, "কর্ব্যা".to_string());
+
+        method.buffer = "কব্যাঁ".to_string();
+        method.insert_old_style_reph();
+        assert_eq!(method.buffer, "কর্ব্যাঁ".to_string());
     }
 
     #[test]
