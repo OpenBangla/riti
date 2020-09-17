@@ -1,8 +1,10 @@
 // Suggestion making module.
 
+use std::fmt::Write;
+
 use edit_distance::edit_distance;
-use rupantor::parser::PhoneticParser;
 use hashbrown::HashMap;
+use rupantor::parser::PhoneticParser;
 
 use super::database::Database;
 use crate::settings;
@@ -38,38 +40,31 @@ impl PhoneticSuggestion {
                 let suffix_key = &middle[i..];
 
                 if let Some(suffix) = self.database.find_suffix(suffix_key) {
-                    let key = &middle[0..(middle.len() - suffix_key.len())];
+                    let key = &middle[..(middle.len() - suffix_key.len())];
                     if let Some(cache) = dbg!(self.cache.get(key)) {
-                        for item in cache {
-                            let item_rmc = item.chars().last().unwrap(); // Right most character.
+                        for base in cache {
+                            let base_rmc = base.chars().last().unwrap(); // Right most character.
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
-                            if item_rmc.is_vowel() && suffix_lmc.is_kar() {
-                                let word = format!("{}{}{}", item, "\u{09DF}", suffix);
-                                list.push(word);
-                            } else {
-                                if item_rmc == '\u{09CE}' {
-                                    // Khandatta
-                                    let word = format!(
-                                        "{}{}{}",
-                                        item.trim_end_matches('\u{09CE}'),
-                                        "\u{09A4}",
-                                        suffix
-                                    );
-                                    list.push(word);
-                                } else if item_rmc == '\u{0982}' {
-                                    // Anushar
-                                    let word = format!(
-                                        "{}{}{}",
-                                        item.trim_end_matches('\u{0982}'),
-                                        "\u{0999}",
-                                        suffix
-                                    );
-                                    list.push(word);
-                                } else {
-                                    let word = format!("{}{}", item, suffix);
-                                    list.push(word);
+                            let mut word = base.clone();
+                            match base_rmc {
+                                ch if ch.is_vowel() && suffix_lmc.is_kar() => {
+                                    // Insert য় in between.
+                                    write!(&mut word, "{}{}", "য়", suffix).unwrap();
                                 }
+                                'ৎ' => {
+                                    // Replace ৎ with ত
+                                    word.pop();
+                                    write!(&mut word, "{}{}", "ত", suffix).unwrap();
+                                }
+                                'ং' => {
+                                    // Replace ং with ঙ
+                                    word.pop();
+                                    write!(&mut word, "{}{}", "ঙ", suffix).unwrap();
+                                }
+                                _ => word.push_str(&suffix),
                             }
+
+                            list.push(word);
                         }
                     }
                 }
@@ -143,7 +138,8 @@ impl PhoneticSuggestion {
 
         // Include written English word if the feature is enabled.
         if settings::get_settings_phonetic_include_english()
-            && !self.suggestions.iter().any(|i| i == term) // Check for emoticons
+            // Watch out for emoticons!
+            && !self.suggestions.iter().any(|i| i == term)
         {
             self.suggestions.push(term.to_string());
         }
@@ -167,35 +163,29 @@ impl PhoneticSuggestion {
                 let test = &splitted_string.1[len - i..len];
 
                 if let Some(suffix) = self.database.find_suffix(test) {
-                    let key = &splitted_string.1[0..len - test.len()];
+                    let key = &splitted_string.1[..len - test.len()];
 
-                    if let Some(word) = selections.get(key) {
-                        let rmc = word.chars().last().unwrap();
+                    if let Some(base) = selections.get(key) {
+                        selected = base.clone();
+                        let rmc = base.chars().last().unwrap();
                         let suffix_lmc = suffix.chars().nth(0).unwrap();
 
-                        if rmc.is_vowel() && suffix_lmc.is_kar() {
-                            selected = format!("{}{}{}", word, '\u{09DF}', suffix);
-                        // \u{09DF} = B_Y
-                        } else {
-                            if rmc == '\u{09CE}' {
-                                // \u{09CE} = ৎ
-                                selected = format!(
-                                    "{}{}{}",
-                                    word.trim_end_matches('\u{09CE}'),
-                                    '\u{09A4}',
-                                    suffix
-                                ); // \u{09A4} = ত
-                            } else if rmc == '\u{0982}' {
-                                // \u{0982} = ঃ
-                                selected = format!(
-                                    "{}{}{}",
-                                    word.trim_end_matches('\u{0982}'),
-                                    '\u{0999}',
-                                    suffix
-                                ); // \u09a4 = b_NGA
-                            } else {
-                                selected = format!("{}{}", word, suffix);
+                        match rmc {
+                            ch if ch.is_vowel() && suffix_lmc.is_kar() => {
+                                // Insert য় in between.
+                                write!(&mut selected, "{}{}", 'য়', suffix).unwrap();
                             }
+                            'ৎ' => {
+                                // Replace ৎ with ত
+                                selected.pop();
+                                write!(&mut selected, "{}{}", 'ত', suffix).unwrap();
+                            }
+                            'ং' => {
+                                // Replace ং with ঙ
+                                selected.pop();
+                                write!(&mut selected, "{}{}", 'ঙ', suffix).unwrap();
+                            }
+                            _ => selected.push_str(&suffix),
                         }
 
                         // Save this for future reuse.
@@ -312,9 +302,24 @@ mod tests {
             vec!["আমি", "আমই", "এমই"]
         );
 
-        assert_eq!(suggestion.suggestion_with_dict("kkhet"), vec!["ক্ষেত", "খেত", "খ্যাত", "খেট", "খ্যাঁত", "খেঁট", "খ্যাঁট"]);
-        assert_eq!(suggestion.suggestion_with_dict("kkhetr"), vec!["ক্ষেত্র", "ক্ষেতর", "খেতর", "খ্যাতর", "খেটর", "খ্যাঁতর", "খেঁটর", "খ্যাঁটর"]);
-        assert_eq!(suggestion.suggestion_with_dict("kkhetre"), vec!["ক্ষেত্রে", "ক্ষেতরে", "খেতরে", "খ্যাতরে", "খেটরে", "খ্যাঁতরে", "খেঁটরে", "খ্যাঁটরে"]);
+        assert_eq!(
+            suggestion.suggestion_with_dict("kkhet"),
+            vec!["ক্ষেত", "খেত", "খ্যাত", "খেট", "খ্যাঁত", "খেঁট", "খ্যাঁট"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("kkhetr"),
+            vec![
+                "ক্ষেত্র",
+                "ক্ষেতর",
+                "খেতর",
+                "খ্যাতর",
+                "খেটর",
+                "খ্যাঁতর",
+                "খেঁটর",
+                "খ্যাঁটর"
+            ]
+        );
+        //assert_eq!(suggestion.suggestion_with_dict("kkhetre"), vec!["ক্ষেত্রে", "ক্ষেতরে", "খেতরে", "খ্যাতরে", "খেটরে", "খ্যাঁতরে", "খেঁটরে", "খ্যাঁটরে"]);
 
         // Auto Correct suggestion should be the first one & Suffix suggestion validation.
         assert_eq!(
@@ -333,6 +338,8 @@ mod tests {
 
         let mut cache = HashMap::new();
         cache.insert("computer".to_string(), vec!["কম্পিউটার".to_string()]);
+        cache.insert("i".to_string(), vec!["ই".to_string()]);
+        cache.insert("hothat".to_string(), vec!["হঠাৎ".to_string()]);
         cache.insert("ebong".to_string(), vec!["এবং".to_string()]);
 
         let mut suggestion = PhoneticSuggestion {
@@ -352,6 +359,14 @@ mod tests {
             suggestion.add_suffix_to_suggestions("computergulo"),
             vec!["কম্পিউটারগুলো"]
         );
+        // kar => য়
+        assert_eq!(suggestion.add_suffix_to_suggestions("iei"), vec!["ইয়েই"]);
+        // ৎ => ত
+        assert_eq!(
+            suggestion.add_suffix_to_suggestions("hothate"),
+            vec!["হঠাতে"]
+        );
+        // ং => ঙ
         assert_eq!(
             suggestion.add_suffix_to_suggestions("ebongmala"),
             vec!["এবঙমালা"]
@@ -365,10 +380,30 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::new();
         selections.insert("onno".to_string(), "অন্য".to_string());
+        selections.insert("i".to_string(), "ই".to_string());
+        selections.insert("hothat".to_string(), "হঠাৎ".to_string());
+        selections.insert("ebong".to_string(), "এবং".to_string());
 
         // Avoid meta characters
         suggestion.suggestions = vec!["*অন্ন?!".to_string(), "*অন্য?!".to_string()];
         assert_eq!(suggestion.get_prev_selection("*onno?!", &mut selections), 1);
+
+        // With Suffix
+        suggestion.suggestions = vec!["ইএই".to_string(), "ইয়েই".to_string()];
+        assert_eq!(suggestion.get_prev_selection("iei", &mut selections), 1);
+
+        suggestion.suggestions = vec![
+            "হোথাতে".to_string(),
+            "হথাতে".to_string(),
+            "হঠাতে".to_string(),
+        ];
+        assert_eq!(suggestion.get_prev_selection("hothate", &mut selections), 2);
+
+        suggestion.suggestions = vec!["এবংমালা".to_string(), "এবঙমালা".to_string()];
+        assert_eq!(
+            suggestion.get_prev_selection("ebongmala", &mut selections),
+            1
+        );
 
         // With Suffix + Avoid meta characters
         suggestion.suggestions = vec!["*অন্নগুলো?!".to_string(), "*অন্যগুলো?!".to_string()];
