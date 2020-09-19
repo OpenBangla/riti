@@ -28,6 +28,14 @@ impl Utility for char {
     }
 }
 
+/// Checks if the `vec` already has the `value` before inserting.
+/// If it does, then the `value` is not inserted.
+pub(crate) fn push_checked<T: PartialEq>(vec: &mut Vec<T>, value: T) {
+    if !vec.contains(&value) {
+        vec.push(value);
+    }
+}
+
 /// Tuple of modifier keys.
 ///
 /// First  is Shift, second is AltGr.

@@ -8,7 +8,7 @@ use rupantor::parser::PhoneticParser;
 
 use super::database::Database;
 use crate::settings;
-use crate::utility::{split_string, Utility};
+use crate::utility::{push_checked, split_string, Utility};
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) suggestions: Vec<String>,
@@ -16,6 +16,8 @@ pub(crate) struct PhoneticSuggestion {
     // Cache for storing dictionary searches.
     cache: HashMap<String, Vec<String>>,
     phonetic: PhoneticParser,
+    // Auto Correct caches.
+    corrects: Vec<String>,
 }
 
 impl PhoneticSuggestion {
@@ -25,15 +27,19 @@ impl PhoneticSuggestion {
             database: Database::new(),
             cache: HashMap::new(),
             phonetic: PhoneticParser::new(layout),
+            corrects: Vec::new(),
         }
     }
 
-    /// Add suffix(গুলো, মালা...etc) to the dictionary suggestions and return them.
+    /// Add suffix(গুলো, মালা, etc.) to the dictionary suggestions and return them.
+    ///
     /// This function gets the suggestion list from the stored cache.
+    ///
+    /// Handles Auto Corrected words specially. It includes them into
+    /// the `self.suggestions` directly to let them be one of the first suggestions.
     fn add_suffix_to_suggestions(&mut self, middle: &str) -> Vec<String> {
-        // Fill up the list with what we have from dictionary.
+        // Fill up the list with what we have from the cache.
         let mut list = self.cache.get(middle).cloned().unwrap_or_default();
-        dbg!(middle, list.len());
 
         if middle.len() > 2 {
             for i in 1..middle.len() {
@@ -41,7 +47,7 @@ impl PhoneticSuggestion {
 
                 if let Some(suffix) = self.database.find_suffix(suffix_key) {
                     let key = &middle[..(middle.len() - suffix_key.len())];
-                    if let Some(cache) = dbg!(self.cache.get(key)) {
+                    if let Some(cache) = self.cache.get(key) {
                         for base in cache {
                             let base_rmc = base.chars().last().unwrap(); // Right most character.
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
@@ -63,16 +69,19 @@ impl PhoneticSuggestion {
                                 }
                                 _ => word.push_str(&suffix),
                             }
-
-                            list.push(word);
+                            // Check if the base was an auto corrected word.
+                            // If it is, then add the suffixed word into the suggestion list
+                            // to let it be one of the first ones.
+                            if self.corrects.contains(base) {
+                                push_checked(&mut self.suggestions, word);
+                            } else {
+                                list.push(word);
+                            }
                         }
                     }
                 }
             }
         }
-
-        list.dedup(); // Remove duplicates.
-        self.cache.insert(middle.to_string(), list.clone());
 
         list
     }
@@ -103,27 +112,37 @@ impl PhoneticSuggestion {
 
         let phonetic = self.phonetic.convert(splitted_string.1);
 
+        // We always cache the suggestions for future reuse and for adding suffix to the suggestions.
         if !self.cache.contains_key(splitted_string.1) {
-            let mut dictionary = self.database.search_dictionary(splitted_string.1);
-
-            dictionary.sort_unstable_by(|a, b| {
-                edit_distance(&phonetic, a).cmp(&edit_distance(&phonetic, b))
-            });
+            let mut suggestions: Vec<String> = Vec::new();
 
             if let Some(autocorrect) = self.database.search_corrected(splitted_string.1) {
                 let corrected = self.phonetic.convert(&autocorrect);
-                dictionary.insert(0, corrected);
+                // Let the Auto Correct to be the first suggestion.
+                self.suggestions.push(corrected.clone());
+                // Add it in the corrected list.
+                self.corrects.push(corrected.clone());
+                suggestions.push(corrected);
             }
 
-            self.cache.insert(splitted_string.1.to_string(), dictionary);
+            suggestions.append(&mut self.database.search_dictionary(splitted_string.1));
+            // Add the suggestions into the cache.
+            self.cache
+                .insert(splitted_string.1.to_string(), suggestions);
         }
 
-        self.suggestions = self.add_suffix_to_suggestions(splitted_string.1);
+        let mut suffixed_suggestions = self.add_suffix_to_suggestions(splitted_string.1);
 
-        // Last Item: Phonetic. Check if it already contains.
-        if !self.suggestions.contains(&phonetic) {
-            self.suggestions.push(phonetic);
+        // Sort the list.
+        suffixed_suggestions
+            .sort_unstable_by(|a, b| edit_distance(&phonetic, a).cmp(&edit_distance(&phonetic, b)));
+
+        for suggestion in suffixed_suggestions {
+            push_checked(&mut self.suggestions, suggestion);
         }
+
+        // Last Item: Phonetic
+        push_checked(&mut self.suggestions, phonetic);
 
         for item in self.suggestions.iter_mut() {
             *item = format!("{}{}{}", splitted_string.0, item, splitted_string.2);
@@ -213,6 +232,7 @@ impl Default for PhoneticSuggestion {
             database: Database::new(),
             cache: HashMap::new(),
             phonetic: PhoneticParser::new(loader.layout()),
+            corrects: Vec::new(),
         }
     }
 }
@@ -280,23 +300,23 @@ mod tests {
             suggestion.suggestion_with_dict("(as)"),
             vec!["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
         );
-        assert_eq!(
-            suggestion.suggestion_with_dict("format"),
-            vec!["ফরম্যাট", "ফরমাত"]
-        );
-        assert_eq!(
-            suggestion.suggestion_with_dict("formate"),
-            vec!["ফরম্যাটে", "ফরমাতে"]
-        );
+    }
 
-        // Suffix suggestion validation.
-        assert_eq!(suggestion.suggestion_with_dict("apn"), vec!["আপন", "আপ্ন"]);
+    #[test]
+    fn test_suffix_suggestion() {
+        set_default_phonetic();
+
+        let mut suggestion = PhoneticSuggestion::default();
+
+        suggestion.suggestion_with_dict("a");
+        suggestion.suggestion_with_dict("ap");
+        suggestion.suggestion_with_dict("apn");
         assert_eq!(
             suggestion.suggestion_with_dict("apni"),
             vec!["আপনি", "আপনই", "আপ্নি"]
         );
 
-        assert_eq!(suggestion.suggestion_with_dict("am"), vec!["আম", "এম"]);
+        suggestion.suggestion_with_dict("am");
         assert_eq!(
             suggestion.suggestion_with_dict("ami"),
             vec!["আমি", "আমই", "এমই"]
@@ -314,14 +334,44 @@ mod tests {
                 "খেতর",
                 "খ্যাতর",
                 "খেটর",
-                "খ্যাঁতর",
                 "খেঁটর",
-                "খ্যাঁটর"
+                "খ্যাঁটর",
+                "খ্যাঁতর"
             ]
         );
-        //assert_eq!(suggestion.suggestion_with_dict("kkhetre"), vec!["ক্ষেত্রে", "ক্ষেতরে", "খেতরে", "খ্যাতরে", "খেটরে", "খ্যাঁতরে", "খেঁটরে", "খ্যাঁটরে"]);
+        assert_eq!(
+            suggestion.suggestion_with_dict("kkhetre"),
+            vec![
+                "ক্ষেত্রে",
+                "ক্ষেতরে",
+                "খেতরে",
+                "খ্যাতরে",
+                "খেটরে",
+                "খেঁটরে",
+                "খ্যাঁটরে",
+                "খ্যাঁতরে"
+            ]
+        );
 
-        // Auto Correct suggestion should be the first one & Suffix suggestion validation.
+        assert_eq!(suggestion.suggestion_with_dict("form"), vec!["ফর্ম", "ফরম"]);
+        assert_eq!(suggestion.suggestion_with_dict("forma"), ["ফরমা", "ফর্মা"]);
+        assert_eq!(
+            suggestion.suggestion_with_dict("format"),
+            vec!["ফরম্যাট", "ফরমাত"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("formate"),
+            vec!["ফরম্যাটে", "ফরমাতে", "ফর্মাতে"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("formatt"),
+            vec!["ফরম্যাট", "ফরমাত্ত"]
+        );
+        assert_eq!(
+            suggestion.suggestion_with_dict("formatte"),
+            vec!["ফরম্যাটতে", "ফরম্যাটে", "ফরমাত্তে"]
+        );
+
         assert_eq!(
             suggestion.suggestion_with_dict("atm"),
             vec!["এটিএম", "আত্ম", "অ্যাটম"]
