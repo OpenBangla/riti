@@ -90,18 +90,18 @@ impl Database {
             .collect()
     }
 
-    pub(crate) fn find_suffix(&self, string: &str) -> Option<String> {
-        self.suffix.get(string).cloned()
+    pub(crate) fn find_suffix(&self, string: &str) -> Option<&str> {
+        self.suffix.get(string).map(String::as_str)
     }
 
     /// Search for a `term` in AutoCorrect dictionary.
     ///
     /// This looks in the user defined AutoCorrect entries first.
-    pub(crate) fn search_corrected(&self, term: &str) -> Option<String> {
+    pub(crate) fn search_corrected(&self, term: &str) -> Option<&str> {
         self.user_autocorrect
             .get(term)
-            .cloned()
-            .or_else(|| self.autocorrect.get(term).cloned())
+            .or_else(|| self.autocorrect.get(term))
+            .map(String::as_str)
     }
 
     /// Update the user defined AutoCorrect dictionary.
@@ -139,8 +139,8 @@ mod tests {
 
         let db = Database::new();
 
-        assert_eq!(db.find_suffix("gulo"), Some("গুলো".to_string()));
-        assert_eq!(db.find_suffix("er"), Some("ের".to_string()));
+        assert_eq!(db.find_suffix("gulo"), Some("গুলো"));
+        assert_eq!(db.find_suffix("er"), Some("ের"));
         assert_eq!(db.find_suffix("h"), None);
     }
 
@@ -152,7 +152,7 @@ mod tests {
 
         assert_eq!(
             db.search_corrected("academy"),
-            Some("oZakaDemi".to_string())
+            Some("oZakaDemi")
         );
         assert_eq!(db.search_corrected("\\nai\\"), None);
     }

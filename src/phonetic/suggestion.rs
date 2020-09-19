@@ -55,17 +55,17 @@ impl PhoneticSuggestion {
                             match base_rmc {
                                 ch if ch.is_vowel() && suffix_lmc.is_kar() => {
                                     // Insert য় in between.
-                                    write!(&mut word, "{}{}", "য়", suffix).unwrap();
+                                    write!(&mut word, "য়{}", suffix).unwrap();
                                 }
                                 'ৎ' => {
                                     // Replace ৎ with ত
                                     word.pop();
-                                    write!(&mut word, "{}{}", "ত", suffix).unwrap();
+                                    write!(&mut word, "ত{}", suffix).unwrap();
                                 }
                                 'ং' => {
                                     // Replace ং with ঙ
                                     word.pop();
-                                    write!(&mut word, "{}{}", "ঙ", suffix).unwrap();
+                                    write!(&mut word, "ঙ{}", suffix).unwrap();
                                 }
                                 _ => word.push_str(&suffix),
                             }
@@ -117,7 +117,7 @@ impl PhoneticSuggestion {
             let mut suggestions: Vec<String> = Vec::new();
 
             if let Some(autocorrect) = self.database.search_corrected(splitted_string.1) {
-                let corrected = self.phonetic.convert(&autocorrect);
+                let corrected = self.phonetic.convert(autocorrect);
                 // Let the Auto Correct to be the first suggestion.
                 self.suggestions.push(corrected.clone());
                 // Add it in the corrected list.
@@ -151,7 +151,7 @@ impl PhoneticSuggestion {
         // Emoticons Auto Corrects
         if let Some(emoticon) = self.database.search_corrected(term) {
             if emoticon == term {
-                self.suggestions.insert(0, emoticon);
+                self.suggestions.insert(0, emoticon.to_string());
             }
         }
 
@@ -192,17 +192,17 @@ impl PhoneticSuggestion {
                         match rmc {
                             ch if ch.is_vowel() && suffix_lmc.is_kar() => {
                                 // Insert য় in between.
-                                write!(&mut selected, "{}{}", 'য়', suffix).unwrap();
+                                write!(&mut selected, "য়{}", suffix).unwrap();
                             }
                             'ৎ' => {
                                 // Replace ৎ with ত
                                 selected.pop();
-                                write!(&mut selected, "{}{}", 'ত', suffix).unwrap();
+                                write!(&mut selected, "ত{}", suffix).unwrap();
                             }
                             'ং' => {
                                 // Replace ং with ঙ
                                 selected.pop();
-                                write!(&mut selected, "{}{}", 'ঙ', suffix).unwrap();
+                                write!(&mut selected, "ঙ{}", suffix).unwrap();
                             }
                             _ => selected.push_str(&suffix),
                         }
