@@ -3,7 +3,7 @@
 use std::fmt::Write;
 
 use edit_distance::edit_distance;
-use hashbrown::HashMap;
+use hashbrown::{hash_map::Entry, HashMap};
 use rupantor::parser::PhoneticParser;
 
 use super::database::Database;
@@ -17,7 +17,7 @@ pub(crate) struct PhoneticSuggestion {
     cache: HashMap<String, Vec<String>>,
     phonetic: PhoneticParser,
     // Auto Correct caches.
-    corrects: Vec<String>,
+    corrects: HashMap<String, String>,
 }
 
 impl PhoneticSuggestion {
@@ -27,7 +27,7 @@ impl PhoneticSuggestion {
             database: Database::new(),
             cache: HashMap::new(),
             phonetic: PhoneticParser::new(layout),
-            corrects: Vec::new(),
+            corrects: HashMap::new(),
         }
     }
 
@@ -36,7 +36,7 @@ impl PhoneticSuggestion {
     /// This function gets the suggestion list from the stored cache.
     ///
     /// Handles Auto Corrected words specially. It includes them into
-    /// the `self.suggestions` directly to let them be one of the first suggestions.
+    /// the `self.corrects` directly to let them be one of the first suggestions.
     fn add_suffix_to_suggestions(&mut self, middle: &str) -> Vec<String> {
         // Fill up the list with what we have from the cache.
         let mut list = self.cache.get(middle).cloned().unwrap_or_default();
@@ -70,10 +70,17 @@ impl PhoneticSuggestion {
                                 _ => word.push_str(&suffix),
                             }
                             // Check if the base was an auto corrected word.
-                            // If it is, then add the suffixed word into the suggestion list
-                            // to let it be one of the first ones.
-                            if self.corrects.contains(base) {
-                                push_checked(&mut self.suggestions, word);
+                            // If it is, then add the suffixed word into the `self.corrects` cache
+                            // to let it be one of the first suggestions.
+                            if self.corrects.values().any(|v| v == base) {
+                                if let Entry::Vacant(value) =
+                                    self.corrects.entry(middle.to_string())
+                                {
+                                    value.insert(word);
+                                } else {
+                                    // Entry is already filled, so add the word in the general list.
+                                    list.push(word);
+                                }
                             } else {
                                 list.push(word);
                             }
@@ -116,12 +123,11 @@ impl PhoneticSuggestion {
         if !self.cache.contains_key(splitted_string.1) {
             let mut suggestions: Vec<String> = Vec::new();
 
-            if let Some(autocorrect) = self.database.search_corrected(splitted_string.1) {
-                let corrected = self.phonetic.convert(autocorrect);
-                // Let the Auto Correct to be the first suggestion.
-                self.suggestions.push(corrected.clone());
-                // Add it in the corrected list.
-                self.corrects.push(corrected.clone());
+            if let Some(correct) = self.database.search_corrected(splitted_string.1) {
+                let corrected = self.phonetic.convert(correct);
+                // Add it in the corrected cache.
+                self.corrects
+                    .insert(splitted_string.1.to_string(), corrected.clone());
                 suggestions.push(corrected);
             }
 
@@ -137,6 +143,13 @@ impl PhoneticSuggestion {
         suffixed_suggestions
             .sort_unstable_by(|a, b| edit_distance(&phonetic, a).cmp(&edit_distance(&phonetic, b)));
 
+        // First Item: Auto Correct
+        // Get the corrected one from the auto correct cache.
+        if let Some(corrected) = self.corrects.get(splitted_string.1) {
+            self.suggestions.push(corrected.clone());
+        }
+
+        // Middle Items: Dictionary suggestions
         for suggestion in suffixed_suggestions {
             push_checked(&mut self.suggestions, suggestion);
         }
@@ -232,7 +245,7 @@ impl Default for PhoneticSuggestion {
             database: Database::new(),
             cache: HashMap::new(),
             phonetic: PhoneticParser::new(loader.layout()),
-            corrects: Vec::new(),
+            corrects: HashMap::new(),
         }
     }
 }
@@ -379,6 +392,11 @@ mod tests {
         assert_eq!(
             suggestion.suggestion_with_dict("atme"),
             vec!["এটিএমে", "আত্মে", "অ্যাটমে"]
+        );
+        // Cache check
+        assert_eq!(
+            suggestion.suggestion_with_dict("atm"),
+            vec!["এটিএম", "আত্ম", "অ্যাটম"]
         );
     }
 
