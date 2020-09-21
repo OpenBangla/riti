@@ -86,6 +86,8 @@ impl Database {
             _ => return Vec::new(),
         };
 
+        let word = clean_string(word);
+
         let need_chars_upto = match word.chars().count() {
             1 => 0,
             2..=3 => 1,
@@ -94,7 +96,7 @@ impl Database {
 
         let regex = format!(
             "^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{}}}$",
-            ignore_meta_chars(word),
+            word,
             need_chars_upto
         );
         let rgx = Regex::new(&regex).unwrap();
@@ -107,16 +109,16 @@ impl Database {
     }
 }
 
-fn ignore_meta_chars(string: &str) -> String {
+fn clean_string(string: &str) -> String {
     string
         .chars()
-        .filter(|&c| !"|()[]{}^$*+?.~!@#%&-_='\";<>/\\,:`".contains(c))
+        .filter(|&c| !"|()[]{}^$*+?.~!@#%&-_='\";<>/\\,:`\u{200C}".contains(c))
         .collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{ignore_meta_chars, Database};
+    use super::{clean_string, Database};
     use crate::settings::tests::set_default_phonetic;
 
     #[test]
@@ -133,6 +135,6 @@ mod tests {
 
     #[test]
     fn test_ignore_meta_chars() {
-        assert_eq!(ignore_meta_chars("Me|t(a)"), "Meta");
+        assert_eq!(clean_string("Me|t(a)"), "Meta");
     }
 }

@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use edit_distance::edit_distance;
 use serde_json::Value;
 
@@ -92,8 +94,27 @@ impl FixedMethod {
         // Add the user's typed word.
         self.suggestions.push(word.to_string());
         // Add suggestions from the dictionary.
-        self.suggestions
-            .append(&mut self.database.search_dictionary(&word));
+        let mut suggestions = self.database.search_dictionary(&word);
+
+        // Change the Kar joinings if Traditional Kar Joining is set.
+        if get_settings_fixed_traditional_kar() {
+            for suggestion in suggestions.iter_mut() {
+                // Check if the word has any of the ligature making Kars.
+                if suggestion.chars().any(is_ligature_making_kar) {
+                    let mut temp = String::with_capacity(suggestion.capacity());
+                    for ch in suggestion.chars() {
+                        if is_ligature_making_kar(ch) {
+                            write!(&mut temp, "{}{}", ZWNJ, ch).unwrap();
+                        } else {
+                            temp.push(ch);
+                        }
+                    }
+                    *suggestion = temp;
+                }
+            }
+        }
+
+        self.suggestions.append(&mut suggestions);
 
         // Sort the suggestions.
         self.suggestions
@@ -225,7 +246,11 @@ impl FixedMethod {
                 } else if get_settings_fixed_traditional_kar() && rmc.is_pure_consonant() {
                     // Traditional Kar Joining
                     // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
-                    self.buffer = format!("{}{}{}", self.buffer, ZWNJ, character);
+                    if is_ligature_making_kar(character) {
+                        self.buffer = format!("{}{}{}", self.buffer, ZWNJ, character);
+                    } else {
+                        self.buffer.push(character);
+                    }
                     return;
                 } else {
                     self.buffer.push(character);
@@ -271,7 +296,7 @@ impl FixedMethod {
     /// Inserts Reph into the buffer in old style.
     fn insert_old_style_reph(&mut self) {
         let rmc = self.buffer.chars().last().unwrap();
-        let len = self.buffer.chars().count();   
+        let len = self.buffer.chars().count();
         let reph_moveable = self.is_reph_moveable(rmc);
 
         let mut constant = false;
@@ -353,6 +378,11 @@ impl Default for FixedMethod {
             database: Database::new(),
         }
     }
+}
+
+/// Is the provided `c` is a ligature making Kar?
+fn is_ligature_making_kar(c: char) -> bool {
+    c == B_U_KAR || c == B_UU_KAR || c == B_RRI_KAR
 }
 
 #[cfg(test)]
@@ -518,5 +548,70 @@ mod tests {
         method.buffer = "খ".to_string();
         method.process_key_value("্য");
         assert_eq!(method.buffer, "খ্য");
+    }
+
+    #[test]
+    fn test_suggestion_traditional_kar() {
+        set_defaults_fixed();
+
+        let mut method = FixedMethod::default();
+
+        /* With Traditional Kar Joining */
+        method.process_key_value("হ");
+        method.process_key_value("ৃ");
+        method.process_key_value("দ");
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            vec!["হ‌ৃদ", "হ‌ৃদি", "হ‌ৃদয়"]
+        );
+        method.buffer.clear();
+
+        method.process_key_value("হ");
+        method.process_key_value("ু");
+        method.process_key_value("ল");
+        method.process_key_value("া");
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            vec!["হ‌ুলা", "হ‌ুলানো", "হ‌ুলাহ‌ুলি"]
+        );
+        method.buffer.clear();
+
+        method.process_key_value("র");
+        method.process_key_value("ূ");
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            vec!["র‌ূ", "র‌ূপ", "র‌ূহ"]
+        );
+        method.buffer.clear();
+
+        /* Without Traditional Kar Joining */
+        set_var(settings::ENV_LAYOUT_FIXED_KAR, "false");
+
+        method.process_key_value("হ");
+        method.process_key_value("ৃ");
+        method.process_key_value("দ");
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            vec!["হৃদ", "হৃদি", "হৃদয়"]
+        );
+        method.buffer.clear();
+
+        method.process_key_value("হ");
+        method.process_key_value("ু");
+        method.process_key_value("ল");
+        method.process_key_value("া");
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            vec!["হুলা", "হুলানো", "হুলাহুলি"]
+        );
+        method.buffer.clear();
+
+        method.process_key_value("র");
+        method.process_key_value("ূ");
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            vec!["রূ", "রূপ", "রূহ"]
+        );
+        method.buffer.clear();
     }
 }
