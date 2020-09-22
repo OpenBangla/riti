@@ -31,7 +31,7 @@ impl PhoneticMethod {
             };
 
         PhoneticMethod {
-            buffer: String::new(),
+            buffer: String::with_capacity(20),
             suggestion: PhoneticSuggestion::new(layout),
             selections,
             prev_selection: 0,
@@ -216,7 +216,7 @@ impl Method for PhoneticMethod {
     fn backspace_event(&mut self) -> Suggestion {
         if !self.buffer.is_empty() {
             // Remove the last character.
-            self.buffer = self.buffer[0..self.buffer.len() - 1].to_string();
+            self.buffer.pop();
 
             if self.buffer.is_empty() {
                 // The buffer is now empty, so return empty suggestion.

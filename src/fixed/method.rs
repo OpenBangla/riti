@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use edit_distance::edit_distance;
 use serde_json::Value;
 
@@ -51,7 +49,7 @@ impl Method for FixedMethod {
     fn backspace_event(&mut self) -> Suggestion {
         if !self.buffer.is_empty() {
             // Remove the last character from buffer.
-            self.internal_backspace();
+            self.buffer.pop();
 
             if self.buffer.is_empty() {
                 // The buffer is now empty, so return empty suggestion.
@@ -71,8 +69,8 @@ impl FixedMethod {
         let parser = LayoutParser::new(layout);
 
         FixedMethod {
-            buffer: String::new(),
-            suggestions: Vec::new(),
+            buffer: String::with_capacity(20),
+            suggestions: Vec::with_capacity(10),
             parser,
             database: Database::new(),
         }
@@ -104,10 +102,9 @@ impl FixedMethod {
                     let mut temp = String::with_capacity(suggestion.capacity());
                     for ch in suggestion.chars() {
                         if is_ligature_making_kar(ch) {
-                            write!(&mut temp, "{}{}", ZWNJ, ch).unwrap();
-                        } else {
-                            temp.push(ch);
+                            temp.push(ZWNJ);
                         }
+                        temp.push(ch);
                     }
                     *suggestion = temp;
                 }
@@ -157,12 +154,10 @@ impl FixedMethod {
             // Check if র is not a part of a Ro-fola, if its not then add an ZWJ before
             // the Zo-fola to have the র‍্য form.
             if rmc == B_R && self.buffer.chars().rev().nth(1).unwrap_or_default() != B_HASANTA {
-                self.buffer = format!("{}{}{}", self.buffer, ZWJ, value);
-                return;
-            } else {
-                self.buffer.push_str(value);
-                return;
+                self.buffer.push(ZWJ);
             }
+            self.buffer.push_str(value);
+            return;
         }
 
         // Old style Reph insertion
@@ -189,68 +184,68 @@ impl FixedMethod {
                         B_OI_KAR => self.buffer.push(B_OI),
                         B_O_KAR => self.buffer.push(B_O),
                         B_OU_KAR => self.buffer.push(B_OU),
-                        _ => unreachable!(),
+                        _ => (),
                     }
                     return;
                 } else if get_settings_fixed_automatic_chandra() && rmc == B_CHANDRA {
                     // Automatic Fix of Chandra Position
-                    self.internal_backspace();
-                    self.buffer = format!("{}{}{}", self.buffer, character, B_CHANDRA);
+                    self.buffer.pop();
+                    self.buffer.push(character);
+                    self.buffer.push(B_CHANDRA);
                     return;
                 } else if rmc == B_HASANTA {
                     // Vowel making with Hasanta + Kar
                     match character {
                         B_AA_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_AA);
                         }
                         B_I_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_I);
                         }
                         B_II_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_II);
                         }
                         B_U_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_U);
                         }
                         B_UU_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_UU);
                         }
                         B_RRI_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_RRI);
                         }
                         B_E_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_E);
                         }
                         B_OI_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_OI);
                         }
                         B_O_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_O);
                         }
                         B_OU_KAR => {
-                            self.internal_backspace();
+                            self.buffer.pop();
                             self.buffer.push(B_OU);
                         }
-                        _ => unreachable!(),
+                        _ => (),
                     }
                     return;
                 } else if get_settings_fixed_traditional_kar() && rmc.is_pure_consonant() {
                     // Traditional Kar Joining
                     // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
                     if is_ligature_making_kar(character) {
-                        self.buffer = format!("{}{}{}", self.buffer, ZWNJ, character);
-                    } else {
-                        self.buffer.push(character);
+                        self.buffer.push(ZWNJ);
                     }
+                    self.buffer.push(character);
                     return;
                 } else {
                     self.buffer.push(character);
@@ -344,22 +339,25 @@ impl FixedMethod {
 
             let temp: String = self.buffer.chars().skip(len - step).collect();
             self.internal_backspace_step(step);
-            self.buffer = format!("{}{}{}{}", self.buffer, B_R, B_HASANTA, temp);
+            self.buffer.push(B_R);
+            self.buffer.push(B_HASANTA);
+            self.buffer.push_str(&temp);
         } else {
-            self.buffer = format!("{}{}{}", self.buffer, B_R, B_HASANTA);
+            self.buffer.push(B_R);
+            self.buffer.push(B_HASANTA);
         }
-    }
-
-    /// Removes the last character from the buffer.
-    fn internal_backspace(&mut self) {
-        let len = self.buffer.chars().count() - 1;
-        self.buffer = self.buffer.chars().take(len).collect();
     }
 
     /// Removes the last `n` character from the buffer.
     fn internal_backspace_step(&mut self, n: usize) {
-        let len = self.buffer.chars().count() - n;
-        self.buffer = self.buffer.chars().take(len).collect();
+        let len = self
+            .buffer
+            .chars()
+            .rev()
+            .take(n)
+            .fold(0, |acc, x| acc + x.len_utf8());
+        let new_len = self.buffer.len() - len;
+        self.buffer.truncate(new_len);
     }
 }
 

@@ -1,7 +1,5 @@
 // Suggestion making module.
 
-use std::fmt::Write;
-
 use edit_distance::edit_distance;
 use hashbrown::{hash_map::Entry, HashMap};
 use rupantor::parser::PhoneticParser;
@@ -55,20 +53,21 @@ impl PhoneticSuggestion {
                             match base_rmc {
                                 ch if ch.is_vowel() && suffix_lmc.is_kar() => {
                                     // Insert য় in between.
-                                    write!(&mut word, "য়{}", suffix).unwrap();
+                                    word.push('য়');
                                 }
                                 'ৎ' => {
                                     // Replace ৎ with ত
                                     word.pop();
-                                    write!(&mut word, "ত{}", suffix).unwrap();
+                                    word.push('ত');
                                 }
                                 'ং' => {
                                     // Replace ং with ঙ
                                     word.pop();
-                                    write!(&mut word, "ঙ{}", suffix).unwrap();
+                                    word.push('ঙ');
                                 }
-                                _ => word.push_str(&suffix),
+                                _ => (),
                             }
+                            word.push_str(suffix);
                             // Check if the base was an auto corrected word.
                             // If it is, then add the suffixed word into the `self.corrects` cache
                             // to let it be one of the first suggestions.
@@ -205,20 +204,21 @@ impl PhoneticSuggestion {
                         match rmc {
                             ch if ch.is_vowel() && suffix_lmc.is_kar() => {
                                 // Insert য় in between.
-                                write!(&mut selected, "য়{}", suffix).unwrap();
+                                selected.push('য়');
                             }
                             'ৎ' => {
                                 // Replace ৎ with ত
                                 selected.pop();
-                                write!(&mut selected, "ত{}", suffix).unwrap();
+                                selected.push('ত');
                             }
                             'ং' => {
                                 // Replace ং with ঙ
                                 selected.pop();
-                                write!(&mut selected, "ঙ{}", suffix).unwrap();
+                                selected.push('ঙ');
                             }
-                            _ => selected.push_str(&suffix),
+                            _ => (),
                         }
+                        selected.push_str(suffix);
 
                         // Save this for future reuse.
                         selections.insert(splitted_string.1.to_string(), selected.to_string());
