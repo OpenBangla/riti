@@ -187,7 +187,7 @@ impl Method for PhoneticMethod {
     fn candidate_committed(&mut self, index: usize) {
         // Check if user has selected a different suggestion
         if self.prev_selection != index && get_settings_phonetic_database_on() {
-            let suggestion = self.suggestion.suggestions[index].clone();
+            let suggestion = split_string(&self.suggestion.suggestions[index]).1.to_string();
             self.selections
                 .insert(split_string(&self.buffer).1.to_string(), suggestion);
             write(

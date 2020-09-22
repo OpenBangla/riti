@@ -140,6 +140,7 @@ mod test {
             split_string("#\"percent%sign\"#"),
             ("#\"", "percent%sign", "\"#")
         );
+        assert_eq!(split_string("*[মেটা]*"), ("*[", "মেটা", "]*"));
         assert_eq!(split_string("text"), ("", "text", ""));
         assert_eq!(split_string(":)"), ("", ":", ")"));
     }
