@@ -562,7 +562,7 @@ mod tests {
         method.process_key_value("দ");
         assert_eq!(
             method.create_dictionary_suggestion().get_suggestions(),
-            vec!["হ‌ৃদ", "হ‌ৃদি", "হ‌ৃদয়"]
+            ["হ‌ৃদ", "হ‌ৃদি", "হ‌ৃদয়"]
         );
         method.buffer.clear();
 
@@ -572,7 +572,7 @@ mod tests {
         method.process_key_value("া");
         assert_eq!(
             method.create_dictionary_suggestion().get_suggestions(),
-            vec!["হ‌ুলা", "হ‌ুলানো", "হ‌ুলাহ‌ুলি"]
+            ["হ‌ুলা", "হ‌ুলানো", "হ‌ুলাহ‌ুলি"]
         );
         method.buffer.clear();
 
@@ -580,7 +580,7 @@ mod tests {
         method.process_key_value("ূ");
         assert_eq!(
             method.create_dictionary_suggestion().get_suggestions(),
-            vec!["র‌ূ", "র‌ূপ", "র‌ূহ"]
+            ["র‌ূ", "র‌ূপ", "র‌ূহ"]
         );
         method.buffer.clear();
 
@@ -592,7 +592,7 @@ mod tests {
         method.process_key_value("দ");
         assert_eq!(
             method.create_dictionary_suggestion().get_suggestions(),
-            vec!["হৃদ", "হৃদি", "হৃদয়"]
+            ["হৃদ", "হৃদি", "হৃদয়"]
         );
         method.buffer.clear();
 
@@ -602,7 +602,7 @@ mod tests {
         method.process_key_value("া");
         assert_eq!(
             method.create_dictionary_suggestion().get_suggestions(),
-            vec!["হুলা", "হুলানো", "হুলাহুলি"]
+            ["হুলা", "হুলানো", "হুলাহুলি"]
         );
         method.buffer.clear();
 
@@ -610,7 +610,7 @@ mod tests {
         method.process_key_value("ূ");
         assert_eq!(
             method.create_dictionary_suggestion().get_suggestions(),
-            vec!["রূ", "রূপ", "রূহ"]
+            ["রূ", "রূপ", "রূহ"]
         );
         method.buffer.clear();
     }
