@@ -23,9 +23,9 @@ impl PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new(),
-            cache: HashMap::new(),
+            cache: HashMap::with_capacity(20),
             phonetic: PhoneticParser::new(layout),
-            corrects: HashMap::new(),
+            corrects: HashMap::with_capacity(10),
         }
     }
 
@@ -49,7 +49,8 @@ impl PhoneticSuggestion {
                         for base in cache {
                             let base_rmc = base.chars().last().unwrap(); // Right most character.
                             let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
-                            let mut word = base.clone();
+                            let mut word = String::with_capacity(middle.len() * 3);
+                            word.push_str(base);
                             match base_rmc {
                                 ch if ch.is_vowel() && suffix_lmc.is_kar() => {
                                     // Insert য় in between.
@@ -184,11 +185,12 @@ impl PhoneticSuggestion {
         selections: &mut HashMap<String, String>,
     ) -> usize {
         let splitted_string = split_string(buffer);
-        let mut selected = String::new();
         let len = splitted_string.1.len();
+        let mut selected = String::with_capacity(len * 3);
+        
 
         if let Some(item) = selections.get(splitted_string.1) {
-            selected = item.clone();
+            selected.push_str(item);
         } else if len >= 2 {
             for i in 1..len {
                 let test = &splitted_string.1[len - i..len];
@@ -197,9 +199,9 @@ impl PhoneticSuggestion {
                     let key = &splitted_string.1[..len - test.len()];
 
                     if let Some(base) = selections.get(key) {
-                        selected = base.clone();
                         let rmc = base.chars().last().unwrap();
                         let suffix_lmc = suffix.chars().nth(0).unwrap();
+                        selected.push_str(base);
 
                         match rmc {
                             ch if ch.is_vowel() && suffix_lmc.is_kar() => {

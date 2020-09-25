@@ -7,9 +7,11 @@ use super::patterns::{Scope, Type, CONSONANT, IGNORE, MAX_PATTERN_LEN, PATTERNS,
 /// Parse `input` string containing phonetic text and return a regex string.
 pub(crate) fn parse(input: &str) -> String {
     let fixed = clean_string(input);
-    let mut output = String::new();
-
     let len = fixed.len();
+
+    let mut output = String::with_capacity(len * 60);
+    output.push('^'); // Regex beginning mark.
+
     let mut cur = 0;
     while cur < len {
         let start = cur as i32;
@@ -140,8 +142,9 @@ pub(crate) fn parse(input: &str) -> String {
         }
         cur += 1;
     }
+    output.push('$'); // Regex end mark.
 
-    format!("^{}$", output)
+    output
 }
 
 fn clean_string(string: &str) -> String {

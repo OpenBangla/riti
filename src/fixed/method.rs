@@ -69,7 +69,7 @@ impl FixedMethod {
         let parser = LayoutParser::new(layout);
 
         FixedMethod {
-            buffer: String::with_capacity(20),
+            buffer: String::with_capacity(20 * 3), // A Bengali character is 3 bytes in size.
             suggestions: Vec::with_capacity(10),
             parser,
             database: Database::new(),
