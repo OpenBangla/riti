@@ -53,7 +53,7 @@ pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
 /// Split the string into three parts.
 /// This function splits preceding and trailing meta characters.
 pub(crate) fn split_string(input: &str) -> (&str, &str, &str) {
-    let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,";
+    let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,:";
     let mut first_index = 0;
     let mut last_index = 0;
     let mut encountered_alpha = false;
@@ -142,6 +142,5 @@ mod test {
         );
         assert_eq!(split_string("*[মেটা]*"), ("*[", "মেটা", "]*"));
         assert_eq!(split_string("text"), ("", "text", ""));
-        assert_eq!(split_string(":)"), ("", ":", ")"));
     }
 }

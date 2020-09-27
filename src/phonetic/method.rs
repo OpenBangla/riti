@@ -41,14 +41,14 @@ impl PhoneticMethod {
     /// Returns `Suggestion` struct with suggestions.
     fn create_suggestion(&mut self) -> Suggestion {
         if get_settings_phonetic_database_on() {
-            let suggestions = self.suggestion.suggestion_with_dict(&self.buffer);
-            self.prev_selection = self
-                .suggestion
-                .get_prev_selection(&self.buffer, &mut self.selections);
+            let (suggestions, selection) =
+                self.suggestion.suggest(&self.buffer, &mut self.selections);
+
+            self.prev_selection = selection;
 
             Suggestion::new(self.buffer.clone(), suggestions, self.prev_selection)
         } else {
-            let suggestion = self.suggestion.suggestion_only_phonetic(&self.buffer);
+            let suggestion = self.suggestion.suggest_only_phonetic(&self.buffer);
 
             Suggestion::new_lonely(suggestion)
         }
@@ -187,7 +187,9 @@ impl Method for PhoneticMethod {
     fn candidate_committed(&mut self, index: usize) {
         // Check if user has selected a different suggestion
         if self.prev_selection != index && get_settings_phonetic_database_on() {
-            let suggestion = split_string(&self.suggestion.suggestions[index]).1.to_string();
+            let suggestion = split_string(&self.suggestion.suggestions[index])
+                .1
+                .to_string();
             self.selections
                 .insert(split_string(&self.buffer).1.to_string(), suggestion);
             write(

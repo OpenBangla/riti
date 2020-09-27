@@ -94,7 +94,7 @@ impl PhoneticSuggestion {
     }
 
     /// Make suggestion from given `term` with only phonetic transliteration.
-    pub(crate) fn suggestion_only_phonetic(&self, term: &str) -> String {
+    pub(crate) fn suggest_only_phonetic(&self, term: &str) -> String {
         let splitted_string = split_string(term);
 
         format!(
@@ -105,9 +105,11 @@ impl PhoneticSuggestion {
         )
     }
 
-    /// Make suggestions from the given `term`. This will include dictionary and auto-correct suggestion.
-    pub(crate) fn suggestion_with_dict(&mut self, term: &str) -> Vec<String> {
-        self.suggestions.clear();
+    pub(crate) fn suggest(
+        &mut self,
+        term: &str,
+        selections: &mut HashMap<String, String>,
+    ) -> (Vec<String>, usize) {
         let splitted_string = split_string(term);
 
         // Convert preceding and trailing meta characters into Bengali(phonetic representation).
@@ -116,6 +118,32 @@ impl PhoneticSuggestion {
             splitted_string.1,
             &self.phonetic.convert(splitted_string.2),
         );
+
+        self.suggestion_with_dict(&splitted_string);
+
+        // Emoticons Auto Corrects
+        if let Some(emoticon) = self.database.search_corrected(term) {
+            if emoticon == term {
+                self.suggestions.insert(0, emoticon.to_string());
+            }
+        }
+
+        // Include written English word if the feature is enabled.
+        if settings::get_settings_phonetic_include_english()
+            // Watch out for emoticons!
+            && !self.suggestions.iter().any(|i| i == term)
+        {
+            self.suggestions.push(term.to_string());
+        }
+
+        let selection = self.get_prev_selection(&splitted_string, selections);
+
+        (self.suggestions.clone(), selection)
+    }
+
+    /// Make suggestions from the given `splitted_string`. This will include dictionary and auto-correct suggestion.
+    pub(crate) fn suggestion_with_dict(&mut self, splitted_string: &(&str, &str, &str)) {
+        self.suggestions.clear();
 
         let phonetic = self.phonetic.convert(splitted_string.1);
 
@@ -157,37 +185,21 @@ impl PhoneticSuggestion {
         // Last Item: Phonetic
         push_checked(&mut self.suggestions, phonetic);
 
-        for item in self.suggestions.iter_mut() {
-            *item = format!("{}{}{}", splitted_string.0, item, splitted_string.2);
-        }
-
-        // Emoticons Auto Corrects
-        if let Some(emoticon) = self.database.search_corrected(term) {
-            if emoticon == term {
-                self.suggestions.insert(0, emoticon.to_string());
+        // Add those preceding and trailing meta characters.
+        if !splitted_string.0.is_empty() || !splitted_string.2.is_empty() {
+            for item in self.suggestions.iter_mut() {
+                *item = format!("{}{}{}", splitted_string.0, item, splitted_string.2);
             }
         }
-
-        // Include written English word if the feature is enabled.
-        if settings::get_settings_phonetic_include_english()
-            // Watch out for emoticons!
-            && !self.suggestions.iter().any(|i| i == term)
-        {
-            self.suggestions.push(term.to_string());
-        }
-
-        self.suggestions.clone()
     }
 
     pub(crate) fn get_prev_selection(
         &self,
-        buffer: &str,
+        splitted_string: &(&str, &str, &str),
         selections: &mut HashMap<String, String>,
     ) -> usize {
-        let splitted_string = split_string(buffer);
         let len = splitted_string.1.len();
         let mut selected = String::with_capacity(len * 3);
-        
 
         if let Some(item) = selections.get(splitted_string.1) {
             selected.push_str(item);
@@ -258,6 +270,7 @@ mod tests {
 
     use super::PhoneticSuggestion;
     use crate::settings::{tests::set_default_phonetic, ENV_PHONETIC_INCLUDE_ENGLISH};
+    use crate::utility::split_string;
 
     //#[test] TODO: Enable this test after the environ variable data race issue is mitigated.
     fn test_suggestion_with_english() {
@@ -265,11 +278,15 @@ mod tests {
         std::env::set_var(ENV_PHONETIC_INCLUDE_ENGLISH, "true");
 
         let mut suggestion = PhoneticSuggestion::default();
+        let mut selections = HashMap::new();
 
-        assert_eq!(suggestion.suggestion_with_dict(":)"), vec![":)", "ঃ)"]);
+        suggestion.suggest(":)", &mut selections);
+        assert_eq!(suggestion.suggestions, [":)", "ঃ)"]);
+
+        suggestion.suggest("{a}", &mut selections);
         assert_eq!(
-            suggestion.suggestion_with_dict("{a}"),
-            vec!["{আ}", "{আঃ}", "{া}", "{এ}", "{অ্যা}", "{অ্যাঁ}", "{a}"]
+            suggestion.suggestions,
+            ["{আ}", "{আঃ}", "{া}", "{এ}", "{অ্যা}", "{অ্যাঁ}", "{a}"]
         );
     }
 
@@ -279,8 +296,8 @@ mod tests {
 
         let suggestion = PhoneticSuggestion::default();
 
-        assert_eq!(suggestion.suggestion_only_phonetic("{kotha}"), "{কথা}");
-        assert_eq!(suggestion.suggestion_only_phonetic(",ah,,"), ",আহ্‌");
+        assert_eq!(suggestion.suggest_only_phonetic("{kotha}"), "{কথা}");
+        assert_eq!(suggestion.suggest_only_phonetic(",ah,,"), ",আহ্‌");
     }
 
     #[test]
@@ -288,9 +305,13 @@ mod tests {
         set_default_phonetic();
 
         let mut suggestion = PhoneticSuggestion::default();
+        let mut selections = HashMap::new();
 
-        assert_eq!(suggestion.suggestion_with_dict(":)"), vec![":)", "ঃ)"]);
-        assert_eq!(suggestion.suggestion_with_dict("."), vec!["।"]);
+        suggestion.suggest(":)", &mut selections);
+        assert_eq!(suggestion.suggestions, [":)", "ঃ)"]);
+
+        suggestion.suggest(".", &mut selections);
+        assert_eq!(suggestion.suggestions, ["।"]);
     }
 
     #[test]
@@ -299,22 +320,20 @@ mod tests {
 
         let mut suggestion = PhoneticSuggestion::default();
 
+        suggestion.suggestion_with_dict(&split_string("a"));
+        assert_eq!(suggestion.suggestions, ["আ", "আঃ", "া", "এ", "অ্যা", "অ্যাঁ"]);
+
+        suggestion.suggestion_with_dict(&split_string("as"));
+        assert_eq!(suggestion.suggestions, ["আস", "আশ", "এস", "আঁশ"]);
+
+        suggestion.suggestion_with_dict(&split_string("asgulo"));
         assert_eq!(
-            suggestion.suggestion_with_dict("a"),
-            vec!["আ", "আঃ", "া", "এ", "অ্যা", "অ্যাঁ"]
+            suggestion.suggestions,
+            ["আসগুলো", "আশগুলো", "এসগুলো", "আঁশগুলো", "আসগুল"]
         );
-        assert_eq!(
-            suggestion.suggestion_with_dict("as"),
-            vec!["আস", "আশ", "এস", "আঁশ"]
-        );
-        assert_eq!(
-            suggestion.suggestion_with_dict("asgulo"),
-            vec!["আসগুলো", "আশগুলো", "এসগুলো", "আঁশগুলো", "আসগুল"]
-        );
-        assert_eq!(
-            suggestion.suggestion_with_dict("(as)"),
-            vec!["(আস)", "(আশ)", "(এস)", "(আঁশ)"]
-        );
+
+        suggestion.suggestion_with_dict(&split_string("(as)"));
+        assert_eq!(suggestion.suggestions, ["(আস)", "(আশ)", "(এস)", "(আঁশ)"]);
     }
 
     #[test]
@@ -323,27 +342,26 @@ mod tests {
 
         let mut suggestion = PhoneticSuggestion::default();
 
-        suggestion.suggestion_with_dict("a");
-        suggestion.suggestion_with_dict("ap");
-        suggestion.suggestion_with_dict("apn");
+        suggestion.suggestion_with_dict(&split_string("a"));
+        suggestion.suggestion_with_dict(&split_string("ap"));
+        suggestion.suggestion_with_dict(&split_string("apn"));
+        suggestion.suggestion_with_dict(&split_string("apni"));
+        assert_eq!(suggestion.suggestions, ["আপনি", "আপনই", "আপ্নি"]);
+
+        suggestion.suggestion_with_dict(&split_string("am"));
+        suggestion.suggestion_with_dict(&split_string("ami"));
+        assert_eq!(suggestion.suggestions, ["আমি", "আমই", "এমই"]);
+
+        suggestion.suggestion_with_dict(&split_string("kkhet"));
         assert_eq!(
-            suggestion.suggestion_with_dict("apni"),
-            vec!["আপনি", "আপনই", "আপ্নি"]
+            suggestion.suggestions,
+            ["ক্ষেত", "খেত", "খ্যাত", "খেট", "খ্যাঁত", "খেঁট", "খ্যাঁট"]
         );
 
-        suggestion.suggestion_with_dict("am");
+        suggestion.suggestion_with_dict(&split_string("kkhetr"));
         assert_eq!(
-            suggestion.suggestion_with_dict("ami"),
-            vec!["আমি", "আমই", "এমই"]
-        );
-
-        assert_eq!(
-            suggestion.suggestion_with_dict("kkhet"),
-            vec!["ক্ষেত", "খেত", "খ্যাত", "খেট", "খ্যাঁত", "খেঁট", "খ্যাঁট"]
-        );
-        assert_eq!(
-            suggestion.suggestion_with_dict("kkhetr"),
-            vec![
+            suggestion.suggestions,
+            [
                 "ক্ষেত্র",
                 "ক্ষেতর",
                 "খেতর",
@@ -354,9 +372,11 @@ mod tests {
                 "খ্যাঁতর"
             ]
         );
+
+        suggestion.suggestion_with_dict(&split_string("kkhetre"));
         assert_eq!(
-            suggestion.suggestion_with_dict("kkhetre"),
-            vec![
+            suggestion.suggestions,
+            [
                 "ক্ষেত্রে",
                 "ক্ষেতরে",
                 "খেতরে",
@@ -368,38 +388,32 @@ mod tests {
             ]
         );
 
-        assert_eq!(suggestion.suggestion_with_dict("form"), vec!["ফর্ম", "ফরম"]);
-        assert_eq!(suggestion.suggestion_with_dict("forma"), ["ফরমা", "ফর্মা"]);
-        assert_eq!(
-            suggestion.suggestion_with_dict("format"),
-            vec!["ফরম্যাট", "ফরমাত"]
-        );
-        assert_eq!(
-            suggestion.suggestion_with_dict("formate"),
-            vec!["ফরম্যাটে", "ফরমাতে", "ফর্মাতে"]
-        );
-        assert_eq!(
-            suggestion.suggestion_with_dict("formatt"),
-            vec!["ফরম্যাট", "ফরমাত্ত"]
-        );
-        assert_eq!(
-            suggestion.suggestion_with_dict("formatte"),
-            vec!["ফরম্যাটতে", "ফরম্যাটে", "ফরমাত্তে"]
-        );
+        suggestion.suggestion_with_dict(&split_string("form"));
+        assert_eq!(suggestion.suggestions, ["ফর্ম", "ফরম"]);
 
-        assert_eq!(
-            suggestion.suggestion_with_dict("atm"),
-            vec!["এটিএম", "আত্ম", "অ্যাটম"]
-        );
-        assert_eq!(
-            suggestion.suggestion_with_dict("atme"),
-            vec!["এটিএমে", "আত্মে", "অ্যাটমে"]
-        );
+        suggestion.suggestion_with_dict(&split_string("forma"));
+        assert_eq!(suggestion.suggestions, ["ফরমা", "ফর্মা"]);
+
+        suggestion.suggestion_with_dict(&split_string("format"));
+        assert_eq!(suggestion.suggestions, ["ফরম্যাট", "ফরমাত"]);
+
+        suggestion.suggestion_with_dict(&split_string("formate"));
+        assert_eq!(suggestion.suggestions, ["ফরম্যাটে", "ফরমাতে", "ফর্মাতে"]);
+
+        suggestion.suggestion_with_dict(&split_string("formatt"));
+        assert_eq!(suggestion.suggestions, ["ফরম্যাট", "ফরমাত্ত"]);
+
+        suggestion.suggestion_with_dict(&split_string("formatte"));
+        assert_eq!(suggestion.suggestions, ["ফরম্যাটতে", "ফরম্যাটে", "ফরমাত্তে"]);
+
+        suggestion.suggestion_with_dict(&split_string("atm"));
+        assert_eq!(suggestion.suggestions, ["এটিএম", "আত্ম", "অ্যাটম"]);
+
+        suggestion.suggestion_with_dict(&split_string("atme"));
+        assert_eq!(suggestion.suggestions, ["এটিএমে", "আত্মে", "অ্যাটমে"]);
         // Cache check
-        assert_eq!(
-            suggestion.suggestion_with_dict("atm"),
-            vec!["এটিএম", "আত্ম", "অ্যাটম"]
-        );
+        suggestion.suggestion_with_dict(&split_string("atm"));
+        assert_eq!(suggestion.suggestions, ["এটিএম", "আত্ম", "অ্যাটম"]);
     }
 
     #[test]
@@ -419,27 +433,24 @@ mod tests {
 
         assert_eq!(
             suggestion.add_suffix_to_suggestions("computer"),
-            vec!["কম্পিউটার"]
+            ["কম্পিউটার"]
         );
         assert_eq!(
             suggestion.add_suffix_to_suggestions("computere"),
-            vec!["কম্পিউটারে"]
+            ["কম্পিউটারে"]
         );
         assert_eq!(
             suggestion.add_suffix_to_suggestions("computergulo"),
-            vec!["কম্পিউটারগুলো"]
+            ["কম্পিউটারগুলো"]
         );
         // kar => য়
         assert_eq!(suggestion.add_suffix_to_suggestions("iei"), vec!["ইয়েই"]);
         // ৎ => ত
-        assert_eq!(
-            suggestion.add_suffix_to_suggestions("hothate"),
-            vec!["হঠাতে"]
-        );
+        assert_eq!(suggestion.add_suffix_to_suggestions("hothate"), ["হঠাতে"]);
         // ং => ঙ
         assert_eq!(
             suggestion.add_suffix_to_suggestions("ebongmala"),
-            vec!["এবঙমালা"]
+            ["এবঙমালা"]
         );
     }
 
@@ -456,30 +467,60 @@ mod tests {
 
         // Avoid meta characters
         suggestion.suggestions = vec!["*অন্ন?!".to_string(), "*অন্য?!".to_string()];
-        assert_eq!(suggestion.get_prev_selection("*onno?!", &mut selections), 1);
+        assert_eq!(
+            suggestion.get_prev_selection(&split_string("*onno?!"), &mut selections),
+            1
+        );
 
         // With Suffix
         suggestion.suggestions = vec!["ইএই".to_string(), "ইয়েই".to_string()];
-        assert_eq!(suggestion.get_prev_selection("iei", &mut selections), 1);
+        assert_eq!(
+            suggestion.get_prev_selection(&split_string("iei"), &mut selections),
+            1
+        );
 
         suggestion.suggestions = vec![
             "হোথাতে".to_string(),
             "হথাতে".to_string(),
             "হঠাতে".to_string(),
         ];
-        assert_eq!(suggestion.get_prev_selection("hothate", &mut selections), 2);
+        assert_eq!(
+            suggestion.get_prev_selection(&split_string("hothate"), &mut selections),
+            2
+        );
 
         suggestion.suggestions = vec!["এবংমালা".to_string(), "এবঙমালা".to_string()];
         assert_eq!(
-            suggestion.get_prev_selection("ebongmala", &mut selections),
+            suggestion.get_prev_selection(&split_string("ebongmala"), &mut selections),
             1
         );
 
         // With Suffix + Avoid meta characters
         suggestion.suggestions = vec!["*অন্নগুলো?!".to_string(), "*অন্যগুলো?!".to_string()];
         assert_eq!(
-            suggestion.get_prev_selection("*onnogulo?!", &mut selections),
+            suggestion.get_prev_selection(&split_string("*onnogulo?!"), &mut selections),
             1
         );
+    }
+
+    #[test]
+    fn test_suggest_special_chars_selections() {
+        set_default_phonetic();
+
+        let mut suggestion = PhoneticSuggestion::default();
+        let mut selections = HashMap::new();
+        selections.insert("sesh".to_string(), "শেষ".to_string());
+
+        let (suggestions, selection) = suggestion.suggest("sesh", &mut selections);
+        assert_eq!(suggestions, ["সেস", "শেষ", "সেশ"]);
+        assert_eq!(selection, 1);
+
+        let (suggestions, selection) = suggestion.suggest("sesh.", &mut selections);
+        assert_eq!(suggestions, ["সেস।", "শেষ।", "সেশ।"]);
+        assert_eq!(selection, 1);
+
+        let (suggestions, selection) = suggestion.suggest("sesh:", &mut selections);
+        assert_eq!(suggestions, ["সেসঃ", "শেষঃ", "সেশঃ"]);
+        assert_eq!(selection, 1);
     }
 }
