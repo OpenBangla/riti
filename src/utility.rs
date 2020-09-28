@@ -53,17 +53,18 @@ pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
 /// Split the string into three parts.
 /// This function splits preceding and trailing meta characters.
 pub(crate) fn split_string(input: &str) -> (&str, &str, &str) {
-    let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,:";
+    let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,:।ঃ";
     let mut first_index = 0;
-    let mut last_index = 0;
+    let mut last_index = input.len();
     let mut encountered_alpha = false;
 
-    for (index, c) in input.chars().enumerate() {
+    for c in input.chars() {
         if !meta.contains(c) {
-            first_index = index;
             encountered_alpha = true;
             break;
         }
+        
+        first_index += c.len_utf8();
     }
 
     // Corner case: If we haven't yet encountered an alpha or
@@ -74,15 +75,26 @@ pub(crate) fn split_string(input: &str) -> (&str, &str, &str) {
     }
 
     for (index, c) in input.chars().rev().enumerate() {
+        // Check is there a double ` accent character.
+        if c == '`' {
+            if input.chars().rev().nth(index + 1).unwrap_or_default() == '`' {
+                break;
+            } else {
+                last_index -= 1;
+                continue;
+            }
+        }
+
         if !meta.contains(c) {
-            last_index = input.len() - index - 1;
             break;
         }
+
+        last_index -= c.len_utf8();
     }
 
     let first_part = &input[0..first_index];
-    let middle_part = &input[first_index..=last_index];
-    let last_part = &input[last_index + 1..];
+    let middle_part = &input[first_index..last_index];
+    let last_part = &input[last_index..];
 
     (first_part, middle_part, last_part)
 }
@@ -142,5 +154,8 @@ mod test {
         );
         assert_eq!(split_string("*[মেটা]*"), ("*[", "মেটা", "]*"));
         assert_eq!(split_string("text"), ("", "text", ""));
+        assert_eq!(split_string("kt:`"), ("", "kt", ":`"));
+        assert_eq!(split_string("kt:```"), ("", "kt:```", ""));
+        assert_eq!(split_string("ঃ।মেঃ।টাঃ।"), ("ঃ।", "মেঃ।টা", "ঃ।"));
     }
 }

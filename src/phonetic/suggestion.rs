@@ -522,5 +522,12 @@ mod tests {
         let (suggestions, selection) = suggestion.suggest("sesh:", &mut selections);
         assert_eq!(suggestions, ["সেসঃ", "শেষঃ", "সেশঃ"]);
         assert_eq!(selection, 1);
+
+        let (suggestions, selection) = suggestion.suggest("sesh:`", &mut selections);
+        assert_eq!(suggestions, ["সেস:", "শেষ:", "সেশ:"]);
+        assert_eq!(selection, 1);
+
+        let (suggestions, _) = suggestion.suggest("6t``", &mut selections);
+        assert_eq!(suggestions, ["৬ৎ"]);
     }
 }
