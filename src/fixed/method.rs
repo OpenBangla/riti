@@ -85,7 +85,7 @@ impl FixedMethod {
     }
 
     fn create_dictionary_suggestion(&mut self) -> Suggestion {
-        let (first_part, word, last_part) = split_string(&self.buffer);
+        let (first_part, word, last_part) = split_string(&self.buffer, true);
 
         self.suggestions.clear();
 
@@ -408,6 +408,18 @@ mod tests {
         assert_eq!(
             method.create_dictionary_suggestion().get_suggestions(),
             ["[আমি]", "[আমিন]", "[আমির]", "[আমিষ]"]
+        );
+
+        method.buffer = "আমি:".to_string();
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            ["আমি:", "আমিন:", "আমির:", "আমিষ:"]
+        );
+
+        method.buffer = "আমি।".to_string();
+        assert_eq!(
+            method.create_dictionary_suggestion().get_suggestions(),
+            ["আমি।", "আমিন।", "আমির।", "আমিষ।"]
         );
 
         // User written word should be the first one.

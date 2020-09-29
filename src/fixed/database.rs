@@ -112,7 +112,7 @@ impl Database {
 fn clean_string(string: &str) -> String {
     string
         .chars()
-        .filter(|&c| !"|()[]{}^$*+?.~!@#%&-_='\";<>/\\,:`\u{200C}".contains(c))
+        .filter(|&c| !"|()[]{}^$*+?.~!@#%&-_='\";<>/\\,:`।\u{200C}".contains(c))
         .collect()
 }
 

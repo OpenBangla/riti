@@ -95,7 +95,7 @@ impl PhoneticSuggestion {
 
     /// Make suggestion from given `term` with only phonetic transliteration.
     pub(crate) fn suggest_only_phonetic(&self, term: &str) -> String {
-        let splitted_string = split_string(term);
+        let splitted_string = split_string(term, false);
 
         format!(
             "{}{}{}",
@@ -110,7 +110,7 @@ impl PhoneticSuggestion {
         term: &str,
         selections: &mut HashMap<String, String>,
     ) -> (Vec<String>, usize) {
-        let splitted_string = split_string(term);
+        let splitted_string = split_string(term, false);
 
         // Convert preceding and trailing meta characters into Bengali(phonetic representation).
         let splitted_string: (&str, &str, &str) = (
@@ -320,19 +320,19 @@ mod tests {
 
         let mut suggestion = PhoneticSuggestion::default();
 
-        suggestion.suggestion_with_dict(&split_string("a"));
+        suggestion.suggestion_with_dict(&split_string("a", false));
         assert_eq!(suggestion.suggestions, ["আ", "আঃ", "া", "এ", "অ্যা", "অ্যাঁ"]);
 
-        suggestion.suggestion_with_dict(&split_string("as"));
+        suggestion.suggestion_with_dict(&split_string("as", false));
         assert_eq!(suggestion.suggestions, ["আস", "আশ", "এস", "আঁশ"]);
 
-        suggestion.suggestion_with_dict(&split_string("asgulo"));
+        suggestion.suggestion_with_dict(&split_string("asgulo", false));
         assert_eq!(
             suggestion.suggestions,
             ["আসগুলো", "আশগুলো", "এসগুলো", "আঁশগুলো", "আসগুল"]
         );
 
-        suggestion.suggestion_with_dict(&split_string("(as)"));
+        suggestion.suggestion_with_dict(&split_string("(as)", false));
         assert_eq!(suggestion.suggestions, ["(আস)", "(আশ)", "(এস)", "(আঁশ)"]);
     }
 
@@ -342,23 +342,23 @@ mod tests {
 
         let mut suggestion = PhoneticSuggestion::default();
 
-        suggestion.suggestion_with_dict(&split_string("a"));
-        suggestion.suggestion_with_dict(&split_string("ap"));
-        suggestion.suggestion_with_dict(&split_string("apn"));
-        suggestion.suggestion_with_dict(&split_string("apni"));
+        suggestion.suggestion_with_dict(&split_string("a", false));
+        suggestion.suggestion_with_dict(&split_string("ap", false));
+        suggestion.suggestion_with_dict(&split_string("apn", false));
+        suggestion.suggestion_with_dict(&split_string("apni", false));
         assert_eq!(suggestion.suggestions, ["আপনি", "আপনই", "আপ্নি"]);
 
-        suggestion.suggestion_with_dict(&split_string("am"));
-        suggestion.suggestion_with_dict(&split_string("ami"));
+        suggestion.suggestion_with_dict(&split_string("am", false));
+        suggestion.suggestion_with_dict(&split_string("ami", false));
         assert_eq!(suggestion.suggestions, ["আমি", "আমই", "এমই"]);
 
-        suggestion.suggestion_with_dict(&split_string("kkhet"));
+        suggestion.suggestion_with_dict(&split_string("kkhet", false));
         assert_eq!(
             suggestion.suggestions,
             ["ক্ষেত", "খেত", "খ্যাত", "খেট", "খ্যাঁত", "খেঁট", "খ্যাঁট"]
         );
 
-        suggestion.suggestion_with_dict(&split_string("kkhetr"));
+        suggestion.suggestion_with_dict(&split_string("kkhetr", false));
         assert_eq!(
             suggestion.suggestions,
             [
@@ -373,7 +373,7 @@ mod tests {
             ]
         );
 
-        suggestion.suggestion_with_dict(&split_string("kkhetre"));
+        suggestion.suggestion_with_dict(&split_string("kkhetre", false));
         assert_eq!(
             suggestion.suggestions,
             [
@@ -388,31 +388,31 @@ mod tests {
             ]
         );
 
-        suggestion.suggestion_with_dict(&split_string("form"));
+        suggestion.suggestion_with_dict(&split_string("form", false));
         assert_eq!(suggestion.suggestions, ["ফর্ম", "ফরম"]);
 
-        suggestion.suggestion_with_dict(&split_string("forma"));
+        suggestion.suggestion_with_dict(&split_string("forma", false));
         assert_eq!(suggestion.suggestions, ["ফরমা", "ফর্মা"]);
 
-        suggestion.suggestion_with_dict(&split_string("format"));
+        suggestion.suggestion_with_dict(&split_string("format", false));
         assert_eq!(suggestion.suggestions, ["ফরম্যাট", "ফরমাত"]);
 
-        suggestion.suggestion_with_dict(&split_string("formate"));
+        suggestion.suggestion_with_dict(&split_string("formate", false));
         assert_eq!(suggestion.suggestions, ["ফরম্যাটে", "ফরমাতে", "ফর্মাতে"]);
 
-        suggestion.suggestion_with_dict(&split_string("formatt"));
+        suggestion.suggestion_with_dict(&split_string("formatt", false));
         assert_eq!(suggestion.suggestions, ["ফরম্যাট", "ফরমাত্ত"]);
 
-        suggestion.suggestion_with_dict(&split_string("formatte"));
+        suggestion.suggestion_with_dict(&split_string("formatte", false));
         assert_eq!(suggestion.suggestions, ["ফরম্যাটতে", "ফরম্যাটে", "ফরমাত্তে"]);
 
-        suggestion.suggestion_with_dict(&split_string("atm"));
+        suggestion.suggestion_with_dict(&split_string("atm", false));
         assert_eq!(suggestion.suggestions, ["এটিএম", "আত্ম", "অ্যাটম"]);
 
-        suggestion.suggestion_with_dict(&split_string("atme"));
+        suggestion.suggestion_with_dict(&split_string("atme", false));
         assert_eq!(suggestion.suggestions, ["এটিএমে", "আত্মে", "অ্যাটমে"]);
         // Cache check
-        suggestion.suggestion_with_dict(&split_string("atm"));
+        suggestion.suggestion_with_dict(&split_string("atm", false));
         assert_eq!(suggestion.suggestions, ["এটিএম", "আত্ম", "অ্যাটম"]);
     }
 
@@ -468,14 +468,14 @@ mod tests {
         // Avoid meta characters
         suggestion.suggestions = vec!["*অন্ন?!".to_string(), "*অন্য?!".to_string()];
         assert_eq!(
-            suggestion.get_prev_selection(&split_string("*onno?!"), &mut selections),
+            suggestion.get_prev_selection(&split_string("*onno?!", false), &mut selections),
             1
         );
 
         // With Suffix
         suggestion.suggestions = vec!["ইএই".to_string(), "ইয়েই".to_string()];
         assert_eq!(
-            suggestion.get_prev_selection(&split_string("iei"), &mut selections),
+            suggestion.get_prev_selection(&split_string("iei", false), &mut selections),
             1
         );
 
@@ -485,20 +485,20 @@ mod tests {
             "হঠাতে".to_string(),
         ];
         assert_eq!(
-            suggestion.get_prev_selection(&split_string("hothate"), &mut selections),
+            suggestion.get_prev_selection(&split_string("hothate", false), &mut selections),
             2
         );
 
         suggestion.suggestions = vec!["এবংমালা".to_string(), "এবঙমালা".to_string()];
         assert_eq!(
-            suggestion.get_prev_selection(&split_string("ebongmala"), &mut selections),
+            suggestion.get_prev_selection(&split_string("ebongmala", false), &mut selections),
             1
         );
 
         // With Suffix + Avoid meta characters
         suggestion.suggestions = vec!["*অন্নগুলো?!".to_string(), "*অন্যগুলো?!".to_string()];
         assert_eq!(
-            suggestion.get_prev_selection(&split_string("*onnogulo?!"), &mut selections),
+            suggestion.get_prev_selection(&split_string("*onnogulo?!", false), &mut selections),
             1
         );
     }
@@ -519,9 +519,8 @@ mod tests {
         assert_eq!(suggestions, ["সেস।", "শেষ।", "সেশ।"]);
         assert_eq!(selection, 1);
 
-        let (suggestions, selection) = suggestion.suggest("sesh:", &mut selections);
-        assert_eq!(suggestions, ["সেসঃ", "শেষঃ", "সেশঃ"]);
-        assert_eq!(selection, 1);
+        let (suggestions, _) = suggestion.suggest("sesh:", &mut selections);
+        assert_eq!(suggestions, ["সেস", "শেষ", "সেশঃ"]);
 
         let (suggestions, selection) = suggestion.suggest("sesh:`", &mut selections);
         assert_eq!(suggestions, ["সেস:", "শেষ:", "সেশ:"]);

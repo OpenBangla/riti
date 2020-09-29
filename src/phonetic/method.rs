@@ -187,11 +187,11 @@ impl Method for PhoneticMethod {
     fn candidate_committed(&mut self, index: usize) {
         // Check if user has selected a different suggestion
         if self.prev_selection != index && get_settings_phonetic_database_on() {
-            let suggestion = split_string(&self.suggestion.suggestions[index])
+            let suggestion = split_string(&self.suggestion.suggestions[index], true)
                 .1
                 .to_string();
             self.selections
-                .insert(split_string(&self.buffer).1.to_string(), suggestion);
+                .insert(split_string(&self.buffer, false).1.to_string(), suggestion);
             write(
                 get_settings_user_phonetic_selection_data(),
                 serde_json::to_string(&self.selections).unwrap(),

@@ -52,8 +52,10 @@ pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
 
 /// Split the string into three parts.
 /// This function splits preceding and trailing meta characters.
-pub(crate) fn split_string(input: &str) -> (&str, &str, &str) {
-    let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,:।ঃ";
+///
+/// `include_colon` argument controls the inclusion of colon as a trailing meta character.
+pub(crate) fn split_string(input: &str, include_colon: bool) -> (&str, &str, &str) {
+    let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,।";
     let mut first_index = 0;
     let mut last_index = input.len();
     let mut encountered_alpha = false;
@@ -74,15 +76,31 @@ pub(crate) fn split_string(input: &str) -> (&str, &str, &str) {
         return (&input[..], "", "");
     }
 
+    let mut skip_next = false; // Skip the next iteration.
+
     for (index, c) in input.chars().rev().enumerate() {
+        if skip_next {
+            skip_next = false;
+            continue;
+        }
         // Check is there a double ` accent character.
+        // Accent character can be used to escape tha colon character.
         if c == '`' {
-            if input.chars().rev().nth(index + 1).unwrap_or_default() == '`' {
+            let next = input.chars().rev().nth(index + 1).unwrap_or_default();
+            if next == '`' {
                 break;
+            } else if next == ':' {
+                last_index -= 2;
+                skip_next = true;
+                continue;
             } else {
                 last_index -= 1;
                 continue;
             }
+        }
+        // Include colon as a meta character if `include_colon` is true.
+        if include_colon && c == ':' {
+            last_index -= 1;
         }
 
         if !meta.contains(c) {
@@ -145,17 +163,19 @@ mod test {
 
     #[test]
     fn test_split_string() {
-        assert_eq!(split_string("[][][][]"), ("[][][][]", "", ""));
-        assert_eq!(split_string("t*"), ("", "t", "*"));
-        assert_eq!(split_string("1"), ("", "1", ""));
+        assert_eq!(split_string("[][][][]", false), ("[][][][]", "", ""));
+        assert_eq!(split_string("t*", false), ("", "t", "*"));
+        assert_eq!(split_string("1", false), ("", "1", ""));
         assert_eq!(
-            split_string("#\"percent%sign\"#"),
+            split_string("#\"percent%sign\"#", false),
             ("#\"", "percent%sign", "\"#")
         );
-        assert_eq!(split_string("*[মেটা]*"), ("*[", "মেটা", "]*"));
-        assert_eq!(split_string("text"), ("", "text", ""));
-        assert_eq!(split_string("kt:`"), ("", "kt", ":`"));
-        assert_eq!(split_string("kt:```"), ("", "kt:```", ""));
-        assert_eq!(split_string("ঃ।মেঃ।টাঃ।"), ("ঃ।", "মেঃ।টা", "ঃ।"));
+        assert_eq!(split_string("*[মেটা]*", false), ("*[", "মেটা", "]*"));
+        assert_eq!(split_string("text", false), ("", "text", ""));
+        assert_eq!(split_string("kt:", false), ("", "kt:", ""));
+        assert_eq!(split_string("kt:", true), ("", "kt", ":"));
+        assert_eq!(split_string("kt:`", false), ("", "kt", ":`"));
+        assert_eq!(split_string("kt``", false), ("", "kt``", ""));
+        assert_eq!(split_string("।ঃমেঃ।টাঃ।", false), ("।", "ঃমেঃ।টাঃ", "।"));
     }
 }
