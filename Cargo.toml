@@ -8,6 +8,9 @@ edition = "2018"
 [lib]
 crate-type = ["staticlib"]
 
+[profile.release]
+codegen-units = 1
+
 [dependencies]
 either = "1.6"
 serde_json = "1.0"
