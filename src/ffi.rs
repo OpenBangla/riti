@@ -64,7 +64,7 @@ pub extern "C" fn riti_context_update_engine(ptr: *mut RitiContext) {
     context.update_engine()
 }
 
-/// Checks if there is an onging input session.
+/// Checks if there is an ongoing input session.
 #[no_mangle]
 pub extern "C" fn riti_context_ongoing_input_session(ptr: *mut RitiContext) -> bool {
     let context = unsafe {
@@ -117,7 +117,7 @@ pub extern "C" fn riti_suggestion_free(ptr: *mut Suggestion) {
 }
 
 #[no_mangle]
-pub extern "C" fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *const *mut c_char {
+pub extern "C" fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *mut *mut c_char {
     let suggestion = unsafe {
         assert!(!ptr.is_null());
         &*ptr
@@ -133,10 +133,33 @@ pub extern "C" fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *co
         }
     }
 
+    // Shrink capacity close to the length and ensure that it's equal in size.
+    res_vec.shrink_to_fit();
+    assert_eq!(res_vec.capacity(), res_vec.len());
+
     // Here we leak the memory for giving the ownership.
-    let res = res_vec.as_ptr();
+    let res = res_vec.as_mut_ptr();
     std::mem::forget(res_vec);
     res
+}
+
+/// Free the string array `ptr` of `len` length previously allocated by other function.
+#[no_mangle]
+pub extern "C" fn riti_string_array_free(ptr: *mut *mut c_char, len: usize) {
+    if ptr.is_null() {
+        return;
+    }
+
+    unsafe {
+        // Safe because we ensure that the capacity and the length of the vector 
+        // is same while returning a pointer of that vector.
+        let vec = Vec::from_raw_parts(ptr, len, len);
+        
+        // Now reconstitute the values to properly deallocate them.
+        for item in vec {
+            CString::from_raw(item);
+        }
+    }
 }
 
 /// Get the only suggestion of the *lonely* `Suggestion`.
@@ -158,6 +181,18 @@ pub extern "C" fn riti_suggestion_get_auxiliary_text(ptr: *const Suggestion) -> 
     };
 
     unsafe { CString::from_vec_unchecked(suggestion.get_auxiliary_text().into()).into_raw() }
+}
+
+/// Free the allocated string.
+#[no_mangle]
+pub extern "C" fn riti_string_free(ptr: *mut c_char) {
+    if ptr.is_null() {
+        return;
+    }
+
+    unsafe {
+        CString::from_raw(ptr);
+    }
 }
 
 /// Returns index of the suggestion, which was previously selected.
