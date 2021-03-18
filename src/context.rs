@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::fixed::method::FixedMethod;
+use crate::{config::Config, fixed::method::FixedMethod};
 use crate::loader::{LayoutLoader, LayoutType};
 use crate::phonetic::method::PhoneticMethod;
 use crate::suggestion::Suggestion;
@@ -9,28 +9,46 @@ use crate::suggestion::Suggestion;
 pub struct RitiContext {
     method: RefCell<Box<dyn Method>>,
     loader: LayoutLoader,
+    config: Config,
 }
 
 impl RitiContext {
     /// A new `RitiContext` instance.
     pub fn new() -> Self {
         let loader = LayoutLoader::load_from_settings();
+        let config = Config::default();
 
         match loader.layout_type() {
             LayoutType::Phonetic => {
                 let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout())));
-                RitiContext { method, loader }
+                RitiContext { method, loader, config }
             }
             LayoutType::Fixed => {
                 let method = RefCell::new(Box::new(FixedMethod::new(loader.layout())));
-                RitiContext { method, loader }
+                RitiContext { method, loader, config }
+            }
+        }
+    }
+
+    pub fn new_with_config(config: &Config) -> Self {
+        let loader = LayoutLoader::load_from_config(config);
+        let config = config.to_owned();
+
+        match loader.layout_type() {
+            LayoutType::Phonetic => {
+                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout())));
+                RitiContext { method, loader, config }
+            }
+            LayoutType::Fixed => {
+                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout())));
+                RitiContext { method, loader, config }
             }
         }
     }
 
     /// Get suggestion for key.
     pub fn get_suggestion_for_key(&self, key: u16, modifier: u8) -> Suggestion {
-        self.method.borrow_mut().get_suggestion(key, modifier)
+        self.method.borrow_mut().get_suggestion(key, modifier, &self.config)
     }
 
     /// A candidate of the suggestion list was committed.
@@ -83,7 +101,7 @@ impl RitiContext {
 }
 
 pub(crate) trait Method {
-    fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion;
+    fn get_suggestion(&mut self, key: u16, modifier: u8, config: &Config) -> Suggestion;
     fn candidate_committed(&mut self, index: usize);
     fn update_engine(&mut self);
     fn ongoing_input_session(&self) -> bool;

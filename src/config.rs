@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+#[derive(Clone, Default)]
 pub struct Config {
     layout: String,
     phonetic_database: bool,
@@ -40,8 +41,8 @@ impl Config {
         }
     }
 
-    pub(crate) fn get_layout_file_path(&self) -> String {
-        self.layout.clone()
+    pub(crate) fn get_layout_file_path(&self) -> &str {
+        &self.layout
     }
 
     pub(crate) fn get_database_path(&self) -> PathBuf {

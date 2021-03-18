@@ -2,7 +2,7 @@
 use hashbrown::HashMap;
 use std::fs::{read_to_string, write};
 
-use crate::context::Method;
+use crate::{config::Config, context::Method};
 use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::settings::{
@@ -56,7 +56,7 @@ impl PhoneticMethod {
 }
 
 impl Method for PhoneticMethod {
-    fn get_suggestion(&mut self, key: u16, _modifier: u8) -> Suggestion {
+    fn get_suggestion(&mut self, key: u16, _modifier: u8, config: &Config) -> Suggestion {
         match key {
             // Alphanumeric keys
             VC_GRAVE => self.buffer.push('`'),
