@@ -4,7 +4,7 @@ use serde_json::Value;
 use std::fs::read_to_string;
 use std::str::FromStr;
 
-use crate::{config::Config, settings::get_settings_layout_file};
+use crate::config::Config;
 
 /// Layout Loader
 ///
@@ -23,15 +23,7 @@ pub(crate) enum LayoutType {
 }
 
 impl LayoutLoader {
-    /// Load the layout which is specified in settings.
-    pub(crate) fn load_from_settings() -> Self {
-        let path = get_settings_layout_file();
-        let layout: Value = serde_json::from_str(&read_to_string(&path).unwrap()).unwrap();
-
-        LayoutLoader { path, layout }
-    }
-
-    /// Load the layout which is specified in settings.
+    /// Load the layout which is specified in config.
     pub(crate) fn load_from_config(config: &Config) -> Self {
         let path = config.get_layout_file_path().to_string();
         let layout: Value = serde_json::from_str(&read_to_string(&path).unwrap()).unwrap();
@@ -54,8 +46,8 @@ impl LayoutLoader {
     }
 
     /// Checks if the layout path had changed.
-    pub(crate) fn changed(&self) -> bool {
-        self.path != get_settings_layout_file()
+    pub(crate) fn changed(&self, config: &Config) -> bool {
+        self.path != config.get_layout_file_path()
     }
 }
 

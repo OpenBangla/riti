@@ -15,8 +15,8 @@ pub struct RitiContext {
 impl RitiContext {
     /// A new `RitiContext` instance.
     pub fn new() -> Self {
-        let loader = LayoutLoader::load_from_settings();
         let config = Config::default();
+        let loader = LayoutLoader::load_from_config(&config);
 
         match loader.layout_type() {
             LayoutType::Phonetic => {
@@ -62,18 +62,18 @@ impl RitiContext {
 
     /// Update the suggestion making engine. This would also look for changes
     /// in layout selection and AutoCorrect database.
+    /// FIXME
     pub fn update_engine(&mut self) {
-        let config = Config::default(); //FIXME
-        if self.loader.changed() {
-            self.loader = LayoutLoader::load_from_settings();
+        if self.loader.changed(&self.config) {
+            self.loader = LayoutLoader::load_from_config(&self.config);
 
             match self.loader.layout_type() {
                 LayoutType::Phonetic => self
                     .method
-                    .replace(Box::new(PhoneticMethod::new(self.loader.layout(), &config))),
+                    .replace(Box::new(PhoneticMethod::new(self.loader.layout(), &self.config))),
                 LayoutType::Fixed => self
                     .method
-                    .replace(Box::new(FixedMethod::new(self.loader.layout(), &config))),
+                    .replace(Box::new(FixedMethod::new(self.loader.layout(), &self.config))),
             };
         } else {
             self.method.borrow_mut().update_engine();
