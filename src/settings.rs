@@ -32,24 +32,7 @@ pub(crate) fn get_settings_database_dir() -> PathBuf {
     var(ENV_DATABASE_DIR).unwrap().into()
 }
 
-/// Get file path of user defined Auto Correct file.
-pub(crate) fn get_settings_user_phonetic_autocorrect() -> String {
-    let base = var("XDG_DATA_HOME")
-        .unwrap_or_else(|_| format!("{}{}", var("HOME").unwrap(), "/.local/share"));
 
-    format!("{}{}", base, "/openbangla-keyboard/autocorrect.json")
-}
-
-/// Get file path of user defined phonetic candidate selection file.
-pub(crate) fn get_settings_user_phonetic_selection_data() -> String {
-    let base = var("XDG_DATA_HOME")
-        .unwrap_or_else(|_| format!("{}{}", var("HOME").unwrap(), "/.local/share"));
-
-    format!(
-        "{}{}",
-        base, "/openbangla-keyboard/phonetic-candidate-selection.json"
-    )
-}
 
 /// Check if the dictionary suggestion of
 /// Fixed Keyboard layout method feature is enabled.

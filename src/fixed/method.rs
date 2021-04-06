@@ -21,7 +21,7 @@ impl Method for FixedMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8, config: &Config) -> Suggestion {
         let modifier = get_modifiers(modifier);
 
-        if let Some(value) = self.parser.get_char_for_key(key, modifier.into()) {
+        if let Some(value) = self.parser.get_char_for_key(key, modifier.into(), config) {
             self.process_key_value(&value, config);
         } else {
             return self.current_suggestion(config);
@@ -30,7 +30,7 @@ impl Method for FixedMethod {
         self.create_suggestion(config)
     }
 
-    fn candidate_committed(&mut self, _index: usize) {
+    fn candidate_committed(&mut self, _index: usize, _: &Config) {
         self.buffer.clear();
     }
 

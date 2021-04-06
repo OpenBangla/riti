@@ -4,8 +4,8 @@ use edit_distance::edit_distance;
 use hashbrown::{hash_map::Entry, HashMap};
 use rupantor::parser::PhoneticParser;
 
+use crate::config::{Config, get_phonetic_method_defaults};
 use super::database::Database;
-use crate::settings;
 use crate::utility::{push_checked, split_string, Utility};
 
 pub(crate) struct PhoneticSuggestion {
@@ -19,10 +19,10 @@ pub(crate) struct PhoneticSuggestion {
 }
 
 impl PhoneticSuggestion {
-    pub(crate) fn new(layout: &serde_json::Value) -> Self {
+    pub(crate) fn new(layout: &serde_json::Value, config: &Config) -> Self {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
-            database: Database::new(),
+            database: Database::new_with_config(&config),
             cache: HashMap::with_capacity(20),
             phonetic: PhoneticParser::new(layout),
             corrects: HashMap::with_capacity(10),
@@ -109,6 +109,7 @@ impl PhoneticSuggestion {
         &mut self,
         term: &str,
         selections: &mut HashMap<String, String>,
+        config: &Config
     ) -> (Vec<String>, usize) {
         let splitted_string = split_string(term, false);
 
@@ -129,7 +130,7 @@ impl PhoneticSuggestion {
         }
 
         // Include written English word if the feature is enabled.
-        if settings::get_settings_phonetic_include_english()
+        if config.get_phonetic_include_english()
             // Watch out for emoticons!
             && !self.suggestions.iter().any(|i| i == term)
         {
@@ -253,10 +254,11 @@ impl PhoneticSuggestion {
 // Implement Default trait on PhoneticSuggestion, actually for testing convenience.
 impl Default for PhoneticSuggestion {
     fn default() -> Self {
-        let loader = crate::loader::LayoutLoader::load_from_settings();
+        let config = get_phonetic_method_defaults();
+        let loader = crate::loader::LayoutLoader::load_from_config(&config);
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
-            database: Database::new(),
+            database: Database::new_with_config(&config),
             cache: HashMap::new(),
             phonetic: PhoneticParser::new(loader.layout()),
             corrects: HashMap::new(),
@@ -269,21 +271,20 @@ mod tests {
     use hashbrown::HashMap;
 
     use super::PhoneticSuggestion;
-    use crate::settings::{tests::set_default_phonetic, ENV_PHONETIC_INCLUDE_ENGLISH};
+    use crate::config::get_phonetic_method_defaults;
     use crate::utility::split_string;
 
-    //#[test] TODO: Enable this test after the environ variable data race issue is mitigated.
+    #[test]
     fn test_suggestion_with_english() {
-        set_default_phonetic();
-        std::env::set_var(ENV_PHONETIC_INCLUDE_ENGLISH, "true");
-
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::new();
+        let mut config = get_phonetic_method_defaults();
+        config.set_phonetic_include_english(true);
 
-        suggestion.suggest(":)", &mut selections);
+        suggestion.suggest(":)", &mut selections, &config);
         assert_eq!(suggestion.suggestions, [":)", "ঃ)"]);
 
-        suggestion.suggest("{a}", &mut selections);
+        suggestion.suggest("{a}", &mut selections, &config);
         assert_eq!(
             suggestion.suggestions,
             ["{আ}", "{আঃ}", "{া}", "{এ}", "{অ্যা}", "{অ্যাঁ}", "{a}"]
@@ -292,8 +293,6 @@ mod tests {
 
     #[test]
     fn test_suggestion_only_phonetic() {
-        set_default_phonetic();
-
         let suggestion = PhoneticSuggestion::default();
 
         assert_eq!(suggestion.suggest_only_phonetic("{kotha}"), "{কথা}");
@@ -302,22 +301,19 @@ mod tests {
 
     #[test]
     fn test_emoticon() {
-        set_default_phonetic();
-
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::new();
+        let config = get_phonetic_method_defaults();
 
-        suggestion.suggest(":)", &mut selections);
+        suggestion.suggest(":)", &mut selections, &config);
         assert_eq!(suggestion.suggestions, [":)", "ঃ)"]);
 
-        suggestion.suggest(".", &mut selections);
+        suggestion.suggest(".", &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["।"]);
     }
 
     #[test]
     fn test_suggestion() {
-        set_default_phonetic();
-
         let mut suggestion = PhoneticSuggestion::default();
 
         suggestion.suggestion_with_dict(&split_string("a", false));
@@ -338,8 +334,6 @@ mod tests {
 
     #[test]
     fn test_suffix_suggestion() {
-        set_default_phonetic();
-
         let mut suggestion = PhoneticSuggestion::default();
 
         suggestion.suggestion_with_dict(&split_string("a", false));
@@ -418,8 +412,6 @@ mod tests {
 
     #[test]
     fn test_suffix() {
-        set_default_phonetic();
-
         let mut cache = HashMap::new();
         cache.insert("computer".to_string(), vec!["কম্পিউটার".to_string()]);
         cache.insert("i".to_string(), vec!["ই".to_string()]);
@@ -456,8 +448,6 @@ mod tests {
 
     #[test]
     fn test_prev_selected() {
-        set_default_phonetic();
-
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::new();
         selections.insert("onno".to_string(), "অন্য".to_string());
@@ -505,28 +495,27 @@ mod tests {
 
     #[test]
     fn test_suggest_special_chars_selections() {
-        set_default_phonetic();
-
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::new();
+        let config = get_phonetic_method_defaults();
         selections.insert("sesh".to_string(), "শেষ".to_string());
 
-        let (suggestions, selection) = suggestion.suggest("sesh", &mut selections);
+        let (suggestions, selection) = suggestion.suggest("sesh", &mut selections, &config);
         assert_eq!(suggestions, ["সেস", "শেষ", "সেশ"]);
         assert_eq!(selection, 1);
 
-        let (suggestions, selection) = suggestion.suggest("sesh.", &mut selections);
+        let (suggestions, selection) = suggestion.suggest("sesh.", &mut selections, &config);
         assert_eq!(suggestions, ["সেস।", "শেষ।", "সেশ।"]);
         assert_eq!(selection, 1);
 
-        let (suggestions, _) = suggestion.suggest("sesh:", &mut selections);
+        let (suggestions, _) = suggestion.suggest("sesh:", &mut selections, &config);
         assert_eq!(suggestions, ["সেস", "শেষ", "সেশঃ"]);
 
-        let (suggestions, selection) = suggestion.suggest("sesh:`", &mut selections);
+        let (suggestions, selection) = suggestion.suggest("sesh:`", &mut selections, &config);
         assert_eq!(suggestions, ["সেস:", "শেষ:", "সেশ:"]);
         assert_eq!(selection, 1);
 
-        let (suggestions, _) = suggestion.suggest("6t``", &mut selections);
+        let (suggestions, _) = suggestion.suggest("6t``", &mut selections, &config);
         assert_eq!(suggestions, ["৬ৎ"]);
     }
 }

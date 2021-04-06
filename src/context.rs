@@ -20,7 +20,7 @@ impl RitiContext {
 
         match loader.layout_type() {
             LayoutType::Phonetic => {
-                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout())));
+                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout(), &config)));
                 RitiContext { method, loader, config }
             }
             LayoutType::Fixed => {
@@ -36,7 +36,7 @@ impl RitiContext {
 
         match loader.layout_type() {
             LayoutType::Phonetic => {
-                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout())));
+                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout(), &config)));
                 RitiContext { method, loader, config }
             }
             LayoutType::Fixed => {
@@ -57,7 +57,7 @@ impl RitiContext {
     ///
     /// This function will end the ongoing input session.
     pub fn candidate_committed(&self, index: usize) {
-        self.method.borrow_mut().candidate_committed(index)
+        self.method.borrow_mut().candidate_committed(index, &self.config)
     }
 
     /// Update the suggestion making engine. This would also look for changes
@@ -70,7 +70,7 @@ impl RitiContext {
             match self.loader.layout_type() {
                 LayoutType::Phonetic => self
                     .method
-                    .replace(Box::new(PhoneticMethod::new(self.loader.layout()))),
+                    .replace(Box::new(PhoneticMethod::new(self.loader.layout(), &config))),
                 LayoutType::Fixed => self
                     .method
                     .replace(Box::new(FixedMethod::new(self.loader.layout(), &config))),
@@ -103,7 +103,7 @@ impl RitiContext {
 
 pub(crate) trait Method {
     fn get_suggestion(&mut self, key: u16, modifier: u8, config: &Config) -> Suggestion;
-    fn candidate_committed(&mut self, index: usize);
+    fn candidate_committed(&mut self, index: usize, config: &Config);
     fn update_engine(&mut self);
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);

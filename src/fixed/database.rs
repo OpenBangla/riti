@@ -13,7 +13,7 @@ impl Database {
     pub(crate) fn new_with_config(config: &Config) -> Database {
         Database {
             table: serde_json::from_str(
-                &read_to_string(config.get_database_path().join("dictionary.json")).unwrap(),
+                &read_to_string(config.get_database_path()).unwrap(),
             )
             .unwrap(),
         }

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{env::var, path::PathBuf};
 
 #[derive(Clone, Default)]
 pub struct Config {
@@ -46,7 +46,7 @@ impl Config {
     }
 
     pub(crate) fn get_database_path(&self) -> PathBuf {
-        self.database_dir.clone()
+        self.database_dir.join("dictionary.json")
     }
 
     pub(crate) fn get_suffix_data_path(&self) -> PathBuf {
@@ -57,12 +57,21 @@ impl Config {
         self.database_dir.join("autocorrect.json")
     }
 
-    pub(crate) fn get_phonetic_database(&self) -> bool {
+    pub(crate) fn get_phonetic_database_on(&self) -> bool {
         self.phonetic_database
+    }
+
+    /// Set the config's phonetic database.
+    pub(crate) fn set_phonetic_database_on(&mut self, phonetic_database: bool) {
+        self.phonetic_database = phonetic_database;
     }
 
     pub(crate) fn get_phonetic_include_english(&self) -> bool {
         self.phonetic_include_english
+    }
+
+    pub(crate) fn set_phonetic_include_english(&mut self, include: bool) {
+        self.phonetic_include_english = include;
     }
 
     /// Get the config's fixed database.
@@ -126,6 +135,25 @@ impl Config {
     }
 }
 
+/// Get file path of user defined Auto Correct file.
+pub(crate) fn get_user_phonetic_autocorrect() -> String {
+    let base = var("XDG_DATA_HOME")
+        .unwrap_or_else(|_| format!("{}{}", var("HOME").unwrap(), "/.local/share"));
+
+    format!("{}{}", base, "/openbangla-keyboard/autocorrect.json")
+}
+
+/// Get file path of user defined phonetic candidate selection file.
+pub(crate) fn get_user_phonetic_selection_data() -> String {
+    let base = var("XDG_DATA_HOME")
+        .unwrap_or_else(|_| format!("{}{}", var("HOME").unwrap(), "/.local/share"));
+
+    format!(
+        "{}{}",
+        base, "/openbangla-keyboard/phonetic-candidate-selection.json"
+    )
+}
+
 pub(crate) fn get_phonetic_method_defaults() -> Config {
     Config {
         layout: format!(
@@ -135,7 +163,7 @@ pub(crate) fn get_phonetic_method_defaults() -> Config {
         ),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
         phonetic_database: true,
-        phonetic_include_english: true,
+        phonetic_include_english: false,
         fixed_database: false,
         fixed_vowel: false,
         fixed_chandra: false,
