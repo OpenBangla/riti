@@ -24,7 +24,7 @@ impl RitiContext {
                 RitiContext { method, loader, config }
             }
             LayoutType::Fixed => {
-                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout())));
+                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout(), &config)));
                 RitiContext { method, loader, config }
             }
         }
@@ -40,7 +40,7 @@ impl RitiContext {
                 RitiContext { method, loader, config }
             }
             LayoutType::Fixed => {
-                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout())));
+                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout(), &config)));
                 RitiContext { method, loader, config }
             }
         }
@@ -63,6 +63,7 @@ impl RitiContext {
     /// Update the suggestion making engine. This would also look for changes
     /// in layout selection and AutoCorrect database.
     pub fn update_engine(&mut self) {
+        let config = Config::default(); //FIXME
         if self.loader.changed() {
             self.loader = LayoutLoader::load_from_settings();
 
@@ -72,7 +73,7 @@ impl RitiContext {
                     .replace(Box::new(PhoneticMethod::new(self.loader.layout()))),
                 LayoutType::Fixed => self
                     .method
-                    .replace(Box::new(FixedMethod::new(self.loader.layout()))),
+                    .replace(Box::new(FixedMethod::new(self.loader.layout(), &config))),
             };
         } else {
             self.method.borrow_mut().update_engine();
@@ -96,7 +97,7 @@ impl RitiContext {
     /// If the internal buffer becomes empty, this function will
     /// end the ongoing input session.
     pub fn backspace_event(&self) -> Suggestion {
-        self.method.borrow_mut().backspace_event()
+        self.method.borrow_mut().backspace_event(&self.config)
     }
 }
 
@@ -106,7 +107,7 @@ pub(crate) trait Method {
     fn update_engine(&mut self);
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);
-    fn backspace_event(&mut self) -> Suggestion;
+    fn backspace_event(&mut self, config: &Config) -> Suggestion;
 }
 
 /// Shift modifier key.

@@ -46,7 +46,7 @@ impl Config {
     }
 
     pub(crate) fn get_database_path(&self) -> PathBuf {
-        self.database_dir.join("dictionary.json")
+        self.database_dir.clone()
     }
 
     pub(crate) fn get_suffix_data_path(&self) -> PathBuf {
@@ -66,42 +66,42 @@ impl Config {
     }
 
     /// Get the config's fixed database.
-    pub fn get_fixed_database(&self) -> bool {
+    pub fn get_fixed_database_on(&self) -> bool {
         self.fixed_database
     }
 
     /// Set the config's fixed database.
-    pub fn set_fixed_database(&mut self, fixed_database: bool) {
+    pub fn set_fixed_database_on(&mut self, fixed_database: bool) {
         self.fixed_database = fixed_database;
     }
 
     /// Get the config's fixed vowel.
-    pub fn get_fixed_vowel(&self) -> bool {
+    pub fn get_fixed_automatic_vowel(&self) -> bool {
         self.fixed_vowel
     }
 
     /// Set the config's fixed vowel.
-    pub fn set_fixed_vowel(&mut self, fixed_vowel: bool) {
+    pub fn set_fixed_automatic_vowel(&mut self, fixed_vowel: bool) {
         self.fixed_vowel = fixed_vowel;
     }
 
     /// Get the config's fixed chandra.
-    pub fn get_fixed_chandra(&self) -> bool {
+    pub fn get_fixed_automatic_chandra(&self) -> bool {
         self.fixed_chandra
     }
 
     /// Set the config's fixed chandra.
-    pub fn set_fixed_chandra(&mut self, fixed_chandra: bool) {
+    pub fn set_fixed_automatic_chandra(&mut self, fixed_chandra: bool) {
         self.fixed_chandra = fixed_chandra;
     }
 
     /// Get the config's fixed kar.
-    pub fn get_fixed_kar(&self) -> bool {
+    pub fn get_fixed_traditional_kar(&self) -> bool {
         self.fixed_kar
     }
 
     /// Set the config's fixed kar.
-    pub fn set_fixed_kar(&mut self, fixed_kar: bool) {
+    pub fn set_fixed_traditional_kar(&mut self, fixed_kar: bool) {
         self.fixed_kar = fixed_kar;
     }
 
@@ -126,7 +126,7 @@ impl Config {
     }
 }
 
-pub(crate) fn phonetic_method_defaults() -> Config {
+pub(crate) fn get_phonetic_method_defaults() -> Config {
     Config {
         layout: format!(
             "{}{}",

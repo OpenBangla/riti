@@ -2,7 +2,8 @@
 use hashbrown::HashMap;
 use std::fs::{read_to_string, write};
 
-use crate::{config::Config, context::Method};
+use crate::context::Method;
+use crate::config::{Config, get_phonetic_method_defaults};
 use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::settings::{
@@ -215,7 +216,7 @@ impl Method for PhoneticMethod {
         self.buffer.clear();
     }
 
-    fn backspace_event(&mut self) -> Suggestion {
+    fn backspace_event(&mut self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
             // Remove the last character.
             self.buffer.pop();
@@ -235,7 +236,8 @@ impl Method for PhoneticMethod {
 // Implement Default trait on PhoneticMethod for testing convenience.
 impl Default for PhoneticMethod {
     fn default() -> Self {
-        let loader = crate::loader::LayoutLoader::load_from_settings();
+        let config = get_phonetic_method_defaults();
+        let loader = crate::loader::LayoutLoader::load_from_config(&config);
 
         PhoneticMethod {
             buffer: String::new(),
@@ -250,18 +252,17 @@ impl Default for PhoneticMethod {
 mod tests {
     use super::PhoneticMethod;
     use crate::context::Method;
-    use crate::settings::tests::set_default_phonetic;
+    use crate::config::get_phonetic_method_defaults;
 
     #[test]
     fn test_backspace() {
-        set_default_phonetic();
-
         let mut method = PhoneticMethod {
             buffer: "ab".to_string(),
             ..Default::default()
         };
+        let config = get_phonetic_method_defaults();
 
-        assert!(!method.backspace_event().is_empty()); // a
-        assert!(method.backspace_event().is_empty()); // Empty
+        assert!(!method.backspace_event(&config).is_empty()); // a
+        assert!(method.backspace_event(&config).is_empty()); // Empty
     }
 }

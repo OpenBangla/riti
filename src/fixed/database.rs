@@ -3,17 +3,17 @@ use rayon::prelude::*;
 use regex::Regex;
 use std::fs::read_to_string;
 
-use crate::settings::get_settings_database_dir;
+use crate::config::Config;
 
 pub(crate) struct Database {
     table: HashMap<String, Vec<String>>,
 }
 
 impl Database {
-    pub(crate) fn new() -> Database {
+    pub(crate) fn new_with_config(config: &Config) -> Database {
         Database {
             table: serde_json::from_str(
-                &read_to_string(get_settings_database_dir().join("dictionary.json")).unwrap(),
+                &read_to_string(config.get_database_path().join("dictionary.json")).unwrap(),
             )
             .unwrap(),
         }
@@ -119,13 +119,12 @@ fn clean_string(string: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{clean_string, Database};
-    use crate::settings::tests::set_default_phonetic;
+    use crate::config::get_fixed_method_defaults;
 
     #[test]
     fn test_database() {
-        set_default_phonetic();
-
-        let db = Database::new();
+        let config = get_fixed_method_defaults();
+        let db = Database::new_with_config(&config);
 
         assert_eq!(db.search_dictionary("ই"), ["ই"]);
         assert_eq!(db.search_dictionary("আমা"), ["আমা", "আমান", "আমার", "আমায়"]);
