@@ -38,7 +38,7 @@ impl PhoneticMethod {
 
     /// Returns `Suggestion` struct with suggestions.
     fn create_suggestion(&mut self, config: &Config) -> Suggestion {
-        if config.get_phonetic_database_on() {
+        if config.get_phonetic_suggestion() {
             let (suggestions, selection) =
                 self.suggestion.suggest(&self.buffer, &mut self.selections, config);
 
@@ -184,7 +184,7 @@ impl Method for PhoneticMethod {
 
     fn candidate_committed(&mut self, index: usize, config: &Config) {
         // Check if user has selected a different suggestion
-        if self.prev_selection != index && config.get_phonetic_database_on() {
+        if self.prev_selection != index && config.get_phonetic_suggestion() {
             let suggestion = split_string(&self.suggestion.suggestions[index], true)
                 .1
                 .to_string();

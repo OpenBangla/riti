@@ -77,7 +77,7 @@ impl FixedMethod {
     }
 
     fn create_suggestion(&mut self, config: &Config) -> Suggestion {
-        if config.get_fixed_database_on() {
+        if config.get_fixed_suggestion() {
             self.create_dictionary_suggestion(config)
         } else {
             Suggestion::new_lonely(self.buffer.clone())
@@ -134,7 +134,7 @@ impl FixedMethod {
 
     fn current_suggestion(&self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
-            if config.get_fixed_database_on() {
+            if config.get_fixed_suggestion() {
                 Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
             } else {
                 Suggestion::new_lonely(self.buffer.clone())
@@ -436,7 +436,7 @@ mod tests {
         };
         
         let mut config = get_fixed_method_defaults();
-        config.set_fixed_database_on(false);
+        config.set_fixed_suggestion(false);
 
         assert!(!method.backspace_event(&config).is_empty()); // আম
         assert!(!method.backspace_event(&config).is_empty()); // আ
@@ -446,7 +446,6 @@ mod tests {
     #[test]
     fn test_reph_insertion() {
         let mut method = FixedMethod::default();
-        //let config = get_fixed_method_defaults();
 
         method.buffer = "অক".to_string();
         method.insert_old_style_reph();
@@ -502,9 +501,8 @@ mod tests {
         assert_eq!(method.buffer, "র‌ু".to_string());
 
         // Without Traditional Kar joining
-        //set_var(settings::ENV_LAYOUT_FIXED_KAR, "false");
         config.set_fixed_traditional_kar(false);
-
+        
         method.buffer = "র".to_string();
         method.process_key_value(&B_U_KAR.to_string(), &config);
         assert_eq!(method.buffer, "রু".to_string());
@@ -533,7 +531,7 @@ mod tests {
     fn test_z_zofola() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
-        config.set_fixed_database_on(false);
+        config.set_fixed_suggestion(false);
 
         method.buffer = "র্".to_string();
         method.process_key_value("য", &config);

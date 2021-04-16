@@ -308,7 +308,7 @@ pub extern "C" fn riti_config_set_phonetic_suggestion(ptr: *mut Config, option: 
         &mut *ptr
     };
 
-    config.set_phonetic_database_on(option);
+    config.set_phonetic_suggestion(option);
 }
 
 #[no_mangle]
@@ -328,7 +328,7 @@ pub extern "C" fn riti_config_set_fixed_suggestion(ptr: *mut Config, option: boo
         &mut *ptr
     };
 
-    config.set_fixed_database_on(option);
+    config.set_fixed_suggestion(option);
 }
 
 #[no_mangle]

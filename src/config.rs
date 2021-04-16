@@ -4,10 +4,10 @@ use std::{env::var, path::PathBuf};
 #[derive(Clone, Default)]
 pub struct Config {
     layout: String,
-    phonetic_database: bool,
+    phonetic_suggestion: bool,
     phonetic_include_english: bool,
     database_dir: PathBuf,
-    fixed_database: bool,
+    fixed_suggestion: bool,
     fixed_vowel: bool,
     fixed_chandra: bool,
     fixed_kar: bool,
@@ -18,10 +18,10 @@ pub struct Config {
 impl Config {
     pub fn new_config(
         layout: String,
-        phonetic_database: bool,
+        phonetic_suggestion: bool,
         phonetic_include_english: bool,
         database_dir: PathBuf,
-        fixed_database: bool,
+        fixed_suggestion: bool,
         fixed_vowel: bool,
         fixed_chandra: bool,
         fixed_kar: bool,
@@ -30,10 +30,10 @@ impl Config {
     ) -> Config {
         Config {
             layout,
-            phonetic_database,
+            phonetic_suggestion: phonetic_suggestion,
             phonetic_include_english,
             database_dir,
-            fixed_database,
+            fixed_suggestion,
             fixed_vowel,
             fixed_chandra,
             fixed_kar,
@@ -66,13 +66,13 @@ impl Config {
         self.database_dir.join("autocorrect.json")
     }
 
-    pub(crate) fn get_phonetic_database_on(&self) -> bool {
-        self.phonetic_database
+    pub(crate) fn get_phonetic_suggestion(&self) -> bool {
+        self.phonetic_suggestion
     }
 
     /// Set the config's phonetic database.
-    pub(crate) fn set_phonetic_database_on(&mut self, phonetic_database: bool) {
-        self.phonetic_database = phonetic_database;
+    pub(crate) fn set_phonetic_suggestion(&mut self, phonetic_suggestion: bool) {
+        self.phonetic_suggestion = phonetic_suggestion;
     }
 
     pub(crate) fn get_phonetic_include_english(&self) -> bool {
@@ -84,13 +84,13 @@ impl Config {
     }
 
     /// Get the config's fixed database.
-    pub fn get_fixed_database_on(&self) -> bool {
-        self.fixed_database
+    pub fn get_fixed_suggestion(&self) -> bool {
+        self.fixed_suggestion
     }
 
     /// Set the config's fixed database.
-    pub fn set_fixed_database_on(&mut self, fixed_database: bool) {
-        self.fixed_database = fixed_database;
+    pub fn set_fixed_suggestion(&mut self, fixed_suggestion: bool) {
+        self.fixed_suggestion = fixed_suggestion;
     }
 
     /// Get the config's fixed vowel.
@@ -171,9 +171,9 @@ pub(crate) fn get_phonetic_method_defaults() -> Config {
             "/data/avrophonetic.json"
         ),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
-        phonetic_database: true,
+        phonetic_suggestion: true,
         phonetic_include_english: false,
-        fixed_database: false,
+        fixed_suggestion: false,
         fixed_vowel: false,
         fixed_chandra: false,
         fixed_kar: false,
@@ -186,13 +186,13 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
     Config {
         layout: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
-        fixed_database: true,
+        fixed_suggestion: true,
         fixed_vowel: true,
         fixed_chandra: true,
         fixed_kar: true,
         fixed_numpad: true,
         fixed_old_reph: true,
-        phonetic_database: false,
+        phonetic_suggestion: false,
         phonetic_include_english: false,
     }
 }
