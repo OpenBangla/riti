@@ -1,6 +1,6 @@
 use either::Either;
 
-/// Suggestions which are intend to be shown by the IM's candidate window.
+/// Suggestions which are intended to be shown by the IM's candidate window.
 #[derive(Debug)]
 pub struct Suggestion {
     // Auxiliary text

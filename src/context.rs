@@ -14,22 +14,6 @@ pub struct RitiContext {
 
 impl RitiContext {
     /// A new `RitiContext` instance.
-    pub fn new() -> Self {
-        let config = Config::default();
-        let loader = LayoutLoader::load_from_config(&config);
-
-        match loader.layout_type() {
-            LayoutType::Phonetic => {
-                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout(), &config)));
-                RitiContext { method, loader, config }
-            }
-            LayoutType::Fixed => {
-                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout(), &config)));
-                RitiContext { method, loader, config }
-            }
-        }
-    }
-
     pub fn new_with_config(config: &Config) -> Self {
         let loader = LayoutLoader::load_from_config(config);
         let config = config.to_owned();
@@ -62,18 +46,21 @@ impl RitiContext {
 
     /// Update the suggestion making engine. This would also look for changes
     /// in layout selection and AutoCorrect database.
-    /// FIXME
-    pub fn update_engine(&mut self) {
-        if self.loader.changed(&self.config) {
-            self.loader = LayoutLoader::load_from_config(&self.config);
+    pub fn update_engine(&mut self, config: &Config) {
+        // Update the config
+        self.config = config.to_owned();
+
+        // If the layout file has been changed.
+        if self.loader.changed(config) {
+            self.loader = LayoutLoader::load_from_config(config);
 
             match self.loader.layout_type() {
                 LayoutType::Phonetic => self
                     .method
-                    .replace(Box::new(PhoneticMethod::new(self.loader.layout(), &self.config))),
+                    .replace(Box::new(PhoneticMethod::new(self.loader.layout(), config))),
                 LayoutType::Fixed => self
                     .method
-                    .replace(Box::new(FixedMethod::new(self.loader.layout(), &self.config))),
+                    .replace(Box::new(FixedMethod::new(self.loader.layout(), config))),
             };
         } else {
             self.method.borrow_mut().update_engine();

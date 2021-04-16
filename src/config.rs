@@ -1,5 +1,6 @@
 use std::{env::var, path::PathBuf};
 
+/// Config struct for configuring RitiContext.
 #[derive(Clone, Default)]
 pub struct Config {
     layout: String,
@@ -41,8 +42,16 @@ impl Config {
         }
     }
 
+    pub(crate) fn set_layout_file_path(&mut self, layout: &str) {
+        self.layout = layout.to_string();
+    }
+    
     pub(crate) fn get_layout_file_path(&self) -> &str {
         &self.layout
+    }
+
+    pub(crate) fn set_database_dir(&mut self, path: &str) {
+        self.database_dir = path.into();
     }
 
     pub(crate) fn get_database_path(&self) -> PathBuf {
