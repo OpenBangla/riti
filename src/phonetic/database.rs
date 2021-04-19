@@ -3,9 +3,9 @@ use rayon::prelude::*;
 use regex::Regex;
 use std::fs::read_to_string;
 
+use crate::config::{Config, get_user_phonetic_autocorrect};
 use crate::hashmap;
 use crate::phonetic::regex::parse;
-use crate::settings::{get_settings_database_dir, get_settings_user_phonetic_autocorrect};
 
 pub(crate) struct Database {
     map: HashMap<&'static str, Vec<&'static str>>,
@@ -17,10 +17,10 @@ pub(crate) struct Database {
 }
 
 impl Database {
-    pub(crate) fn new() -> Database {
+    pub(crate) fn new_with_config(config: &Config) -> Database {
         // Load the user's auto-correct entries.
         let user_autocorrect =
-            if let Ok(file) = read_to_string(get_settings_user_phonetic_autocorrect()) {
+            if let Ok(file) = read_to_string(get_user_phonetic_autocorrect()) {
                 serde_json::from_str(&file).unwrap()
             } else {
                 HashMap::new()
@@ -58,15 +58,15 @@ impl Database {
         Database {
             map,
             table: serde_json::from_str(
-                &read_to_string(get_settings_database_dir().join("dictionary.json")).unwrap(),
+                &read_to_string(config.get_database_path()).unwrap(),
             )
             .unwrap(),
             suffix: serde_json::from_str(
-                &read_to_string(get_settings_database_dir().join("suffix.json")).unwrap(),
+                &read_to_string(config.get_suffix_data_path()).unwrap(),
             )
             .unwrap(),
             autocorrect: serde_json::from_str(
-                &read_to_string(get_settings_database_dir().join("autocorrect.json")).unwrap(),
+                &read_to_string(config.get_autocorrect_data()).unwrap(),
             )
             .unwrap(),
             user_autocorrect,
@@ -107,7 +107,7 @@ impl Database {
     /// Update the user defined AutoCorrect dictionary.
     pub(crate) fn update(&mut self) {
         self.user_autocorrect =
-            if let Ok(file) = read_to_string(get_settings_user_phonetic_autocorrect()) {
+            if let Ok(file) = read_to_string(get_user_phonetic_autocorrect()) {
                 serde_json::from_str(&file).unwrap()
             } else {
                 HashMap::new()
@@ -118,13 +118,12 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::Database;
-    use crate::settings::tests::set_default_phonetic;
+    use crate::config::get_phonetic_method_defaults;
 
     #[test]
     fn test_database() {
-        set_default_phonetic();
-
-        let db = Database::new();
+        let config = get_phonetic_method_defaults();
+        let db = Database::new_with_config(&config);
 
         assert_eq!(
             db.search_dictionary("a"),
@@ -135,9 +134,8 @@ mod tests {
 
     #[test]
     fn test_suffix() {
-        set_default_phonetic();
-
-        let db = Database::new();
+        let config = get_phonetic_method_defaults();
+        let db = Database::new_with_config(&config);
 
         assert_eq!(db.find_suffix("gulo"), Some("গুলো"));
         assert_eq!(db.find_suffix("er"), Some("ের"));
@@ -146,9 +144,8 @@ mod tests {
 
     #[test]
     fn test_autocorrect() {
-        set_default_phonetic();
-
-        let db = Database::new();
+        let config = get_phonetic_method_defaults();
+        let db = Database::new_with_config(&config);
 
         assert_eq!(
             db.search_corrected("academy"),

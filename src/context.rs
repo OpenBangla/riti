@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::fixed::method::FixedMethod;
+use crate::{config::Config, fixed::method::FixedMethod};
 use crate::loader::{LayoutLoader, LayoutType};
 use crate::phonetic::method::PhoneticMethod;
 use crate::suggestion::Suggestion;
@@ -9,28 +9,30 @@ use crate::suggestion::Suggestion;
 pub struct RitiContext {
     method: RefCell<Box<dyn Method>>,
     loader: LayoutLoader,
+    config: Config,
 }
 
 impl RitiContext {
     /// A new `RitiContext` instance.
-    pub fn new() -> Self {
-        let loader = LayoutLoader::load_from_settings();
+    pub fn new_with_config(config: &Config) -> Self {
+        let loader = LayoutLoader::load_from_config(config);
+        let config = config.to_owned();
 
         match loader.layout_type() {
             LayoutType::Phonetic => {
-                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout())));
-                RitiContext { method, loader }
+                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout(), &config)));
+                RitiContext { method, loader, config }
             }
             LayoutType::Fixed => {
-                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout())));
-                RitiContext { method, loader }
+                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout(), &config)));
+                RitiContext { method, loader, config }
             }
         }
     }
 
     /// Get suggestion for key.
     pub fn get_suggestion_for_key(&self, key: u16, modifier: u8) -> Suggestion {
-        self.method.borrow_mut().get_suggestion(key, modifier)
+        self.method.borrow_mut().get_suggestion(key, modifier, &self.config)
     }
 
     /// A candidate of the suggestion list was committed.
@@ -39,22 +41,26 @@ impl RitiContext {
     ///
     /// This function will end the ongoing input session.
     pub fn candidate_committed(&self, index: usize) {
-        self.method.borrow_mut().candidate_committed(index)
+        self.method.borrow_mut().candidate_committed(index, &self.config)
     }
 
     /// Update the suggestion making engine. This would also look for changes
     /// in layout selection and AutoCorrect database.
-    pub fn update_engine(&mut self) {
-        if self.loader.changed() {
-            self.loader = LayoutLoader::load_from_settings();
+    pub fn update_engine(&mut self, config: &Config) {
+        // Update the config
+        self.config = config.to_owned();
+
+        // If the layout file has been changed.
+        if self.loader.changed(config) {
+            self.loader = LayoutLoader::load_from_config(config);
 
             match self.loader.layout_type() {
                 LayoutType::Phonetic => self
                     .method
-                    .replace(Box::new(PhoneticMethod::new(self.loader.layout()))),
+                    .replace(Box::new(PhoneticMethod::new(self.loader.layout(), config))),
                 LayoutType::Fixed => self
                     .method
-                    .replace(Box::new(FixedMethod::new(self.loader.layout()))),
+                    .replace(Box::new(FixedMethod::new(self.loader.layout(), config))),
             };
         } else {
             self.method.borrow_mut().update_engine();
@@ -78,17 +84,17 @@ impl RitiContext {
     /// If the internal buffer becomes empty, this function will
     /// end the ongoing input session.
     pub fn backspace_event(&self) -> Suggestion {
-        self.method.borrow_mut().backspace_event()
+        self.method.borrow_mut().backspace_event(&self.config)
     }
 }
 
 pub(crate) trait Method {
-    fn get_suggestion(&mut self, key: u16, modifier: u8) -> Suggestion;
-    fn candidate_committed(&mut self, index: usize);
+    fn get_suggestion(&mut self, key: u16, modifier: u8, config: &Config) -> Suggestion;
+    fn candidate_committed(&mut self, index: usize, config: &Config);
     fn update_engine(&mut self);
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);
-    fn backspace_event(&mut self) -> Suggestion;
+    fn backspace_event(&mut self, config: &Config) -> Suggestion;
 }
 
 /// Shift modifier key.

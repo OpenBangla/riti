@@ -3,11 +3,9 @@ use hashbrown::HashMap;
 use std::fs::{read_to_string, write};
 
 use crate::context::Method;
+use crate::config::{Config, get_user_phonetic_selection_data, get_phonetic_method_defaults};
 use crate::keycodes::*;
 use crate::phonetic::suggestion::PhoneticSuggestion;
-use crate::settings::{
-    get_settings_phonetic_database_on, get_settings_user_phonetic_selection_data,
-};
 use crate::suggestion::Suggestion;
 use crate::utility::split_string;
 
@@ -22,9 +20,9 @@ pub(crate) struct PhoneticMethod {
 
 impl PhoneticMethod {
     /// Creates a new `PhoneticMethod` struct.
-    pub(crate) fn new(layout: &serde_json::Value) -> Self {
+    pub(crate) fn new(layout: &serde_json::Value, config: &Config) -> Self {
         let selections =
-            if let Ok(file) = read_to_string(get_settings_user_phonetic_selection_data()) {
+            if let Ok(file) = read_to_string(get_user_phonetic_selection_data()) {
                 serde_json::from_str(&file).unwrap()
             } else {
                 HashMap::new()
@@ -32,17 +30,17 @@ impl PhoneticMethod {
 
         PhoneticMethod {
             buffer: String::with_capacity(20),
-            suggestion: PhoneticSuggestion::new(layout),
+            suggestion: PhoneticSuggestion::new(layout, config),
             selections,
             prev_selection: 0,
         }
     }
 
     /// Returns `Suggestion` struct with suggestions.
-    fn create_suggestion(&mut self) -> Suggestion {
-        if get_settings_phonetic_database_on() {
+    fn create_suggestion(&mut self, config: &Config) -> Suggestion {
+        if config.get_phonetic_suggestion() {
             let (suggestions, selection) =
-                self.suggestion.suggest(&self.buffer, &mut self.selections);
+                self.suggestion.suggest(&self.buffer, &mut self.selections, config);
 
             self.prev_selection = selection;
 
@@ -56,7 +54,7 @@ impl PhoneticMethod {
 }
 
 impl Method for PhoneticMethod {
-    fn get_suggestion(&mut self, key: u16, _modifier: u8) -> Suggestion {
+    fn get_suggestion(&mut self, key: u16, _modifier: u8, config: &Config) -> Suggestion {
         match key {
             // Alphanumeric keys
             VC_GRAVE => self.buffer.push('`'),
@@ -181,19 +179,19 @@ impl Method for PhoneticMethod {
             _ => panic!("Got unknown key!"),
         }
 
-        self.create_suggestion()
+        self.create_suggestion(config)
     }
 
-    fn candidate_committed(&mut self, index: usize) {
+    fn candidate_committed(&mut self, index: usize, config: &Config) {
         // Check if user has selected a different suggestion
-        if self.prev_selection != index && get_settings_phonetic_database_on() {
+        if self.prev_selection != index && config.get_phonetic_suggestion() {
             let suggestion = split_string(&self.suggestion.suggestions[index], true)
                 .1
                 .to_string();
             self.selections
                 .insert(split_string(&self.buffer, false).1.to_string(), suggestion);
             write(
-                get_settings_user_phonetic_selection_data(),
+                get_user_phonetic_selection_data(),
                 serde_json::to_string(&self.selections).unwrap(),
             )
             .unwrap();
@@ -215,7 +213,7 @@ impl Method for PhoneticMethod {
         self.buffer.clear();
     }
 
-    fn backspace_event(&mut self) -> Suggestion {
+    fn backspace_event(&mut self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
             // Remove the last character.
             self.buffer.pop();
@@ -225,7 +223,7 @@ impl Method for PhoneticMethod {
                 return Suggestion::empty();
             }
 
-            return self.create_suggestion();
+            return self.create_suggestion(config);
         } else {
             return Suggestion::empty();
         }
@@ -235,11 +233,12 @@ impl Method for PhoneticMethod {
 // Implement Default trait on PhoneticMethod for testing convenience.
 impl Default for PhoneticMethod {
     fn default() -> Self {
-        let loader = crate::loader::LayoutLoader::load_from_settings();
+        let config = get_phonetic_method_defaults();
+        let loader = crate::loader::LayoutLoader::load_from_config(&config);
 
         PhoneticMethod {
             buffer: String::new(),
-            suggestion: PhoneticSuggestion::new(loader.layout()),
+            suggestion: PhoneticSuggestion::new(loader.layout(), &config),
             selections: HashMap::new(),
             prev_selection: 0,
         }
@@ -250,18 +249,17 @@ impl Default for PhoneticMethod {
 mod tests {
     use super::PhoneticMethod;
     use crate::context::Method;
-    use crate::settings::tests::set_default_phonetic;
+    use crate::config::get_phonetic_method_defaults;
 
     #[test]
     fn test_backspace() {
-        set_default_phonetic();
-
         let mut method = PhoneticMethod {
             buffer: "ab".to_string(),
             ..Default::default()
         };
+        let config = get_phonetic_method_defaults();
 
-        assert!(!method.backspace_event().is_empty()); // a
-        assert!(method.backspace_event().is_empty()); // Empty
+        assert!(!method.backspace_event(&config).is_empty()); // a
+        assert!(method.backspace_event(&config).is_empty()); // Empty
     }
 }

@@ -254,18 +254,27 @@ static const uint16_t VC_KP_9 = 73;
 static const uint16_t VC_KP_0 = 82;
 
 /*
+ Config struct for configuring RitiContext.
+ */
+struct Config;
+
+/*
  Context handle used for libRiti IM APIs
  */
 struct RitiContext;
 
 /*
- Suggestions which are intend to be shown by the IM's candidate window.
+ Suggestions which are intended to be shown by the IM's candidate window.
  */
 struct Suggestion;
 
 extern "C" {
 
-RitiContext *riti_context_new();
+/*
+ Creates a new instance of RitiContext with a Config which is properly
+ populated using `riti_config_set_*` set of functions.
+ */
+RitiContext *riti_context_new_with_config(const Config *ptr);
 
 void riti_context_free(RitiContext *ptr);
 
@@ -286,7 +295,7 @@ void riti_context_candidate_committed(RitiContext *ptr, uintptr_t index);
  Update the suggestion making engine. This would also look for changes
  in layout selection and AutoCorrect database.
  */
-void riti_context_update_engine(RitiContext *ptr);
+void riti_context_update_engine(RitiContext *ptr, const Config *config);
 
 /*
  Checks if there is an ongoing input session.
@@ -345,6 +354,41 @@ uintptr_t riti_suggestion_get_length(const Suggestion *ptr);
 bool riti_suggestion_is_lonely(const Suggestion *ptr);
 
 bool riti_suggestion_is_empty(const Suggestion *ptr);
+
+/*
+ Creates a new instance of Config which is used to initialize
+ and to control the configuration of RitiContext.
+
+ This function creates an instance of Config in an initial
+ state which can't be used before populating the Config using
+ `riti_config_set_*` set of functions.
+ */
+Config *riti_config_new();
+
+/*
+ Free the allocated Config struct.
+ */
+void riti_config_free(Config *ptr);
+
+void riti_config_set_layout_file(Config *ptr, const char *path);
+
+void riti_config_set_database_dir(Config *ptr, const char *path);
+
+void riti_config_set_phonetic_suggestion(Config *ptr, bool option);
+
+void riti_config_set_phonetic_include_english(Config *ptr, bool option);
+
+void riti_config_set_fixed_suggestion(Config *ptr, bool option);
+
+void riti_config_set_fixed_auto_vowel(Config *ptr, bool option);
+
+void riti_config_set_fixed_auto_chandra(Config *ptr, bool option);
+
+void riti_config_set_fixed_traditional_kar(Config *ptr, bool option);
+
+void riti_config_set_fixed_old_reph(Config *ptr, bool option);
+
+void riti_config_set_fixed_numpad(Config *ptr, bool option);
 
 } // extern "C"
 

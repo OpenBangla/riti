@@ -1,14 +1,22 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
 use crate::context::RitiContext;
 use crate::suggestion::Suggestion;
+use crate::config::Config;
 
 // FFI functions for handling the `RitiContext` structure.
 
+/// Creates a new instance of RitiContext with a Config which is properly
+/// populated using `riti_config_set_*` set of functions.
 #[no_mangle]
-pub extern "C" fn riti_context_new() -> *mut RitiContext {
-    Box::into_raw(Box::new(RitiContext::new()))
+pub extern "C" fn riti_context_new_with_config(ptr: *const Config) -> *mut RitiContext {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    Box::into_raw(Box::new(RitiContext::new_with_config(config)))
 }
 
 #[no_mangle]
@@ -55,13 +63,18 @@ pub extern "C" fn riti_context_candidate_committed(ptr: *mut RitiContext, index:
 /// Update the suggestion making engine. This would also look for changes
 /// in layout selection and AutoCorrect database.
 #[no_mangle]
-pub extern "C" fn riti_context_update_engine(ptr: *mut RitiContext) {
+pub extern "C" fn riti_context_update_engine(ptr: *mut RitiContext, config: *const Config) {
     let context = unsafe {
         assert!(!ptr.is_null());
         &mut *ptr
     };
 
-    context.update_engine()
+    let config = unsafe {
+        assert!(!config.is_null());
+        &*config
+    };
+
+    context.update_engine(config)
 }
 
 /// Checks if there is an ongoing input session.
@@ -237,4 +250,133 @@ pub extern "C" fn riti_suggestion_is_empty(ptr: *const Suggestion) -> bool {
     };
 
     suggestion.is_empty()
+}
+
+/// Creates a new instance of Config which is used to initialize
+/// and to control the configuration of RitiContext.
+/// 
+/// This function creates an instance of Config in an initial
+/// state which can't be used before populating the Config using
+/// `riti_config_set_*` set of functions.
+#[no_mangle]
+pub extern "C" fn riti_config_new() -> *mut Config {
+    Box::into_raw(Box::new(Config::default()))
+}
+
+
+/// Free the allocated Config struct.
+#[no_mangle]
+pub extern "C" fn riti_config_free(ptr: *mut Config) {
+    if ptr.is_null() {
+        return;
+    }
+    unsafe {
+        Box::from_raw(ptr);
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_layout_file(ptr: *mut Config, path: *const c_char) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    unsafe {
+        let layout = CStr::from_ptr(path).to_str().unwrap();
+        config.set_layout_file_path(layout);
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_database_dir(ptr: *mut Config, path: *const c_char) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    unsafe {
+        let path = CStr::from_ptr(path).to_str().unwrap();
+        config.set_database_dir(path);
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_phonetic_suggestion(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_phonetic_suggestion(option);
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_phonetic_include_english(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_phonetic_include_english(option);
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_fixed_suggestion(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_fixed_suggestion(option);
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_fixed_auto_vowel(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_fixed_automatic_vowel(option);
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_fixed_auto_chandra(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_fixed_automatic_chandra(option);
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_fixed_traditional_kar(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_fixed_traditional_kar(option);
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_fixed_old_reph(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_fixed_old_reph(option);
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_fixed_numpad(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_fixed_numpad(option);
 }
