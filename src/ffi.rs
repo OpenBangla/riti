@@ -332,6 +332,16 @@ pub extern "C" fn riti_config_set_fixed_suggestion(ptr: *mut Config, option: boo
 }
 
 #[no_mangle]
+pub extern "C" fn riti_config_set_fixed_include_english(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_fixed_include_english(option);
+}
+
+#[no_mangle]
 pub extern "C" fn riti_config_set_fixed_auto_vowel(ptr: *mut Config, option: bool) {
     let config = unsafe {
         assert!(!ptr.is_null());

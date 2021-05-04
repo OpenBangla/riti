@@ -8,6 +8,7 @@ pub struct Config {
     phonetic_include_english: bool,
     database_dir: PathBuf,
     fixed_suggestion: bool,
+    fixed_include_english: bool,
     fixed_vowel: bool,
     fixed_chandra: bool,
     fixed_kar: bool,
@@ -22,6 +23,7 @@ impl Config {
         phonetic_include_english: bool,
         database_dir: PathBuf,
         fixed_suggestion: bool,
+        fixed_include_english: bool,
         fixed_vowel: bool,
         fixed_chandra: bool,
         fixed_kar: bool,
@@ -34,6 +36,7 @@ impl Config {
             phonetic_include_english,
             database_dir,
             fixed_suggestion,
+            fixed_include_english,
             fixed_vowel,
             fixed_chandra,
             fixed_kar,
@@ -142,6 +145,16 @@ impl Config {
     pub fn set_fixed_numpad(&mut self, fixed_numpad: bool) {
         self.fixed_numpad = fixed_numpad;
     }
+
+    /// Get the config's fixed include english.
+    pub fn get_fixed_include_english(&self) -> bool {
+        self.fixed_include_english
+    }
+
+    /// Set the config's fixed include english.
+    pub fn set_fixed_include_english(&mut self, fixed_include_english: bool) {
+        self.fixed_include_english = fixed_include_english;
+    }
 }
 
 /// Get file path of user defined Auto Correct file.
@@ -174,6 +187,7 @@ pub(crate) fn get_phonetic_method_defaults() -> Config {
         phonetic_suggestion: true,
         phonetic_include_english: false,
         fixed_suggestion: false,
+        fixed_include_english: false,
         fixed_vowel: false,
         fixed_chandra: false,
         fixed_kar: false,
@@ -187,6 +201,7 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
         layout: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
         fixed_suggestion: true,
+        fixed_include_english: false,
         fixed_vowel: true,
         fixed_chandra: true,
         fixed_kar: true,

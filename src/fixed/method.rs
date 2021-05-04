@@ -2,7 +2,7 @@ use edit_distance::edit_distance;
 use serde_json::Value;
 
 use super::{chars::*, database::Database, parser::LayoutParser};
-use crate::context::Method;
+use crate::{context::Method, keycodes::keycode_to_char};
 use crate::config::{Config, get_fixed_method_defaults};
 use crate::loader::LayoutLoader;
 use crate::suggestion::Suggestion;
@@ -12,6 +12,7 @@ const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
 pub(crate) struct FixedMethod {
     buffer: String,
+    typed: String,
     suggestions: Vec<String>,
     parser: LayoutParser,
     database: Database,
@@ -27,11 +28,17 @@ impl Method for FixedMethod {
             return self.current_suggestion(config);
         }
 
+        // If include english typed word feature is enabled.
+        if config.get_fixed_include_english() {
+            self.typed.push(keycode_to_char(key));
+        }
+
         self.create_suggestion(config)
     }
 
     fn candidate_committed(&mut self, _index: usize, _: &Config) {
         self.buffer.clear();
+        self.typed.clear();
     }
 
     fn update_engine(&mut self) {
@@ -44,12 +51,14 @@ impl Method for FixedMethod {
 
     fn finish_input_session(&mut self) {
         self.buffer.clear();
+        self.typed.clear();
     }
 
     fn backspace_event(&mut self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
             // Remove the last character from buffer.
             self.buffer.pop();
+            self.typed.pop();
 
             if self.buffer.is_empty() {
                 // The buffer is now empty, so return empty suggestion.
@@ -70,6 +79,7 @@ impl FixedMethod {
 
         FixedMethod {
             buffer: String::with_capacity(20 * 3), // A Bengali character is 3 bytes in size.
+            typed: String::with_capacity(20),
             suggestions: Vec::with_capacity(10),
             parser,
             database: Database::new_with_config(config),
@@ -120,8 +130,15 @@ impl FixedMethod {
         // Remove the duplicates if present.
         self.suggestions.dedup();
 
-        // Reduce the number of suggestions.
-        self.suggestions.truncate(9);
+        // Reduce the number of suggestions
+        // and add the typed english word at the end.
+        if config.get_fixed_include_english() {
+            self.suggestions.truncate(8);
+            self.suggestions.push(self.typed.clone());
+        } else {
+            self.suggestions.truncate(9);
+        }
+        
 
         if !first_part.is_empty() || !last_part.is_empty() {
             for suggestion in self.suggestions.iter_mut() {
@@ -362,8 +379,6 @@ impl FixedMethod {
 }
 
 // Implement Default trait on FixedMethod for testing convenience.
-// This constructor uses the layout file specified in the
-// environment variable `RITI_LAYOUT_FILE`.
 impl Default for FixedMethod {
     fn default() -> Self {
         let config = get_fixed_method_defaults();
@@ -372,6 +387,7 @@ impl Default for FixedMethod {
 
         FixedMethod {
             buffer: String::new(),
+            typed: String::new(),
             suggestions: Vec::new(),
             parser,
             database: Database::new_with_config(&config),
@@ -387,7 +403,7 @@ fn is_ligature_making_kar(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::FixedMethod;
-    use crate::context::Method;
+    use crate::{context::Method, keycodes::{VC_A, VC_M, VC_I}};
     use crate::fixed::chars::*;
     use crate::config::get_fixed_method_defaults;
 
@@ -429,9 +445,24 @@ mod tests {
     }
 
     #[test]
+    fn test_suggestions_with_english_word() {
+        let mut method = FixedMethod::default();
+        let mut config = get_fixed_method_defaults();
+        config.set_fixed_include_english(true);
+
+        method.get_suggestion(VC_A, 0, &config);
+        method.get_suggestion(VC_M, 0, &config);
+        method.get_suggestion(VC_I, 0, &config);
+
+        assert_eq!(method.typed.clone(), "ami");
+        assert_eq!(method.current_suggestion(&config).get_suggestions(), &["আমি", "আমিন", "আমির", "আমিষ", "ami"]);
+    }
+
+    #[test]
     fn test_backspace() {
         let mut method = FixedMethod {
             buffer: "আমি".to_string(),
+            typed: "ami".to_string(),
             ..Default::default()
         };
         
@@ -441,6 +472,8 @@ mod tests {
         assert!(!method.backspace_event(&config).is_empty()); // আম
         assert!(!method.backspace_event(&config).is_empty()); // আ
         assert!(method.backspace_event(&config).is_empty()); // Empty
+        assert!(method.buffer.is_empty());
+        assert!(method.typed.is_empty());
     }
 
     #[test]
