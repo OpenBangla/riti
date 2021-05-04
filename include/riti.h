@@ -380,6 +380,8 @@ void riti_config_set_phonetic_include_english(Config *ptr, bool option);
 
 void riti_config_set_fixed_suggestion(Config *ptr, bool option);
 
+void riti_config_set_fixed_include_english(Config *ptr, bool option);
+
 void riti_config_set_fixed_auto_vowel(Config *ptr, bool option);
 
 void riti_config_set_fixed_auto_chandra(Config *ptr, bool option);
