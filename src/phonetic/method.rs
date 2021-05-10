@@ -20,7 +20,7 @@ pub(crate) struct PhoneticMethod {
 
 impl PhoneticMethod {
     /// Creates a new `PhoneticMethod` struct.
-    pub(crate) fn new(layout: &serde_json::Value, config: &Config) -> Self {
+    pub(crate) fn new(config: &Config) -> Self {
         let selections =
             if let Ok(file) = read_to_string(config.get_user_phonetic_selection_data()) {
                 serde_json::from_str(&file).unwrap()
@@ -30,7 +30,7 @@ impl PhoneticMethod {
 
         PhoneticMethod {
             buffer: String::with_capacity(20),
-            suggestion: PhoneticSuggestion::new(layout, config),
+            suggestion: PhoneticSuggestion::new(config),
             selections,
             prev_selection: 0,
         }
@@ -111,11 +111,10 @@ impl Method for PhoneticMethod {
 impl Default for PhoneticMethod {
     fn default() -> Self {
         let config = get_phonetic_method_defaults();
-        let loader = crate::loader::LayoutLoader::load_from_config(&config);
 
         PhoneticMethod {
             buffer: String::new(),
-            suggestion: PhoneticSuggestion::new(loader.layout(), &config),
+            suggestion: PhoneticSuggestion::new(&config),
             selections: HashMap::new(),
             prev_selection: 0,
         }

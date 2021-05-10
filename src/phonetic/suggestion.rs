@@ -2,7 +2,7 @@
 
 use edit_distance::edit_distance;
 use hashbrown::{hash_map::Entry, HashMap};
-use rupantor::parser::PhoneticParser;
+use okkhor::parser::Parser;
 
 use crate::config::{Config, get_phonetic_method_defaults};
 use super::database::Database;
@@ -13,18 +13,18 @@ pub(crate) struct PhoneticSuggestion {
     pub(crate) database: Database,
     // Cache for storing dictionary searches.
     cache: HashMap<String, Vec<String>>,
-    phonetic: PhoneticParser,
+    phonetic: Parser,
     // Auto Correct caches.
     corrects: HashMap<String, String>,
 }
 
 impl PhoneticSuggestion {
-    pub(crate) fn new(layout: &serde_json::Value, config: &Config) -> Self {
+    pub(crate) fn new(config: &Config) -> Self {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new_with_config(&config),
             cache: HashMap::with_capacity(20),
-            phonetic: PhoneticParser::new(layout),
+            phonetic: Parser::new_phonetic(),
             corrects: HashMap::with_capacity(10),
         }
     }
@@ -255,12 +255,11 @@ impl PhoneticSuggestion {
 impl Default for PhoneticSuggestion {
     fn default() -> Self {
         let config = get_phonetic_method_defaults();
-        let loader = crate::loader::LayoutLoader::load_from_config(&config);
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new_with_config(&config),
             cache: HashMap::new(),
-            phonetic: PhoneticParser::new(loader.layout()),
+            phonetic: Parser::new_phonetic(),
             corrects: HashMap::new(),
         }
     }
