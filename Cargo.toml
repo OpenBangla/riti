@@ -8,6 +8,9 @@ edition = "2018"
 [lib]
 crate-type = ["staticlib"]
 
+[features]
+bench = []
+
 [profile.release]
 codegen-units = 1
 

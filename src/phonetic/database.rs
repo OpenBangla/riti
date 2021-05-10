@@ -154,3 +154,42 @@ mod tests {
         assert_eq!(db.search_corrected("\\nai\\"), None);
     }
 }
+
+#[cfg(feature = "bench")]
+mod benches {
+    extern crate test;
+
+    use test::{Bencher, black_box};
+    use super::Database;
+    use crate::config::get_phonetic_method_defaults;
+
+    #[bench]
+    fn bench_a(b: &mut Bencher) {
+        let config = get_phonetic_method_defaults();
+        let db = Database::new_with_config(&config);
+        b.iter(|| {
+            let res = db.search_dictionary("a");
+            black_box(res);
+        })
+    }
+
+    #[bench]
+    fn bench_aro(b: &mut Bencher) {
+        let config = get_phonetic_method_defaults();
+        let db = Database::new_with_config(&config);
+        b.iter(|| {
+            let res = db.search_dictionary("arO");
+            black_box(res);
+        })
+    }
+
+    #[bench]
+    fn bench_bistari(b: &mut Bencher) {
+        let config = get_phonetic_method_defaults();
+        let db = Database::new_with_config(&config);
+        b.iter(|| {
+            let res = db.search_dictionary("bistari");
+            black_box(res);
+        })
+    }
+}
