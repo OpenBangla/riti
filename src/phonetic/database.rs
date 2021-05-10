@@ -1,13 +1,14 @@
 use hashbrown::HashMap;
+use okkhor::parser::Parser;
 use rayon::prelude::*;
 use regex::Regex;
 use std::fs::read_to_string;
 
 use crate::config::Config;
 use crate::hashmap;
-use crate::phonetic::regex::parse;
 
 pub(crate) struct Database {
+    regex: Parser,
     map: HashMap<&'static str, Vec<&'static str>>,
     table: HashMap<String, Vec<String>>,
     suffix: HashMap<String, String>,
@@ -56,6 +57,7 @@ impl Database {
         ];
 
         Database {
+            regex: Parser::new_regex(),
             map,
             table: serde_json::from_str(
                 &read_to_string(config.get_database_path()).unwrap(),
@@ -75,7 +77,7 @@ impl Database {
 
     /// Find words from the dictionary with given word.
     pub(crate) fn search_dictionary(&self, word: &str) -> Vec<String> {
-        let rgx = Regex::new(&parse(word)).unwrap();
+        let rgx = Regex::new(&self.regex.convert_regex(word)).unwrap();
 
         self.map
             .get(word.get(0..1).unwrap_or_default())
