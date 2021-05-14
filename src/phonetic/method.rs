@@ -3,7 +3,7 @@ use hashbrown::HashMap;
 use std::fs::{read_to_string, write};
 
 use crate::context::Method;
-use crate::config::{Config, get_user_phonetic_selection_data, get_phonetic_method_defaults};
+use crate::config::{Config, get_phonetic_method_defaults};
 use crate::keycodes::keycode_to_char;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::suggestion::Suggestion;
@@ -22,7 +22,7 @@ impl PhoneticMethod {
     /// Creates a new `PhoneticMethod` struct.
     pub(crate) fn new(layout: &serde_json::Value, config: &Config) -> Self {
         let selections =
-            if let Ok(file) = read_to_string(get_user_phonetic_selection_data()) {
+            if let Ok(file) = read_to_string(config.get_user_phonetic_selection_data()) {
                 serde_json::from_str(&file).unwrap()
             } else {
                 HashMap::new()
@@ -68,7 +68,7 @@ impl Method for PhoneticMethod {
             self.selections
                 .insert(split_string(&self.buffer, false).1.to_string(), suggestion);
             write(
-                get_user_phonetic_selection_data(),
+                config.get_user_phonetic_selection_data(),
                 serde_json::to_string(&self.selections).unwrap(),
             )
             .unwrap();
@@ -78,8 +78,8 @@ impl Method for PhoneticMethod {
         self.buffer.clear();
     }
 
-    fn update_engine(&mut self) {
-        self.suggestion.database.update();
+    fn update_engine(&mut self, config: &Config) {
+        self.suggestion.database.update(config);
     }
 
     fn ongoing_input_session(&self) -> bool {

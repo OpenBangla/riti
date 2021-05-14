@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use regex::Regex;
 use std::fs::read_to_string;
 
-use crate::config::{Config, get_user_phonetic_autocorrect};
+use crate::config::Config;
 use crate::hashmap;
 use crate::phonetic::regex::parse;
 
@@ -20,7 +20,7 @@ impl Database {
     pub(crate) fn new_with_config(config: &Config) -> Database {
         // Load the user's auto-correct entries.
         let user_autocorrect =
-            if let Ok(file) = read_to_string(get_user_phonetic_autocorrect()) {
+            if let Ok(file) = read_to_string(config.get_user_phonetic_autocorrect()) {
                 serde_json::from_str(&file).unwrap()
             } else {
                 HashMap::new()
@@ -105,9 +105,9 @@ impl Database {
     }
 
     /// Update the user defined AutoCorrect dictionary.
-    pub(crate) fn update(&mut self) {
+    pub(crate) fn update(&mut self, config: &Config) {
         self.user_autocorrect =
-            if let Ok(file) = read_to_string(get_user_phonetic_autocorrect()) {
+            if let Ok(file) = read_to_string(config.get_user_phonetic_autocorrect()) {
                 serde_json::from_str(&file).unwrap()
             } else {
                 HashMap::new()

@@ -41,7 +41,7 @@ impl Method for FixedMethod {
         self.typed.clear();
     }
 
-    fn update_engine(&mut self) {
+    fn update_engine(&mut self, _: &Config) {
         //
     }
 

@@ -63,7 +63,7 @@ impl RitiContext {
                     .replace(Box::new(FixedMethod::new(self.loader.layout(), config))),
             };
         } else {
-            self.method.borrow_mut().update_engine();
+            self.method.borrow_mut().update_engine(config);
         }
     }
 
@@ -91,7 +91,7 @@ impl RitiContext {
 pub(crate) trait Method {
     fn get_suggestion(&mut self, key: u16, modifier: u8, config: &Config) -> Suggestion;
     fn candidate_committed(&mut self, index: usize, config: &Config);
-    fn update_engine(&mut self);
+    fn update_engine(&mut self, config: &Config);
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);
     fn backspace_event(&mut self, config: &Config) -> Suggestion;

@@ -4,9 +4,10 @@ use std::{env::var, path::PathBuf};
 #[derive(Clone, Default)]
 pub struct Config {
     layout: String,
+    database_dir: PathBuf,
+    user_dir: PathBuf,
     phonetic_suggestion: bool,
     phonetic_include_english: bool,
-    database_dir: PathBuf,
     fixed_suggestion: bool,
     fixed_include_english: bool,
     fixed_vowel: bool,
@@ -32,7 +33,8 @@ impl Config {
     ) -> Config {
         Config {
             layout,
-            phonetic_suggestion: phonetic_suggestion,
+            user_dir: get_user_data_dir(),
+            phonetic_suggestion,
             phonetic_include_english,
             database_dir,
             fixed_suggestion,
@@ -48,7 +50,7 @@ impl Config {
     pub(crate) fn set_layout_file_path(&mut self, layout: &str) {
         self.layout = layout.to_string();
     }
-    
+
     pub(crate) fn get_layout_file_path(&self) -> &str {
         &self.layout
     }
@@ -67,6 +69,16 @@ impl Config {
 
     pub(crate) fn get_autocorrect_data(&self) -> PathBuf {
         self.database_dir.join("autocorrect.json")
+    }
+
+    /// Get file path of user defined Auto Correct file.
+    pub(crate) fn get_user_phonetic_autocorrect(&self) -> PathBuf {
+        self.user_dir.join("autocorrect.json")
+    }
+
+    /// Get file path of user defined phonetic candidate selection file.
+    pub(crate) fn get_user_phonetic_selection_data(&self) -> PathBuf {
+        self.user_dir.join("phonetic-candidate-selection.json")
     }
 
     pub(crate) fn get_phonetic_suggestion(&self) -> bool {
@@ -157,23 +169,19 @@ impl Config {
     }
 }
 
-/// Get file path of user defined Auto Correct file.
-pub(crate) fn get_user_phonetic_autocorrect() -> String {
-    let base = var("XDG_DATA_HOME")
-        .unwrap_or_else(|_| format!("{}{}", var("HOME").unwrap(), "/.local/share"));
-
-    format!("{}{}", base, "/openbangla-keyboard/autocorrect.json")
-}
-
-/// Get file path of user defined phonetic candidate selection file.
-pub(crate) fn get_user_phonetic_selection_data() -> String {
-    let base = var("XDG_DATA_HOME")
-        .unwrap_or_else(|_| format!("{}{}", var("HOME").unwrap(), "/.local/share"));
-
-    format!(
-        "{}{}",
-        base, "/openbangla-keyboard/phonetic-candidate-selection.json"
-    )
+pub(crate) fn get_user_data_dir() -> PathBuf {
+    var("XDG_DATA_HOME")
+        .ok()
+        .or_else(|| var("HOME").ok().map(|path| path + "/.local/share"))
+        .map(|path| path + "/openbangla-keyboard")
+        .or_else(|| {
+            // Windows
+            var("localappdata")
+                .ok()
+                .map(|path| path + "/OpenBangla Keyboard")
+        })
+        .unwrap()
+        .into()
 }
 
 pub(crate) fn get_phonetic_method_defaults() -> Config {
@@ -183,6 +191,7 @@ pub(crate) fn get_phonetic_method_defaults() -> Config {
             env!("CARGO_MANIFEST_DIR"),
             "/data/avrophonetic.json"
         ),
+        user_dir: get_user_data_dir(),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
         phonetic_suggestion: true,
         phonetic_include_english: false,
@@ -200,6 +209,7 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
     Config {
         layout: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
+        user_dir: get_user_data_dir(),
         fixed_suggestion: true,
         fixed_include_english: false,
         fixed_vowel: true,
