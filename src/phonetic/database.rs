@@ -1,20 +1,19 @@
-use hashbrown::HashMap;
-use rayon::prelude::*;
+use ahash::RandomState;
 use regex::Regex;
+use std::collections::HashMap;
 use std::fs::read_to_string;
 
 use crate::config::Config;
-use crate::hashmap;
 use crate::phonetic::regex::parse;
 
 pub(crate) struct Database {
     regex: String,
-    map: HashMap<&'static str, Vec<&'static str>>,
-    table: HashMap<String, Vec<String>>,
-    suffix: HashMap<String, String>,
-    autocorrect: HashMap<String, String>,
+    map: HashMap<&'static str, Vec<&'static str>, RandomState>,
+    table: HashMap<String, Vec<String>, RandomState>,
+    suffix: HashMap<String, String, RandomState>,
+    autocorrect: HashMap<String, String, RandomState>,
     // The user's auto-correct entries.
-    user_autocorrect: HashMap<String, String>,
+    user_autocorrect: HashMap<String, String, RandomState>,
 }
 
 impl Database {
@@ -24,49 +23,47 @@ impl Database {
             if let Ok(file) = read_to_string(config.get_user_phonetic_autocorrect()) {
                 serde_json::from_str(&file).unwrap()
             } else {
-                HashMap::new()
+                HashMap::with_hasher(RandomState::new())
             };
 
-        let map = hashmap! [
-            "a" => vec!["a", "aa", "e", "oi", "o", "nya", "y"],
-            "b" => vec!["b", "bh"],
-            "c" => vec!["c", "ch", "k"],
-            "d" => vec!["d", "dh", "dd", "ddh"],
-            "e" => vec!["i", "ii", "e", "y"],
-            "f" => vec!["ph"],
-            "g" => vec!["g", "gh", "j"],
-            "h" => vec!["h"],
-            "i" => vec!["i", "ii", "y"],
-            "j" => vec!["j", "jh", "z"],
-            "k" => vec!["k", "kh"],
-            "l" => vec!["l"],
-            "m" => vec!["h", "m"],
-            "n" => vec!["n", "nya", "nga", "nn"],
-            "o" => vec!["a", "u", "uu", "oi", "o", "ou", "y"],
-            "p" => vec!["p", "ph"],
-            "q" => vec!["k"],
-            "r" => vec!["rri", "h", "r", "rr", "rrh"],
-            "s" => vec!["s", "sh", "ss"],
-            "t" => vec!["t", "th", "tt", "tth", "khandatta"],
-            "u" => vec!["u", "uu", "y"],
-            "v" => vec!["bh"],
-            "w" => vec!["o"],
-            "x" => vec!["e", "k"],
-            "y" => vec!["i", "y"],
-            "z" => vec!["h", "j", "jh", "z"]
-        ];
+        let map = vec![
+            ("a", vec!["a", "aa", "e", "oi", "o", "nya", "y"]),
+            ("b", vec!["b", "bh"]),
+            ("c", vec!["c", "ch", "k"]),
+            ("d", vec!["d", "dh", "dd", "ddh"]),
+            ("e", vec!["i", "ii", "e", "y"]),
+            ("f", vec!["ph"]),
+            ("g", vec!["g", "gh", "j"]),
+            ("h", vec!["h"]),
+            ("i", vec!["i", "ii", "y"]),
+            ("j", vec!["j", "jh", "z"]),
+            ("k", vec!["k", "kh"]),
+            ("l", vec!["l"]),
+            ("m", vec!["h", "m"]),
+            ("n", vec!["n", "nya", "nga", "nn"]),
+            ("o", vec!["a", "u", "uu", "oi", "o", "ou", "y"]),
+            ("p", vec!["p", "ph"]),
+            ("q", vec!["k"]),
+            ("r", vec!["rri", "h", "r", "rr", "rrh"]),
+            ("s", vec!["s", "sh", "ss"]),
+            ("t", vec!["t", "th", "tt", "tth", "khandatta"]),
+            ("u", vec!["u", "uu", "y"]),
+            ("v", vec!["bh"]),
+            ("w", vec!["o"]),
+            ("x", vec!["e", "k"]),
+            ("y", vec!["i", "y"]),
+            ("z", vec!["h", "j", "jh", "z"]),
+        ]
+        .into_iter()
+        .collect();
 
         Database {
             regex: String::with_capacity(1024),
             map,
-            table: serde_json::from_str(
-                &read_to_string(config.get_database_path()).unwrap(),
-            )
-            .unwrap(),
-            suffix: serde_json::from_str(
-                &read_to_string(config.get_suffix_data_path()).unwrap(),
-            )
-            .unwrap(),
+            table: serde_json::from_str(&read_to_string(config.get_database_path()).unwrap())
+                .unwrap(),
+            suffix: serde_json::from_str(&read_to_string(config.get_suffix_data_path()).unwrap())
+                .unwrap(),
             autocorrect: serde_json::from_str(
                 &read_to_string(config.get_autocorrect_data()).unwrap(),
             )
@@ -84,13 +81,8 @@ impl Database {
         self.map
             .get(word.get(0..1).unwrap_or_default())
             .unwrap_or(&Vec::new())
-            .par_iter()
-            .flat_map(|&item| {
-                self.table[item]
-                    .par_iter()
-                    .filter(|i| rgx.is_match(i))
-                    .cloned()
-            })
+            .iter()
+            .flat_map(|&item| self.table[item].iter().filter(|i| rgx.is_match(i)).cloned())
             .collect()
     }
 
@@ -114,7 +106,7 @@ impl Database {
             if let Ok(file) = read_to_string(config.get_user_phonetic_autocorrect()) {
                 serde_json::from_str(&file).unwrap()
             } else {
-                HashMap::new()
+                HashMap::with_hasher(RandomState::new())
             };
     }
 }
@@ -151,10 +143,7 @@ mod tests {
         let config = get_phonetic_method_defaults();
         let db = Database::new_with_config(&config);
 
-        assert_eq!(
-            db.search_corrected("academy"),
-            Some("oZakaDemi")
-        );
+        assert_eq!(db.search_corrected("academy"), Some("oZakaDemi"));
         assert_eq!(db.search_corrected("\\nai\\"), None);
     }
 }
@@ -163,9 +152,9 @@ mod tests {
 mod benches {
     extern crate test;
 
-    use test::{Bencher, black_box};
     use super::Database;
     use crate::config::get_phonetic_method_defaults;
+    use test::{black_box, Bencher};
 
     #[bench]
     fn bench_phonetic_database_a(b: &mut Bencher) {

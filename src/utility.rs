@@ -117,26 +117,6 @@ pub(crate) fn split_string(input: &str, include_colon: bool) -> (&str, &str, &st
     (first_part, middle_part, last_part)
 }
 
-#[macro_export]
-/// A helper macro for initializing HashMap.
-/// Originally from the `maplit` crate but customized for using with `hashbrown::HashMap`.
-macro_rules! hashmap {
-    (@single $($x:tt)*) => (());
-    (@count $($rest:expr),*) => (<[()]>::len(&[$(hashmap!(@single $rest)),*]));
-
-    ($($key:expr => $value:expr,)+) => { hashmap!($($key => $value),+) };
-    ($($key:expr => $value:expr),*) => {
-        {
-            let _cap = hashmap!(@count $($key),*);
-            let mut _map = hashbrown::HashMap::with_capacity(_cap);
-            $(
-                let _ = _map.insert($key, $value);
-            )*
-            _map
-        }
-    };
-}
-
 #[cfg(test)]
 mod test {
     use super::{get_modifiers, split_string, Utility};

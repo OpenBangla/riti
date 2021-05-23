@@ -1,7 +1,8 @@
 // Suggestion making module.
 
+use std::collections::{HashMap, hash_map::Entry};
+use ahash::RandomState;
 use edit_distance::edit_distance;
-use hashbrown::{hash_map::Entry, HashMap};
 use okkhor::parser::Parser;
 
 use crate::config::{Config, get_phonetic_method_defaults};
@@ -12,7 +13,7 @@ pub(crate) struct PhoneticSuggestion {
     pub(crate) suggestions: Vec<String>,
     pub(crate) database: Database,
     // Cache for storing dictionary searches.
-    cache: HashMap<String, Vec<String>>,
+    cache: HashMap<String, Vec<String>, RandomState>,
     phonetic: Parser,
     // Auto Correct caches.
     corrects: HashMap<String, String>,
@@ -23,7 +24,7 @@ impl PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new_with_config(&config),
-            cache: HashMap::with_capacity(20),
+            cache: HashMap::with_capacity_and_hasher(20, RandomState::new()),
             phonetic: Parser::new_phonetic(),
             corrects: HashMap::with_capacity(10),
         }
@@ -108,7 +109,7 @@ impl PhoneticSuggestion {
     pub(crate) fn suggest(
         &mut self,
         term: &str,
-        selections: &mut HashMap<String, String>,
+        selections: &mut HashMap<String, String, RandomState>,
         config: &Config
     ) -> (Vec<String>, usize) {
         let splitted_string = split_string(term, false);
@@ -197,7 +198,7 @@ impl PhoneticSuggestion {
     pub(crate) fn get_prev_selection(
         &self,
         splitted_string: &(&str, &str, &str),
-        selections: &mut HashMap<String, String>,
+        selections: &mut HashMap<String, String, RandomState>,
     ) -> usize {
         let len = splitted_string.1.len();
         let mut selected = String::with_capacity(len * 3);
@@ -258,7 +259,7 @@ impl Default for PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new_with_config(&config),
-            cache: HashMap::new(),
+            cache: HashMap::with_hasher(RandomState::new()),
             phonetic: Parser::new_phonetic(),
             corrects: HashMap::new(),
         }
@@ -267,7 +268,8 @@ impl Default for PhoneticSuggestion {
 
 #[cfg(test)]
 mod tests {
-    use hashbrown::HashMap;
+    use std::collections::HashMap;
+    use ahash::RandomState;
 
     use super::PhoneticSuggestion;
     use crate::config::get_phonetic_method_defaults;
@@ -276,7 +278,7 @@ mod tests {
     #[test]
     fn test_suggestion_with_english() {
         let mut suggestion = PhoneticSuggestion::default();
-        let mut selections = HashMap::new();
+        let mut selections = HashMap::with_hasher(RandomState::new());
         let mut config = get_phonetic_method_defaults();
         config.set_phonetic_include_english(true);
 
@@ -301,7 +303,7 @@ mod tests {
     #[test]
     fn test_emoticon() {
         let mut suggestion = PhoneticSuggestion::default();
-        let mut selections = HashMap::new();
+        let mut selections = HashMap::with_hasher(RandomState::new());
         let config = get_phonetic_method_defaults();
 
         suggestion.suggest(":)", &mut selections, &config);
@@ -411,7 +413,7 @@ mod tests {
 
     #[test]
     fn test_suffix() {
-        let mut cache = HashMap::new();
+        let mut cache = HashMap::with_hasher(RandomState::new());
         cache.insert("computer".to_string(), vec!["কম্পিউটার".to_string()]);
         cache.insert("i".to_string(), vec!["ই".to_string()]);
         cache.insert("hothat".to_string(), vec!["হঠাৎ".to_string()]);
@@ -448,7 +450,7 @@ mod tests {
     #[test]
     fn test_prev_selected() {
         let mut suggestion = PhoneticSuggestion::default();
-        let mut selections = HashMap::new();
+        let mut selections = HashMap::with_hasher(RandomState::new());
         selections.insert("onno".to_string(), "অন্য".to_string());
         selections.insert("i".to_string(), "ই".to_string());
         selections.insert("hothat".to_string(), "হঠাৎ".to_string());
@@ -495,7 +497,7 @@ mod tests {
     #[test]
     fn test_suggest_special_chars_selections() {
         let mut suggestion = PhoneticSuggestion::default();
-        let mut selections = HashMap::new();
+        let mut selections = HashMap::with_hasher(RandomState::new());
         let config = get_phonetic_method_defaults();
         selections.insert("sesh".to_string(), "শেষ".to_string());
 
