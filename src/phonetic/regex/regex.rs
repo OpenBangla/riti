@@ -5,11 +5,11 @@ use stringplus::StringPlus;
 use super::patterns::{Scope, Type, CONSONANT, IGNORE, MAX_PATTERN_LEN, PATTERNS, VOWELS};
 
 /// Parse `input` string containing phonetic text and return a regex string.
-pub(crate) fn parse(input: &str) -> String {
+pub(crate) fn parse(input: &str, output: &mut String) {
     let fixed = clean_string(input);
     let len = fixed.len();
 
-    let mut output = String::with_capacity(len * 60);
+    output.clear();
     output.push('^'); // Regex beginning mark.
 
     let mut cur = 0;
@@ -104,8 +104,8 @@ pub(crate) fn parse(input: &str) -> String {
                                 }
 
                                 if replace {
-                                    output += rule.replace;
-                                    output += "(্[যবম])?(্?)([ঃঁ]?)";
+                                    output.push_str(rule.replace);
+                                    output.push_str("(্[যবম])?(্?)([ঃঁ]?)");
                                     cur = (end - 1) as usize;
                                     matched = true;
                                     break;
@@ -118,8 +118,8 @@ pub(crate) fn parse(input: &str) -> String {
                         }
 
                         // Default
-                        output += pattern.replace;
-                        output += "(্[যবম])?(্?)([ঃঁ]?)";
+                        output.push_str(pattern.replace);
+                        output.push_str("(্[যবম])?(্?)([ঃঁ]?)");
                         cur = (end - 1) as usize;
                         matched = true;
                         break;
@@ -138,13 +138,11 @@ pub(crate) fn parse(input: &str) -> String {
         }
 
         if !matched {
-            output += &fixed[cur..cur + 1];
+            output.push_str(&fixed[cur..cur + 1]);
         }
         cur += 1;
     }
     output.push('$'); // Regex end mark.
-
-    output
 }
 
 fn clean_string(string: &str) -> String {
@@ -184,8 +182,12 @@ mod tests {
 
     #[test]
     fn regex_test() {
-        assert_eq!(parse("l"), "^ল(্[যবম])?(্?)([ঃঁ]?)$");
-        assert_eq!(parse("osthir"), "^([ওোঅ]|(অ্য)|(য়ো?))(্[যবম])?(্?)([ঃঁ]?)([সশষ])(্[যবম])?(্?)([ঃঁ]?)(থ|ঠ|([তটৎ]্?(হ|ঃ|(হ্\u{200C}?))))(্[যবম])?(্?)([ঃঁ]?)([ইঈিী]|(য়[িী]))(্[যবম])?(্?)([ঃঁ]?)([রড়ঢ়]|(হ্র))(্[যবম])?(্?)([ঃঁ]?)$");
-        assert_eq!(parse("OSTHIR"), "^([ওোঅ]|(অ্য)|(য়ো?))(্[যবম])?(্?)([ঃঁ]?)([সশষ])(্[যবম])?(্?)([ঃঁ]?)(থ|ঠ|([তটৎ]্?(হ|ঃ|(হ্\u{200C}?))))(্[যবম])?(্?)([ঃঁ]?)([ইঈিী]|(য়[িী]))(্[যবম])?(্?)([ঃঁ]?)([রড়ঢ়]|(হ্র))(্[যবম])?(্?)([ঃঁ]?)$");
+        let mut regex = String::new();
+        parse("l", &mut regex);
+        assert_eq!(regex, "^ল(্[যবম])?(্?)([ঃঁ]?)$");
+        parse("osthir", &mut regex);
+        assert_eq!(regex, "^([ওোঅ]|(অ্য)|(য়ো?))(্[যবম])?(্?)([ঃঁ]?)([সশষ])(্[যবম])?(্?)([ঃঁ]?)(থ|ঠ|([তটৎ]্?(হ|ঃ|(হ্\u{200C}?))))(্[যবম])?(্?)([ঃঁ]?)([ইঈিী]|(য়[িী]))(্[যবম])?(্?)([ঃঁ]?)([রড়ঢ়]|(হ্র))(্[যবম])?(্?)([ঃঁ]?)$");
+        parse("OSTHIR", &mut regex);
+        assert_eq!(regex, "^([ওোঅ]|(অ্য)|(য়ো?))(্[যবম])?(্?)([ঃঁ]?)([সশষ])(্[যবম])?(্?)([ঃঁ]?)(থ|ঠ|([তটৎ]্?(হ|ঃ|(হ্\u{200C}?))))(্[যবম])?(্?)([ঃঁ]?)([ইঈিী]|(য়[িী]))(্[যবম])?(্?)([ঃঁ]?)([রড়ঢ়]|(হ্র))(্[যবম])?(্?)([ঃঁ]?)$");
     }
 }

@@ -2,7 +2,6 @@
 
 use serde_json::Value;
 use std::fs::read_to_string;
-use std::str::FromStr;
 
 use crate::config::Config;
 
@@ -12,11 +11,13 @@ use crate::config::Config;
 /// to give access to it's contents.
 pub(crate) struct LayoutLoader {
     // Layout file path.
-    path: String,
-    layout: Value,
+    path: Option<String>,
+    typ: LayoutType,
+    layout: Option<Value>,
 }
 
 /// Layout type.
+#[derive(Copy, Clone)]
 pub(crate) enum LayoutType {
     Phonetic,
     Fixed,
@@ -26,39 +27,29 @@ impl LayoutLoader {
     /// Load the layout which is specified in config.
     pub(crate) fn load_from_config(config: &Config) -> Self {
         let path = config.get_layout_file_path().to_string();
-        let layout: Value = serde_json::from_str(&read_to_string(&path).unwrap()).unwrap();
 
-        LayoutLoader { path, layout }
+        let (path, typ, layout) = if path == "avro_phonetic" {
+            (None, LayoutType::Phonetic, None)
+        } else {
+            let layout: Value = serde_json::from_str(&read_to_string(&path).unwrap()).unwrap();
+            (Some(path), LayoutType::Fixed, Some(layout))
+        };
+
+        LayoutLoader { path, typ, layout }
     }
 
     /// Give layout's `layout` json object, which contains the layout data.
     pub(crate) fn layout(&self) -> &Value {
-        &self.layout["layout"]
+        &self.layout.as_ref().unwrap()["layout"]
     }
 
     /// Return layout's type.
     pub(crate) fn layout_type(&self) -> LayoutType {
-        self.layout["info"]["type"]
-            .as_str()
-            .unwrap()
-            .parse()
-            .unwrap()
+        self.typ
     }
 
     /// Checks if the layout path had changed.
     pub(crate) fn changed(&self, config: &Config) -> bool {
-        self.path != config.get_layout_file_path()
-    }
-}
-
-impl FromStr for LayoutType {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "phonetic" => Ok(LayoutType::Phonetic),
-            "fixed" => Ok(LayoutType::Fixed),
-            _ => panic!("Unknown Layout type!"),
-        }
+        self.path.as_ref().unwrap() != config.get_layout_file_path()
     }
 }

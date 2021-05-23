@@ -8,6 +8,7 @@ use crate::hashmap;
 use crate::phonetic::regex::parse;
 
 pub(crate) struct Database {
+    regex: String,
     map: HashMap<&'static str, Vec<&'static str>>,
     table: HashMap<String, Vec<String>>,
     suffix: HashMap<String, String>,
@@ -56,6 +57,7 @@ impl Database {
         ];
 
         Database {
+            regex: String::with_capacity(1024),
             map,
             table: serde_json::from_str(
                 &read_to_string(config.get_database_path()).unwrap(),
@@ -74,8 +76,10 @@ impl Database {
     }
 
     /// Find words from the dictionary with given word.
-    pub(crate) fn search_dictionary(&self, word: &str) -> Vec<String> {
-        let rgx = Regex::new(&parse(word)).unwrap();
+    pub(crate) fn search_dictionary(&mut self, word: &str) -> Vec<String> {
+        // Build the Regex string.
+        parse(word, &mut self.regex);
+        let rgx = Regex::new(&self.regex).unwrap();
 
         self.map
             .get(word.get(0..1).unwrap_or_default())
@@ -123,7 +127,7 @@ mod tests {
     #[test]
     fn test_database() {
         let config = get_phonetic_method_defaults();
-        let db = Database::new_with_config(&config);
+        let mut db = Database::new_with_config(&config);
 
         assert_eq!(
             db.search_dictionary("a"),
@@ -166,7 +170,7 @@ mod benches {
     #[bench]
     fn bench_database_a(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
-        let db = Database::new_with_config(&config);
+        let mut db = Database::new_with_config(&config);
         b.iter(|| {
             let res = db.search_dictionary("a");
             black_box(res);
@@ -176,7 +180,7 @@ mod benches {
     #[bench]
     fn bench_database_aro(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
-        let db = Database::new_with_config(&config);
+        let mut db = Database::new_with_config(&config);
         b.iter(|| {
             let res = db.search_dictionary("arO");
             black_box(res);
@@ -186,7 +190,7 @@ mod benches {
     #[bench]
     fn bench_database_bistari(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
-        let db = Database::new_with_config(&config);
+        let mut db = Database::new_with_config(&config);
         b.iter(|| {
             let res = db.search_dictionary("bistari");
             black_box(res);

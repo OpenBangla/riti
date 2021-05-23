@@ -20,7 +20,7 @@ impl RitiContext {
 
         match loader.layout_type() {
             LayoutType::Phonetic => {
-                let method = RefCell::new(Box::new(PhoneticMethod::new(loader.layout(), &config)));
+                let method = RefCell::new(Box::new(PhoneticMethod::new(&config)));
                 RitiContext { method, loader, config }
             }
             LayoutType::Fixed => {
@@ -57,7 +57,7 @@ impl RitiContext {
             match self.loader.layout_type() {
                 LayoutType::Phonetic => self
                     .method
-                    .replace(Box::new(PhoneticMethod::new(self.loader.layout(), config))),
+                    .replace(Box::new(PhoneticMethod::new(config))),
                 LayoutType::Fixed => self
                     .method
                     .replace(Box::new(FixedMethod::new(self.loader.layout(), config))),
