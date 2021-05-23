@@ -137,3 +137,42 @@ mod tests {
         assert_eq!(clean_string("Me|t(a)"), "Meta");
     }
 }
+
+#[cfg(feature = "bench")]
+mod benches {
+    extern crate test;
+
+    use test::{Bencher, black_box};
+    use super::Database;
+    use crate::config::get_fixed_method_defaults;
+
+    #[bench]
+    fn bench_fixed_database_ama(b: &mut Bencher) {
+        let config = get_fixed_method_defaults();
+        let db = Database::new_with_config(&config);
+        b.iter(|| {
+            let res = db.search_dictionary("আমা");
+            black_box(res);
+        })
+    }
+
+    #[bench]
+    fn bench_fixed_database_compiu(b: &mut Bencher) {
+        let config = get_fixed_method_defaults();
+        let db = Database::new_with_config(&config);
+        b.iter(|| {
+            let res = db.search_dictionary("কম্পি");
+            black_box(res);
+        })
+    }
+
+    #[bench]
+    fn bench_fixed_database_ains(b: &mut Bencher) {
+        let config = get_fixed_method_defaults();
+        let db = Database::new_with_config(&config);
+        b.iter(|| {
+            let res = db.search_dictionary("আইনস্");
+            black_box(res);
+        })
+    }
+}
