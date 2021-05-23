@@ -519,3 +519,45 @@ mod tests {
         assert_eq!(suggestions, ["৬ৎ"]);
     }
 }
+
+#[cfg(feature = "bench")]
+mod benches {
+    extern crate test;
+
+    use test::Bencher;
+    use super::PhoneticSuggestion;
+    use crate::utility::split_string;
+
+    #[bench]
+    fn bench_phonetic_a(b: &mut Bencher) {
+        let mut suggestion = PhoneticSuggestion::default();
+        let term = split_string("a", false);
+
+        b.iter(|| {
+            suggestion.cache.clear();
+            suggestion.suggestion_with_dict(&term);
+        })
+    }
+
+    #[bench]
+    fn bench_phonetic_kkhet(b: &mut Bencher) {
+        let mut suggestion = PhoneticSuggestion::default();
+        let term = split_string("kkhet", false);
+
+        b.iter(|| {
+            suggestion.cache.clear();
+            suggestion.suggestion_with_dict(&term);
+        })
+    }
+
+    #[bench]
+    fn bench_phonetic_bistari(b: &mut Bencher) {
+        let mut suggestion = PhoneticSuggestion::default();
+        let term = split_string("bistari", false);
+
+        b.iter(|| {
+            suggestion.cache.clear();
+            suggestion.suggestion_with_dict(&term);
+        })
+    }
+}

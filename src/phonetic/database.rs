@@ -164,7 +164,7 @@ mod benches {
     use crate::config::get_phonetic_method_defaults;
 
     #[bench]
-    fn bench_a(b: &mut Bencher) {
+    fn bench_database_a(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
         let db = Database::new_with_config(&config);
         b.iter(|| {
@@ -174,7 +174,7 @@ mod benches {
     }
 
     #[bench]
-    fn bench_aro(b: &mut Bencher) {
+    fn bench_database_aro(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
         let db = Database::new_with_config(&config);
         b.iter(|| {
@@ -184,7 +184,7 @@ mod benches {
     }
 
     #[bench]
-    fn bench_bistari(b: &mut Bencher) {
+    fn bench_database_bistari(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
         let db = Database::new_with_config(&config);
         b.iter(|| {
