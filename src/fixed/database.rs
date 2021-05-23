@@ -1,27 +1,25 @@
-use hashbrown::HashMap;
-use rayon::prelude::*;
+use ahash::RandomState;
 use regex::Regex;
+use std::collections::HashMap;
 use std::fs::read_to_string;
 
 use crate::config::Config;
 
 pub(crate) struct Database {
-    table: HashMap<String, Vec<String>>,
+    table: HashMap<String, Vec<String>, RandomState>,
 }
 
 impl Database {
     pub(crate) fn new_with_config(config: &Config) -> Database {
         Database {
-            table: serde_json::from_str(
-                &read_to_string(config.get_database_path()).unwrap(),
-            )
-            .unwrap(),
+            table: serde_json::from_str(&read_to_string(config.get_database_path()).unwrap())
+                .unwrap(),
         }
     }
 
     /// Find words from the dictionary with given word.
     pub(crate) fn search_dictionary(&self, word: &str) -> Vec<String> {
-        let table = match word.chars().nth(0).unwrap_or_default() {
+        let table = match word.chars().next().unwrap_or_default() {
             // Kars
             'া' => "aa",
             'ি' => "i",
@@ -96,13 +94,12 @@ impl Database {
 
         let regex = format!(
             "^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{}}}$",
-            word,
-            need_chars_upto
+            word, need_chars_upto
         );
         let rgx = Regex::new(&regex).unwrap();
 
         self.table[table]
-            .par_iter()
+            .iter()
             .filter(|i| rgx.is_match(i))
             .cloned()
             .collect()
@@ -142,9 +139,9 @@ mod tests {
 mod benches {
     extern crate test;
 
-    use test::{Bencher, black_box};
     use super::Database;
     use crate::config::get_fixed_method_defaults;
+    use test::{black_box, Bencher};
 
     #[bench]
     fn bench_fixed_database_ama(b: &mut Bencher) {

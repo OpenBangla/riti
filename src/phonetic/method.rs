@@ -1,6 +1,7 @@
 // Phonetic Method
-use hashbrown::HashMap;
+use std::collections::HashMap;
 use std::fs::{read_to_string, write};
+use ahash::RandomState;
 
 use crate::context::Method;
 use crate::config::{Config, get_phonetic_method_defaults};
@@ -13,7 +14,7 @@ pub(crate) struct PhoneticMethod {
     buffer: String,
     suggestion: PhoneticSuggestion,
     // Candidate selections.
-    selections: HashMap<String, String>,
+    selections: HashMap<String, String, RandomState>,
     // Previously selected candidate index of the current suggestion list.
     prev_selection: usize,
 }
@@ -25,7 +26,7 @@ impl PhoneticMethod {
             if let Ok(file) = read_to_string(config.get_user_phonetic_selection_data()) {
                 serde_json::from_str(&file).unwrap()
             } else {
-                HashMap::new()
+                HashMap::with_hasher(RandomState::new())
             };
 
         PhoneticMethod {
@@ -115,7 +116,7 @@ impl Default for PhoneticMethod {
         PhoneticMethod {
             buffer: String::new(),
             suggestion: PhoneticSuggestion::new(&config),
-            selections: HashMap::new(),
+            selections: HashMap::with_hasher(RandomState::new()),
             prev_selection: 0,
         }
     }
