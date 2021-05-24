@@ -55,64 +55,34 @@ pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
 ///
 /// `include_colon` argument controls the inclusion of colon as a trailing meta character.
 pub(crate) fn split_string(input: &str, include_colon: bool) -> (&str, &str, &str) {
-    let meta = "-]~!@#%&*()_=+[{}'\";<>/?|.,।";
-    let mut first_index = 0;
-    let mut last_index = input.len();
-    let mut encountered_alpha = false;
+    const META: &str = "-]~!@#%&*()_=+[{}'\";<>/?|.,।";
 
-    for c in input.chars() {
-        if !meta.contains(c) {
-            encountered_alpha = true;
+    let first_index = match input.find(|c| !META.contains(c)) {
+        Some(i) => i,
+        None => {
+            // If no non-META/alphanumeric char is found,
+            // the string has no middle or last part
+            return (input, "", "");
+        }
+    };
+    let (first_part, rest) = input.split_at(first_index);
+
+    let mut escape = false;
+    let mut last_index = rest.len();
+    for (i, c) in rest.char_indices().rev() {
+        if !escape && c == '`' {
+            // escape
+            escape = true; // not updating the last index for escape
+        } else if ((include_colon || escape) && c == ':') || META.contains(c) {
+            // meta
+            escape = false;
+            last_index = i;
+        } else {
+            // alphanumeric
             break;
         }
-        
-        first_index += c.len_utf8();
     }
-
-    // Corner case: If we haven't yet encountered an alpha or
-    // a numeric character, then the string has no middle part
-    // or last part we need. So return "" for them ;)
-    if !encountered_alpha {
-        return (&input[..], "", "");
-    }
-
-    let mut skip_next = false; // Skip the next iteration.
-
-    for (index, c) in input.chars().rev().enumerate() {
-        if skip_next {
-            skip_next = false;
-            continue;
-        }
-        // Check is there a double ` accent character.
-        // Accent character can be used to escape tha colon character.
-        if c == '`' {
-            let next = input.chars().rev().nth(index + 1).unwrap_or_default();
-            if next == '`' {
-                break;
-            } else if next == ':' {
-                last_index -= 2;
-                skip_next = true;
-                continue;
-            } else {
-                last_index -= 1;
-                continue;
-            }
-        }
-        // Include colon as a meta character if `include_colon` is true.
-        if include_colon && c == ':' {
-            last_index -= 1;
-        }
-
-        if !meta.contains(c) {
-            break;
-        }
-
-        last_index -= c.len_utf8();
-    }
-
-    let first_part = &input[0..first_index];
-    let middle_part = &input[first_index..last_index];
-    let last_part = &input[last_index..];
+    let (middle_part, last_part) = rest.split_at(last_index);
 
     (first_part, middle_part, last_part)
 }
@@ -155,7 +125,11 @@ mod test {
         assert_eq!(split_string("kt:", false), ("", "kt:", ""));
         assert_eq!(split_string("kt:", true), ("", "kt", ":"));
         assert_eq!(split_string("kt:`", false), ("", "kt", ":`"));
+        assert_eq!(split_string("kt:`", true), ("", "kt", ":`"));
+        assert_eq!(split_string("kt::`", false), ("", "kt:", ":`"));
+        assert_eq!(split_string("kt::`", true), ("", "kt", "::`"));
         assert_eq!(split_string("kt``", false), ("", "kt``", ""));
+        assert_eq!(split_string("kt:``", false), ("", "kt:``", ""));
         assert_eq!(split_string("।ঃমেঃ।টাঃ।", false), ("।", "ঃমেঃ।টাঃ", "।"));
     }
 }
