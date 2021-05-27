@@ -138,7 +138,6 @@ impl FixedMethod {
         } else {
             self.suggestions.truncate(9);
         }
-        
 
         if !first_part.is_empty() || !last_part.is_empty() {
             for suggestion in self.suggestions.iter_mut() {
@@ -183,7 +182,7 @@ impl FixedMethod {
             return;
         }
 
-        if let Some(character) = value.chars().nth(0) {
+        if let Some(character) = value.chars().next() {
             // Kar insertion
             if character.is_kar() {
                 // Automatic Vowel Forming
@@ -280,36 +279,25 @@ impl FixedMethod {
         self.buffer.push_str(value);
     }
 
-    /// Checks if the Reph is moveable by the Reph insertion algorithm.
-    ///
-    /// `rmc`: Right most character.
-    #[rustfmt::skip]
-    fn is_reph_moveable(&self, rmc: char) -> bool {
-        if rmc.is_pure_consonant() {
-            return true;
-        } else if rmc.is_vowel()
-            && self.buffer.chars().rev().nth(1).unwrap_or_default().is_pure_consonant()
-        {
-            return true;
-        } else if rmc == B_CHANDRA {
-            if self.buffer.chars().rev().nth(1).unwrap_or_default().is_pure_consonant()
-            {
-                return true;
-            } else if self.buffer.chars().rev().nth(1).unwrap_or_default().is_vowel()
-                && self.buffer.chars().rev().nth(2).unwrap_or_default().is_pure_consonant()
-            {
-                return true;
-            }
-        }
+    /// Checks if the Reph is moveable by the Reph insertion algorithm.  
+    fn is_reph_moveable(&self) -> bool {
+        let mut buf_chars = self.buffer.chars().rev();
+        let right_most = buf_chars.next().unwrap();
+        let right_most = if right_most == B_CHANDRA {
+            buf_chars.next().unwrap_or_default()
+        } else {
+            right_most
+        };
+        let before_right_most = buf_chars.next().unwrap_or_default();
 
-        false
+        right_most.is_pure_consonant()
+            || (right_most.is_vowel() && before_right_most.is_pure_consonant())
     }
 
     /// Inserts Reph into the buffer in old style.
     fn insert_old_style_reph(&mut self) {
-        let rmc = self.buffer.chars().last().unwrap();
         let len = self.buffer.chars().count();
-        let reph_moveable = self.is_reph_moveable(rmc);
+        let reph_moveable = self.is_reph_moveable();
 
         let mut constant = false;
         let mut vowel = false;
@@ -454,7 +442,7 @@ mod tests {
         method.get_suggestion(VC_M, 0, &config);
         method.get_suggestion(VC_I, 0, &config);
 
-        assert_eq!(method.typed.clone(), "ami");
+        assert_eq!(method.typed, "ami");
         assert_eq!(method.current_suggestion(&config).get_suggestions(), &["আমি", "আমিন", "আমির", "আমিষ", "ami"]);
     }
 
@@ -465,7 +453,7 @@ mod tests {
             typed: "ami".to_string(),
             ..Default::default()
         };
-        
+
         let mut config = get_fixed_method_defaults();
         config.set_fixed_suggestion(false);
 
@@ -535,7 +523,7 @@ mod tests {
 
         // Without Traditional Kar joining
         config.set_fixed_traditional_kar(false);
-        
+
         method.buffer = "র".to_string();
         method.process_key_value(&B_U_KAR.to_string(), &config);
         assert_eq!(method.buffer, "রু".to_string());
