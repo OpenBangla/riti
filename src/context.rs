@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 
 use crate::{config::Config, fixed::method::FixedMethod};
-use crate::loader::{LayoutLoader, LayoutType};
 use crate::phonetic::method::PhoneticMethod;
 use crate::suggestion::Suggestion;
 
@@ -14,16 +13,16 @@ pub struct RitiContext {
 impl RitiContext {
     /// A new `RitiContext` instance.
     pub fn new_with_config(config: &Config) -> Self {
-        let loader = LayoutLoader::load_from_config(config);
+        let layout = config.get_layout();
         let config = config.to_owned();
 
-        match loader.layout_type() {
-            LayoutType::Phonetic => {
+        match layout {
+            None => {
                 let method = RefCell::new(Box::new(PhoneticMethod::new(&config)));
                 RitiContext { method, config }
             }
-            LayoutType::Fixed => {
-                let method = RefCell::new(Box::new(FixedMethod::new(loader.layout(), &config)));
+            Some(layout) => {
+                let method = RefCell::new(Box::new(FixedMethod::new(&layout, &config)));
                 RitiContext { method, config }
             }
         }
@@ -51,15 +50,15 @@ impl RitiContext {
 
         // If the layout file has been changed.
         if self.config.layout_changed(config) {
-            let loader = LayoutLoader::load_from_config(config);
+            let layout = config.get_layout();
 
-            match loader.layout_type() {
-                LayoutType::Phonetic => self
+            match layout {
+                None => self
                     .method
                     .replace(Box::new(PhoneticMethod::new(config))),
-                LayoutType::Fixed => self
+                Some(layout) => self
                     .method
-                    .replace(Box::new(FixedMethod::new(loader.layout(), config))),
+                    .replace(Box::new(FixedMethod::new(&layout, config))),
             };
         } else {
             self.method.borrow_mut().update_engine(config);

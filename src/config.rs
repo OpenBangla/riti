@@ -1,4 +1,6 @@
-use std::{env::var, path::PathBuf};
+use std::{env::var, fs::read_to_string, path::PathBuf};
+
+use serde_json::Value;
 
 /// Config struct for configuring RitiContext.
 #[derive(Clone, Default)]
@@ -168,8 +170,23 @@ impl Config {
         self.fixed_include_english = fixed_include_english;
     }
 
+    /// Checks if the layout path had changed.
     pub(crate) fn layout_changed(&self, new_config: &Self) -> bool {
         self.layout != new_config.layout
+    }
+
+    /// Give layout's `layout` json object, which contains the layout data.
+    pub(crate) fn get_layout(&self) -> Option<Value> {
+        let path = self.get_layout_file_path().to_string();
+
+        if path == "avro_phonetic" {
+            None
+        } else {
+            read_to_string(&path)
+                .ok()
+                .and_then(|s| serde_json::from_str::<Value>(&s).ok())
+                .map(|v| v["layout"].to_owned())
+        }
     }
 }
 
