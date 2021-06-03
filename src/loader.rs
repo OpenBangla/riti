@@ -47,9 +47,4 @@ impl LayoutLoader {
     pub(crate) fn layout_type(&self) -> LayoutType {
         self.typ
     }
-
-    /// Checks if the layout path had changed.
-    pub(crate) fn changed(&self, config: &Config) -> bool {
-        self.path.as_ref().unwrap() != config.get_layout_file_path()
-    }
 }

@@ -167,6 +167,10 @@ impl Config {
     pub fn set_fixed_include_english(&mut self, fixed_include_english: bool) {
         self.fixed_include_english = fixed_include_english;
     }
+
+    pub(crate) fn layout_changed(&self, new_config: &Self) -> bool {
+        self.layout != new_config.layout
+    }
 }
 
 pub(crate) fn get_user_data_dir() -> PathBuf {

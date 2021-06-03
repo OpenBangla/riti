@@ -8,7 +8,6 @@ use crate::suggestion::Suggestion;
 /// Context handle used for libRiti IM APIs
 pub struct RitiContext {
     method: RefCell<Box<dyn Method>>,
-    loader: LayoutLoader,
     config: Config,
 }
 
@@ -21,11 +20,11 @@ impl RitiContext {
         match loader.layout_type() {
             LayoutType::Phonetic => {
                 let method = RefCell::new(Box::new(PhoneticMethod::new(&config)));
-                RitiContext { method, loader, config }
+                RitiContext { method, config }
             }
             LayoutType::Fixed => {
                 let method = RefCell::new(Box::new(FixedMethod::new(loader.layout(), &config)));
-                RitiContext { method, loader, config }
+                RitiContext { method, config }
             }
         }
     }
@@ -51,16 +50,16 @@ impl RitiContext {
         self.config = config.to_owned();
 
         // If the layout file has been changed.
-        if self.loader.changed(config) {
-            self.loader = LayoutLoader::load_from_config(config);
+        if self.config.layout_changed(config) {
+            let loader = LayoutLoader::load_from_config(config);
 
-            match self.loader.layout_type() {
+            match loader.layout_type() {
                 LayoutType::Phonetic => self
                     .method
                     .replace(Box::new(PhoneticMethod::new(config))),
                 LayoutType::Fixed => self
                     .method
-                    .replace(Box::new(FixedMethod::new(self.loader.layout(), config))),
+                    .replace(Box::new(FixedMethod::new(loader.layout(), config))),
             };
         } else {
             self.method.borrow_mut().update_engine(config);
