@@ -13,19 +13,15 @@ pub struct RitiContext {
 impl RitiContext {
     /// A new `RitiContext` instance.
     pub fn new_with_config(config: &Config) -> Self {
-        let layout = config.get_layout();
         let config = config.to_owned();
 
-        match layout {
-            None => {
-                let method = RefCell::new(Box::new(PhoneticMethod::new(&config)));
-                RitiContext { method, config }
-            }
-            Some(layout) => {
-                let method = RefCell::new(Box::new(FixedMethod::new(&layout, &config)));
-                RitiContext { method, config }
-            }
-        }
+        let method: RefCell<Box<dyn Method>> = if config.is_phonetic() {
+            RefCell::new(Box::new(PhoneticMethod::new(&config)))
+        } else {
+            RefCell::new(Box::new(FixedMethod::new(&config)))
+        };
+
+        RitiContext { method, config }
     }
 
     /// Get suggestion for key.
@@ -50,15 +46,10 @@ impl RitiContext {
 
         // If the layout file has been changed.
         if self.config.layout_changed(config) {
-            let layout = config.get_layout();
-
-            match layout {
-                None => self
-                    .method
-                    .replace(Box::new(PhoneticMethod::new(config))),
-                Some(layout) => self
-                    .method
-                    .replace(Box::new(FixedMethod::new(&layout, config))),
+            if config.is_phonetic() {
+                self.method.replace(Box::new(PhoneticMethod::new(config)))
+            } else {
+                self.method.replace(Box::new(FixedMethod::new(config)))
             };
         } else {
             self.method.borrow_mut().update_engine(config);

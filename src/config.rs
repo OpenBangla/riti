@@ -175,14 +175,17 @@ impl Config {
         self.layout != new_config.layout
     }
 
+    /// Checks if the layout is phonetic
+    pub(crate) fn is_phonetic(&self) -> bool {
+        self.get_layout_file_path() == "avro_phonetic"
+    }
+
     /// Give layout's `layout` json object, which contains the layout data.
     pub(crate) fn get_layout(&self) -> Option<Value> {
-        let path = self.get_layout_file_path().to_string();
-
-        if path == "avro_phonetic" {
+        if self.is_phonetic() {
             None
         } else {
-            read_to_string(&path)
+            read_to_string(self.get_layout_file_path())
                 .ok()
                 .and_then(|s| serde_json::from_str::<Value>(&s).ok())
                 .map(|v| v["layout"].to_owned())

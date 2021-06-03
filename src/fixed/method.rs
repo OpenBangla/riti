@@ -1,5 +1,4 @@
 use edit_distance::edit_distance;
-use serde_json::Value;
 
 use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::{context::Method, keycodes::keycode_to_char};
@@ -73,8 +72,9 @@ impl Method for FixedMethod {
 
 impl FixedMethod {
     /// Creates a new instance of `FixedMethod` with the given layout.
-    pub(crate) fn new(layout: &Value, config: &Config) -> Self {
-        let parser = LayoutParser::new(layout);
+    pub(crate) fn new(config: &Config) -> Self {
+        let layout = config.get_layout().unwrap();
+        let parser = LayoutParser::new(&layout);
 
         FixedMethod {
             buffer: String::with_capacity(20 * 3), // A Bengali character is 3 bytes in size.
