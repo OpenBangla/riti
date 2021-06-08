@@ -14,13 +14,7 @@ impl RitiContext {
     /// A new `RitiContext` instance.
     pub fn new_with_config(config: &Config) -> Self {
         let config = config.to_owned();
-
-        let method: RefCell<Box<dyn Method>> = if config.is_phonetic() {
-            RefCell::new(Box::new(PhoneticMethod::new(&config)))
-        } else {
-            RefCell::new(Box::new(FixedMethod::new(&config)))
-        };
-
+        let method = RefCell::new(<dyn Method>::new(&config));
         RitiContext { method, config }
     }
 
@@ -46,11 +40,7 @@ impl RitiContext {
 
         // If the layout file has been changed.
         if self.config.layout_changed(config) {
-            if config.is_phonetic() {
-                self.method.replace(Box::new(PhoneticMethod::new(config)))
-            } else {
-                self.method.replace(Box::new(FixedMethod::new(config)))
-            };
+            self.method.replace(<dyn Method>::new(config));
         } else {
             self.method.borrow_mut().update_engine(config);
         }
@@ -84,6 +74,16 @@ pub(crate) trait Method {
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);
     fn backspace_event(&mut self, config: &Config) -> Suggestion;
+}
+
+impl dyn Method {
+    fn new(config: &Config) -> Box<dyn Method> {
+        if config.is_phonetic() {
+            Box::new(PhoneticMethod::new(config))
+        } else {
+            Box::new(FixedMethod::new(config))
+        }
+    }
 }
 
 /// Shift modifier key.
