@@ -15,7 +15,7 @@ bench = []
 codegen-units = 1
 
 [dependencies]
-ahash = "0.7"
+ahash = { version = "0.7", default-features = false }
 either = "1.6"
 serde_json = "1.0"
 regex = "1.3"
