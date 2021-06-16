@@ -1,17 +1,20 @@
 // Suggestion making module.
 
-use std::collections::{HashMap, hash_map::Entry};
 use ahash::RandomState;
 use edit_distance::edit_distance;
 use okkhor::parser::Parser;
+use std::collections::{hash_map::Entry, HashMap};
 
-use crate::config::{Config, get_phonetic_method_defaults};
 use super::database::Database;
+use crate::config::{get_phonetic_method_defaults, Config};
 use crate::utility::{push_checked, split_string, Utility};
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) suggestions: Vec<String>,
     pub(crate) database: Database,
+    // Phonetic buffer. It's used to avoid allocations
+    // for phonetic conversion every time.
+    pbuffer: String,
     // Cache for storing dictionary searches.
     cache: HashMap<String, Vec<String>, RandomState>,
     phonetic: Parser,
@@ -24,6 +27,7 @@ impl PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new_with_config(&config),
+            pbuffer: String::with_capacity(60),
             cache: HashMap::with_capacity_and_hasher(20, RandomState::new()),
             phonetic: Parser::new_phonetic(),
             corrects: HashMap::with_capacity(10),
@@ -95,13 +99,16 @@ impl PhoneticSuggestion {
     }
 
     /// Make suggestion from given `term` with only phonetic transliteration.
-    pub(crate) fn suggest_only_phonetic(&self, term: &str) -> String {
+    pub(crate) fn suggest_only_phonetic(&mut self, term: &str) -> String {
         let splitted_string = split_string(term, false);
+
+        self.phonetic
+            .convert_into(splitted_string.1, &mut self.pbuffer);
 
         format!(
             "{}{}{}",
             self.phonetic.convert(splitted_string.0),
-            self.phonetic.convert(splitted_string.1),
+            self.pbuffer,
             self.phonetic.convert(splitted_string.2)
         )
     }
@@ -110,7 +117,7 @@ impl PhoneticSuggestion {
         &mut self,
         term: &str,
         selections: &mut HashMap<String, String, RandomState>,
-        config: &Config
+        config: &Config,
     ) -> (Vec<String>, usize) {
         let splitted_string = split_string(term, false);
 
@@ -147,7 +154,8 @@ impl PhoneticSuggestion {
     pub(crate) fn suggestion_with_dict(&mut self, splitted_string: &(&str, &str, &str)) {
         self.suggestions.clear();
 
-        let phonetic = self.phonetic.convert(splitted_string.1);
+        self.phonetic
+            .convert_into(splitted_string.1, &mut self.pbuffer);
 
         // We always cache the suggestions for future reuse and for adding suffix to the suggestions.
         if !self.cache.contains_key(splitted_string.1) {
@@ -170,8 +178,9 @@ impl PhoneticSuggestion {
         let mut suffixed_suggestions = self.add_suffix_to_suggestions(splitted_string.1);
 
         // Sort the list.
-        suffixed_suggestions
-            .sort_unstable_by(|a, b| edit_distance(&phonetic, a).cmp(&edit_distance(&phonetic, b)));
+        suffixed_suggestions.sort_unstable_by(|a, b| {
+            edit_distance(&self.pbuffer, a).cmp(&edit_distance(&self.pbuffer, b))
+        });
 
         // First Item: Auto Correct
         // Get the corrected one from the auto correct cache.
@@ -185,7 +194,7 @@ impl PhoneticSuggestion {
         }
 
         // Last Item: Phonetic
-        push_checked(&mut self.suggestions, phonetic);
+        push_checked(&mut self.suggestions, self.pbuffer.clone());
 
         // Add those preceding and trailing meta characters.
         if !splitted_string.0.is_empty() || !splitted_string.2.is_empty() {
@@ -259,6 +268,7 @@ impl Default for PhoneticSuggestion {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
             database: Database::new_with_config(&config),
+            pbuffer: String::with_capacity(60),
             cache: HashMap::with_hasher(RandomState::new()),
             phonetic: Parser::new_phonetic(),
             corrects: HashMap::new(),
@@ -268,8 +278,8 @@ impl Default for PhoneticSuggestion {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use ahash::RandomState;
+    use std::collections::HashMap;
 
     use super::PhoneticSuggestion;
     use crate::config::get_phonetic_method_defaults;
@@ -294,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_suggestion_only_phonetic() {
-        let suggestion = PhoneticSuggestion::default();
+        let mut suggestion = PhoneticSuggestion::default();
 
         assert_eq!(suggestion.suggest_only_phonetic("{kotha}"), "{কথা}");
         assert_eq!(suggestion.suggest_only_phonetic(",ah,,"), ",আহ্‌");
@@ -525,9 +535,9 @@ mod tests {
 mod benches {
     extern crate test;
 
-    use test::Bencher;
     use super::PhoneticSuggestion;
     use crate::utility::split_string;
+    use test::Bencher;
 
     #[bench]
     fn bench_phonetic_a(b: &mut Bencher) {
