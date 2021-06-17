@@ -17,6 +17,7 @@ pub struct Config {
     fixed_kar: bool,
     fixed_old_reph: bool,
     fixed_numpad: bool,
+    fixed_kar_order: bool,
 }
 
 impl Config {
@@ -32,6 +33,7 @@ impl Config {
         fixed_kar: bool,
         fixed_old_reph: bool,
         fixed_numpad: bool,
+        fixed_kar_order: bool,
     ) -> Config {
         Config {
             layout,
@@ -46,6 +48,7 @@ impl Config {
             fixed_kar,
             fixed_old_reph,
             fixed_numpad,
+            fixed_kar_order,
         }
     }
 
@@ -170,6 +173,16 @@ impl Config {
         self.fixed_include_english = fixed_include_english;
     }
 
+    /// Get the config's fixed kar order.
+    pub fn get_fixed_old_kar_order(&self) -> bool {
+        self.fixed_kar_order
+    }
+
+    /// Set the config's fixed kar order.
+    pub fn set_fixed_old_kar_order(&mut self, fixed_kar_order: bool) {
+        self.fixed_kar_order = fixed_kar_order;
+    }
+
     /// Checks if the layout path had changed.
     pub(crate) fn layout_changed(&self, new_config: &Self) -> bool {
         self.layout != new_config.layout
@@ -226,6 +239,7 @@ pub(crate) fn get_phonetic_method_defaults() -> Config {
         fixed_kar: false,
         fixed_numpad: false,
         fixed_old_reph: false,
+        fixed_kar_order: false,
     }
 }
 
@@ -241,6 +255,7 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
         fixed_kar: true,
         fixed_numpad: true,
         fixed_old_reph: true,
+        fixed_kar_order: false,
         phonetic_suggestion: false,
         phonetic_include_english: false,
     }
