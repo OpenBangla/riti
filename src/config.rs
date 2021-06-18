@@ -21,37 +21,6 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new_config(
-        layout: String,
-        phonetic_suggestion: bool,
-        phonetic_include_english: bool,
-        database_dir: PathBuf,
-        fixed_suggestion: bool,
-        fixed_include_english: bool,
-        fixed_vowel: bool,
-        fixed_chandra: bool,
-        fixed_kar: bool,
-        fixed_old_reph: bool,
-        fixed_numpad: bool,
-        fixed_kar_order: bool,
-    ) -> Config {
-        Config {
-            layout,
-            user_dir: get_user_data_dir(),
-            phonetic_suggestion,
-            phonetic_include_english,
-            database_dir,
-            fixed_suggestion,
-            fixed_include_english,
-            fixed_vowel,
-            fixed_chandra,
-            fixed_kar,
-            fixed_old_reph,
-            fixed_numpad,
-            fixed_kar_order,
-        }
-    }
-
     pub(crate) fn set_layout_file_path(&mut self, layout: &str) {
         self.layout = layout.to_string();
     }

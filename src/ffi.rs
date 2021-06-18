@@ -140,7 +140,7 @@ pub extern "C" fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *mu
 
     let mut res_vec = Vec::with_capacity(slice.len());
 
-    for string in slice.into_iter() {
+    for string in slice.iter() {
         unsafe {
             res_vec.push(CString::from_vec_unchecked(string.as_bytes().into()).into_raw());
         }

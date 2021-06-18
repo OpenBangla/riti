@@ -85,9 +85,9 @@ impl Method for FixedMethod {
                 return Suggestion::empty();
             }
 
-            return self.create_suggestion(config);
+            self.create_suggestion(config)
         } else {
-            return Suggestion::empty();
+            Suggestion::empty()
         }
     }
 }
@@ -147,7 +147,7 @@ impl FixedMethod {
 
         // Sort the suggestions.
         self.suggestions
-            .sort_unstable_by(|a, b| edit_distance(&word, a).cmp(&edit_distance(&word, b)));
+            .sort_unstable_by_key(|s| edit_distance(&word, s));
 
         // Remove the duplicates if present.
         self.suggestions.dedup();
@@ -273,13 +273,11 @@ impl FixedMethod {
                         B_OU_KAR => self.buffer.push(B_OU),
                         _ => (),
                     }
-                    return;
                 } else if config.get_fixed_automatic_chandra() && rmc == B_CHANDRA {
                     // Automatic Fix of Chandra Position
                     self.buffer.pop();
                     self.buffer.push(character);
                     self.buffer.push(B_CHANDRA);
-                    return;
                 } else if rmc == B_HASANTA {
                     // Vowel making with Hasanta + Kar
                     match character {
@@ -325,7 +323,6 @@ impl FixedMethod {
                         }
                         _ => (),
                     }
-                    return;
                 } else if config.get_fixed_traditional_kar() && rmc.is_pure_consonant() {
                     // Traditional Kar Joining
                     // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
@@ -333,11 +330,10 @@ impl FixedMethod {
                         self.buffer.push(ZWNJ);
                     }
                     self.buffer.push(character);
-                    return;
                 } else {
                     self.buffer.push(character);
-                    return;
                 }
+                return;
             }
 
             // Hasanta
