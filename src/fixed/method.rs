@@ -63,13 +63,15 @@ impl Method for FixedMethod {
 
     fn backspace_event(&mut self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
-            // If there is a pending_kar remove it and return the current suggestion.
+            // TODO:
+            // - Allow to remove pending kar at the begining of a word.
+            // If there is a pending_kar remove it.
             if let Some(_) = &self.pending_kar {
                 self.pending_kar = None;
-                return self.current_suggestion(config);
+            } else {
+                // Remove the last character from buffer.
+                self.buffer.pop();
             }
-            // Remove the last character from buffer.
-            self.buffer.pop();
             self.typed.pop();
 
             if self.buffer.is_empty() {
@@ -210,7 +212,7 @@ impl FixedMethod {
                             _ => None,
                         };
                         return;
-                    } else if rmc == B_E_KAR && (character == B_AA_KAR || character == B_OI_KAR) {
+                    } else if rmc == B_E_KAR && (character == B_AA_KAR || character == B_OI_KAR || character == B_LENGTH_MARK) {
                         // Join two-part dependent vowel signs
                         self.buffer.pop();
                         match character {
