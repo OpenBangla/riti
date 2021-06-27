@@ -367,7 +367,9 @@ impl FixedMethod {
         if config.get_fixed_old_kar_order() {
             if let Some(left_standing_kar) = &self.pending_kar {
                 self.buffer.push_str(value);
-                if value == "\u{09B0}\u{09CD}" {
+                if let Some(B_HASANTA) = value.chars().last() {
+                    // Continue to next consonant insertion if value ends with B_HASANTA,
+                    // for example, if value is reph(র +  ্).
                     return;
                 }
                 self.buffer.push(match left_standing_kar {
@@ -770,11 +772,24 @@ mod tests {
         method.process_key_value("ক", &config);
         assert_eq!(method.buffer, "স্কি".to_string());
 
+        method.buffer = "".to_string();
+        method.process_key_value("ি", &config);
+        method.process_key_value("স", &config);
+        method.process_key_value(&B_HASANTA.to_string(), &config);
+        method.process_key_value("ট", &config);
+        method.process_key_value("ম", &config);
+        assert_eq!(method.buffer, "স্টিম".to_string());
+
         method.buffer = "তি".to_string();
         method.process_key_value("্র", &config);
         assert_eq!(method.buffer, "ত্রি".to_string());
 
         // Vowel making with Hasanta
+        method.buffer = "ক".to_string();
+        method.process_key_value(&B_HASANTA.to_string(), &config);
+        method.process_key_value("ি", &config);
+        assert_eq!(method.buffer, "কই".to_string());
+
         method.buffer = "কে".to_string();
         method.process_key_value(&B_HASANTA.to_string(), &config);
         method.process_key_value("ু", &config);
@@ -785,6 +800,13 @@ mod tests {
         method.process_key_value("ে", &config);
         method.process_key_value("ো", &config);
         assert_eq!(method.buffer, "এও".to_string());
+
+        // With Old style Reph
+        method.buffer = "দ".to_string();
+        method.process_key_value("ি", &config);
+        method.process_key_value("জ", &config);
+        method.process_key_value("র্", &config);
+        assert_eq!(method.buffer, "দর্জি".to_string());
 
         // Without Old style Reph
         config.set_fixed_old_reph(false);
