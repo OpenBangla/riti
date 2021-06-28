@@ -392,6 +392,8 @@ void riti_config_set_fixed_old_reph(Config *ptr, bool option);
 
 void riti_config_set_fixed_numpad(Config *ptr, bool option);
 
+void riti_config_set_fixed_old_kar_order(Config *ptr, bool option);
+
 } // extern "C"
 
 #endif // RITI_H

@@ -390,3 +390,13 @@ pub extern "C" fn riti_config_set_fixed_numpad(ptr: *mut Config, option: bool) {
 
     config.set_fixed_numpad(option);
 }
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_fixed_old_kar_order(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_fixed_old_kar_order(option);
+}
