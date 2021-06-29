@@ -779,6 +779,10 @@ mod tests {
         method.process_key_value("া", &config);
         assert_eq!(method.buffer, "তো".to_string());
 
+        method.buffer = "মে".to_string();
+        method.process_key_value("ৗ", &config);
+        assert_eq!(method.buffer, "মৌ".to_string());
+
         method.buffer = "সি".to_string();
         method.process_key_value(&B_HASANTA.to_string(), &config);
         method.process_key_value("ক", &config);
@@ -795,6 +799,23 @@ mod tests {
         method.buffer = "তি".to_string();
         method.process_key_value("্র", &config);
         assert_eq!(method.buffer, "ত্রি".to_string());
+
+        // Backspace
+        method.buffer = "".to_string();
+        method.process_key_value("ে", &config);
+        assert!(method.backspace_event(&config).is_empty());
+        assert!(method.buffer.is_empty());
+        assert!(method.typed.is_empty());
+
+        method.buffer = "ক".to_string();
+        method.process_key_value("ি", &config);
+        assert!(!method.backspace_event(&config).is_empty());
+        assert_eq!(method.buffer, "ক".to_string());
+
+        method.buffer = "ক".to_string();
+        assert!(method.backspace_event(&config).is_empty());
+        assert!(method.buffer.is_empty());
+        assert!(method.typed.is_empty());
 
         // Vowel making with Hasanta
         method.buffer = "ক".to_string();
