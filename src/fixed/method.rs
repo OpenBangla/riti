@@ -53,6 +53,10 @@ impl Method for FixedMethod {
 
     fn ongoing_input_session(&self) -> bool {
         !self.buffer.is_empty()
+            || match self.pending_kar {
+                None => false,
+                _ => true,
+            }
     }
 
     fn finish_input_session(&mut self) {
@@ -62,16 +66,18 @@ impl Method for FixedMethod {
     }
 
     fn backspace_event(&mut self, config: &Config) -> Suggestion {
-        if !self.buffer.is_empty() {
-            // TODO:
-            // - Allow to remove pending kar at the begining of a word.
-            // If there is a pending_kar remove it.
-            if let Some(_) = &self.pending_kar {
-                self.pending_kar = None;
-            } else {
-                // Remove the last character from buffer.
-                self.buffer.pop();
+        if let Some(_) = &self.pending_kar {
+            // Clear pending_kar.
+            self.pending_kar = None;
+            self.typed.pop();
+            if self.buffer.is_empty() {
+                return Suggestion::empty();
             }
+            return self.create_suggestion(config);
+        }
+        if !self.buffer.is_empty() {
+            // Remove the last character from buffer.
+            self.buffer.pop();
             self.typed.pop();
 
             if self.buffer.is_empty() {
@@ -201,9 +207,9 @@ impl FixedMethod {
         if let Some(character) = value.chars().next() {
             // Kar insertion
             if character.is_kar() {
-                // Old Style Kar Ordering
+                // Old style Kar ordering
                 if config.get_fixed_old_kar_order() {
-                    // Capture left standing kar in pending_kar
+                    // Capture left standing kar in pending_kar.
                     if rmc != B_HASANTA && is_left_standing_kar(character) {
                         self.pending_kar = match character {
                             B_I_KAR => Some(PendingKar::IKar),
@@ -212,17 +218,17 @@ impl FixedMethod {
                             _ => None,
                         };
                         return;
-                    } else if rmc == B_E_KAR && (character == B_AA_KAR || character == B_OI_KAR || character == B_LENGTH_MARK) {
-                        // Join two-part dependent vowel signs
+                    } else if rmc == B_E_KAR && (character == B_AA_KAR || character == B_OI_KAR) {
+                        // Join two-part dependent vowel signs.
                         self.buffer.pop();
                         match character {
                             B_AA_KAR => self.buffer.push(B_O_KAR),
-                            B_OU_KAR | B_LENGTH_MARK => self.buffer.push(B_OU_KAR),
+                            B_OU_KAR => self.buffer.push(B_OU_KAR),
                             _ => (),
                         }
                         return;
                     } else if let Some(left_standing_kar) = &self.pending_kar {
-                        // Restore pending_kar
+                        // Restore pending_kar.
                         if rmc == B_HASANTA {
                             self.buffer.pop();
                             self.buffer.push(match left_standing_kar {
@@ -340,30 +346,36 @@ impl FixedMethod {
                 return;
             }
 
-            // Old Style Kar Ordering
-            if character == B_HASANTA && is_left_standing_kar(rmc) && config.get_fixed_old_kar_order() {
-                if value.chars().count() == 1 {
-                    self.pending_kar = match self.buffer.pop() {
-                        Some(B_I_KAR) => Some(PendingKar::IKar),
-                        Some(B_E_KAR) => Some(PendingKar::EKar),
-                        Some(B_OI_KAR) => Some(PendingKar::OIKar),
-                        _ => None,
-                    };
-                    self.buffer.push(character);
-                } else {
-                    match self.buffer.pop() {
-                        Some(kar) => {
-                            self.buffer.push_str(value);
-                            self.buffer.push(kar);
+            // Old style Kar ordering
+            if config.get_fixed_old_kar_order() {
+                if character == B_HASANTA && is_left_standing_kar(rmc) {
+                    if value.chars().count() == 1 {
+                        self.pending_kar = match self.buffer.pop() {
+                            Some(B_I_KAR) => Some(PendingKar::IKar),
+                            Some(B_E_KAR) => Some(PendingKar::EKar),
+                            Some(B_OI_KAR) => Some(PendingKar::OIKar),
+                            _ => None,
+                        };
+                        self.buffer.push(character);
+                    } else {
+                        match self.buffer.pop() {
+                            Some(kar) => {
+                                self.buffer.push_str(value);
+                                self.buffer.push(kar);
+                            }
+                            _ => ()
                         }
-                        _ => ()
                     }
+                    return;
+                } else if rmc == B_E_KAR && character == B_LENGTH_MARK {
+                    self.buffer.pop();
+                    self.buffer.push(B_OU_KAR);
+                    return;
                 }
-                return;
             }
         }
 
-        // Old Style Kar Ordering
+        // Old style Kar ordering
         if config.get_fixed_old_kar_order() {
             if let Some(left_standing_kar) = &self.pending_kar {
                 self.buffer.push_str(value);
@@ -767,6 +779,10 @@ mod tests {
         method.process_key_value("া", &config);
         assert_eq!(method.buffer, "তো".to_string());
 
+        method.buffer = "মে".to_string();
+        method.process_key_value("ৗ", &config);
+        assert_eq!(method.buffer, "মৌ".to_string());
+
         method.buffer = "সি".to_string();
         method.process_key_value(&B_HASANTA.to_string(), &config);
         method.process_key_value("ক", &config);
@@ -783,6 +799,23 @@ mod tests {
         method.buffer = "তি".to_string();
         method.process_key_value("্র", &config);
         assert_eq!(method.buffer, "ত্রি".to_string());
+
+        // Backspace
+        method.buffer = "".to_string();
+        method.process_key_value("ে", &config);
+        assert!(method.backspace_event(&config).is_empty());
+        assert!(method.buffer.is_empty());
+        assert!(method.typed.is_empty());
+
+        method.buffer = "ক".to_string();
+        method.process_key_value("ি", &config);
+        assert!(!method.backspace_event(&config).is_empty());
+        assert_eq!(method.buffer, "ক".to_string());
+
+        method.buffer = "ক".to_string();
+        assert!(method.backspace_event(&config).is_empty());
+        assert!(method.buffer.is_empty());
+        assert!(method.typed.is_empty());
 
         // Vowel making with Hasanta
         method.buffer = "ক".to_string();
