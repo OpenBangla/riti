@@ -52,11 +52,7 @@ impl Method for FixedMethod {
     }
 
     fn ongoing_input_session(&self) -> bool {
-        !self.buffer.is_empty()
-            || match self.pending_kar {
-                None => false,
-                _ => true,
-            }
+        !self.buffer.is_empty() || self.pending_kar.is_some()
     }
 
     fn finish_input_session(&mut self) {
@@ -66,7 +62,7 @@ impl Method for FixedMethod {
     }
 
     fn backspace_event(&mut self, config: &Config) -> Suggestion {
-        if let Some(_) = &self.pending_kar {
+        if self.pending_kar.is_some() {
             // Clear pending_kar.
             self.pending_kar = None;
             self.typed.pop();
@@ -353,14 +349,9 @@ impl FixedMethod {
                             _ => None,
                         };
                         self.buffer.push(character);
-                    } else {
-                        match self.buffer.pop() {
-                            Some(kar) => {
-                                self.buffer.push_str(value);
-                                self.buffer.push(kar);
-                            }
-                            _ => ()
-                        }
+                    } else if let Some(kar) = self.buffer.pop() {
+                        self.buffer.push_str(value);
+                        self.buffer.push(kar);
                     }
                     return;
                 } else if rmc == B_E_KAR && character == B_LENGTH_MARK {
