@@ -52,11 +52,7 @@ impl Method for FixedMethod {
     }
 
     fn ongoing_input_session(&self) -> bool {
-        !self.buffer.is_empty()
-            || match self.pending_kar {
-                None => false,
-                _ => true,
-            }
+        !self.buffer.is_empty() || self.pending_kar.is_some()
     }
 
     fn finish_input_session(&mut self) {
@@ -66,7 +62,7 @@ impl Method for FixedMethod {
     }
 
     fn backspace_event(&mut self, config: &Config) -> Suggestion {
-        if let Some(_) = &self.pending_kar {
+        if self.pending_kar.is_some() {
             // Clear pending_kar.
             self.pending_kar = None;
             self.typed.pop();
@@ -85,9 +81,9 @@ impl Method for FixedMethod {
                 return Suggestion::empty();
             }
 
-            return self.create_suggestion(config);
+            self.create_suggestion(config)
         } else {
-            return Suggestion::empty();
+            Suggestion::empty()
         }
     }
 }
@@ -147,7 +143,7 @@ impl FixedMethod {
 
         // Sort the suggestions.
         self.suggestions
-            .sort_unstable_by(|a, b| edit_distance(&word, a).cmp(&edit_distance(&word, b)));
+            .sort_unstable_by_key(|s| edit_distance(&word, s));
 
         // Remove the duplicates if present.
         self.suggestions.dedup();
@@ -273,13 +269,11 @@ impl FixedMethod {
                         B_OU_KAR => self.buffer.push(B_OU),
                         _ => (),
                     }
-                    return;
                 } else if config.get_fixed_automatic_chandra() && rmc == B_CHANDRA {
                     // Automatic Fix of Chandra Position
                     self.buffer.pop();
                     self.buffer.push(character);
                     self.buffer.push(B_CHANDRA);
-                    return;
                 } else if rmc == B_HASANTA {
                     // Vowel making with Hasanta + Kar
                     match character {
@@ -325,7 +319,6 @@ impl FixedMethod {
                         }
                         _ => (),
                     }
-                    return;
                 } else if config.get_fixed_traditional_kar() && rmc.is_pure_consonant() {
                     // Traditional Kar Joining
                     // In UNICODE it is known as "Blocking Bengali Consonant-Vowel Ligature"
@@ -333,11 +326,10 @@ impl FixedMethod {
                         self.buffer.push(ZWNJ);
                     }
                     self.buffer.push(character);
-                    return;
                 } else {
                     self.buffer.push(character);
-                    return;
                 }
+                return;
             }
 
             // Hasanta
@@ -357,14 +349,9 @@ impl FixedMethod {
                             _ => None,
                         };
                         self.buffer.push(character);
-                    } else {
-                        match self.buffer.pop() {
-                            Some(kar) => {
-                                self.buffer.push_str(value);
-                                self.buffer.push(kar);
-                            }
-                            _ => ()
-                        }
+                    } else if let Some(kar) = self.buffer.pop() {
+                        self.buffer.push_str(value);
+                        self.buffer.push(kar);
                     }
                     return;
                 } else if rmc == B_E_KAR && character == B_LENGTH_MARK {

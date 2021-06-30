@@ -101,9 +101,9 @@ impl Method for PhoneticMethod {
                 return Suggestion::empty();
             }
 
-            return self.create_suggestion(config);
+            self.create_suggestion(config)
         } else {
-            return Suggestion::empty();
+            Suggestion::empty()
         }
     }
 }

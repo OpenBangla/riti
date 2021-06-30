@@ -53,7 +53,7 @@ impl PhoneticSuggestion {
                     if let Some(cache) = self.cache.get(key) {
                         for base in cache {
                             let base_rmc = base.chars().last().unwrap(); // Right most character.
-                            let suffix_lmc = suffix.chars().nth(0).unwrap(); // Left most character.
+                            let suffix_lmc = suffix.chars().next().unwrap(); // Left most character.
                             let mut word = String::with_capacity(middle.len() * 3);
                             word.push_str(base);
                             match base_rmc {
@@ -223,7 +223,7 @@ impl PhoneticSuggestion {
 
                     if let Some(base) = selections.get(key) {
                         let rmc = base.chars().last().unwrap();
-                        let suffix_lmc = suffix.chars().nth(0).unwrap();
+                        let suffix_lmc = suffix.chars().next().unwrap();
                         selected.push_str(base);
 
                         match rmc {
