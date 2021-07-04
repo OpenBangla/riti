@@ -374,13 +374,11 @@ void riti_config_set_layout_file(Config *ptr, const char *path);
 
 void riti_config_set_database_dir(Config *ptr, const char *path);
 
+void riti_config_set_suggestion_include_english(Config *ptr, bool option);
+
 void riti_config_set_phonetic_suggestion(Config *ptr, bool option);
 
-void riti_config_set_phonetic_include_english(Config *ptr, bool option);
-
 void riti_config_set_fixed_suggestion(Config *ptr, bool option);
-
-void riti_config_set_fixed_include_english(Config *ptr, bool option);
 
 void riti_config_set_fixed_auto_vowel(Config *ptr, bool option);
 

@@ -34,7 +34,7 @@ impl Method for FixedMethod {
         }
 
         // If include english typed word feature is enabled.
-        if config.get_fixed_include_english() {
+        if config.get_suggestion_include_english() {
             self.typed.push(keycode_to_char(key));
         }
 
@@ -150,7 +150,7 @@ impl FixedMethod {
 
         // Reduce the number of suggestions
         // and add the typed english word at the end.
-        if config.get_fixed_include_english() {
+        if config.get_suggestion_include_english() {
             self.suggestions.truncate(8);
             self.suggestions.push(self.typed.clone());
         } else {
@@ -547,7 +547,7 @@ mod tests {
     fn test_suggestions_with_english_word() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
-        config.set_fixed_include_english(true);
+        config.set_suggestion_include_english(true);
 
         method.get_suggestion(VC_A, 0, &config);
         method.get_suggestion(VC_M, 0, &config);

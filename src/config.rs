@@ -8,10 +8,9 @@ pub struct Config {
     layout: String,
     database_dir: PathBuf,
     user_dir: PathBuf,
+    include_english: bool,
     phonetic_suggestion: bool,
-    phonetic_include_english: bool,
     fixed_suggestion: bool,
-    fixed_include_english: bool,
     fixed_vowel: bool,
     fixed_chandra: bool,
     fixed_kar: bool,
@@ -55,6 +54,14 @@ impl Config {
         self.user_dir.join("phonetic-candidate-selection.json")
     }
 
+    pub(crate) fn get_suggestion_include_english(&self) -> bool {
+        self.include_english
+    }
+
+    pub(crate) fn set_suggestion_include_english(&mut self, include: bool) {
+        self.include_english = include;
+    }
+
     pub(crate) fn get_phonetic_suggestion(&self) -> bool {
         self.phonetic_suggestion
     }
@@ -62,14 +69,6 @@ impl Config {
     /// Set the config's phonetic database.
     pub(crate) fn set_phonetic_suggestion(&mut self, phonetic_suggestion: bool) {
         self.phonetic_suggestion = phonetic_suggestion;
-    }
-
-    pub(crate) fn get_phonetic_include_english(&self) -> bool {
-        self.phonetic_include_english
-    }
-
-    pub(crate) fn set_phonetic_include_english(&mut self, include: bool) {
-        self.phonetic_include_english = include;
     }
 
     /// Get the config's fixed database.
@@ -132,16 +131,6 @@ impl Config {
         self.fixed_numpad = fixed_numpad;
     }
 
-    /// Get the config's fixed include english.
-    pub fn get_fixed_include_english(&self) -> bool {
-        self.fixed_include_english
-    }
-
-    /// Set the config's fixed include english.
-    pub fn set_fixed_include_english(&mut self, fixed_include_english: bool) {
-        self.fixed_include_english = fixed_include_english;
-    }
-
     /// Get the config's fixed kar order.
     pub fn get_fixed_old_kar_order(&self) -> bool {
         self.fixed_kar_order
@@ -192,17 +181,12 @@ pub(crate) fn get_user_data_dir() -> PathBuf {
 
 pub(crate) fn get_phonetic_method_defaults() -> Config {
     Config {
-        layout: format!(
-            "{}{}",
-            env!("CARGO_MANIFEST_DIR"),
-            "/data/avrophonetic.json"
-        ),
+        layout: "avro_phonetic".to_owned(),
         user_dir: get_user_data_dir(),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
+        include_english: false,
         phonetic_suggestion: true,
-        phonetic_include_english: false,
         fixed_suggestion: false,
-        fixed_include_english: false,
         fixed_vowel: false,
         fixed_chandra: false,
         fixed_kar: false,
@@ -217,8 +201,8 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
         layout: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
         user_dir: get_user_data_dir(),
+        include_english: false,
         fixed_suggestion: true,
-        fixed_include_english: false,
         fixed_vowel: true,
         fixed_chandra: true,
         fixed_kar: true,
@@ -226,6 +210,5 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
         fixed_old_reph: true,
         fixed_kar_order: false,
         phonetic_suggestion: false,
-        phonetic_include_english: false,
     }
 }

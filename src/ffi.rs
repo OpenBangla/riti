@@ -302,6 +302,16 @@ pub extern "C" fn riti_config_set_database_dir(ptr: *mut Config, path: *const c_
 }
 
 #[no_mangle]
+pub extern "C" fn riti_config_set_suggestion_include_english(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_suggestion_include_english(option);
+}
+
+#[no_mangle]
 pub extern "C" fn riti_config_set_phonetic_suggestion(ptr: *mut Config, option: bool) {
     let config = unsafe {
         assert!(!ptr.is_null());
@@ -312,16 +322,6 @@ pub extern "C" fn riti_config_set_phonetic_suggestion(ptr: *mut Config, option: 
 }
 
 #[no_mangle]
-pub extern "C" fn riti_config_set_phonetic_include_english(ptr: *mut Config, option: bool) {
-    let config = unsafe {
-        assert!(!ptr.is_null());
-        &mut *ptr
-    };
-
-    config.set_phonetic_include_english(option);
-}
-
-#[no_mangle]
 pub extern "C" fn riti_config_set_fixed_suggestion(ptr: *mut Config, option: bool) {
     let config = unsafe {
         assert!(!ptr.is_null());
@@ -329,16 +329,6 @@ pub extern "C" fn riti_config_set_fixed_suggestion(ptr: *mut Config, option: boo
     };
 
     config.set_fixed_suggestion(option);
-}
-
-#[no_mangle]
-pub extern "C" fn riti_config_set_fixed_include_english(ptr: *mut Config, option: bool) {
-    let config = unsafe {
-        assert!(!ptr.is_null());
-        &mut *ptr
-    };
-
-    config.set_fixed_include_english(option);
 }
 
 #[no_mangle]

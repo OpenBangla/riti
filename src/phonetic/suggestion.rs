@@ -138,7 +138,7 @@ impl PhoneticSuggestion {
         }
 
         // Include written English word if the feature is enabled.
-        if config.get_phonetic_include_english()
+        if config.get_suggestion_include_english()
             // Watch out for emoticons!
             && !self.suggestions.iter().any(|i| i == term)
         {
@@ -290,7 +290,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let mut config = get_phonetic_method_defaults();
-        config.set_phonetic_include_english(true);
+        config.set_suggestion_include_english(true);
 
         suggestion.suggest(":)", &mut selections, &config);
         assert_eq!(suggestion.suggestions, [":)", "ঃ)"]);
