@@ -35,15 +35,15 @@ impl RitiContext {
     /// Update the suggestion making engine. This would also look for changes
     /// in layout selection and AutoCorrect database.
     pub fn update_engine(&mut self, config: &Config) {
-        // Update the config
-        self.config = config.to_owned();
-
         // If the layout file has been changed.
         if self.config.layout_changed(config) {
             self.method.replace(<dyn Method>::new(config));
         } else {
             self.method.borrow_mut().update_engine(config);
         }
+
+        // Update the config
+        self.config = config.to_owned();
     }
 
     /// Checks if there is an onging input session.         
@@ -94,3 +94,34 @@ pub const MODIFIER_SHIFT: u8 = 1 << 0;
 ///
 /// Used by the [`get_suggestion_for_key()`](struct.RitiContext.html#method.get_suggestion_for_key) function.
 pub const MODIFIER_ALT_GR: u8 = 1 << 1;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{config::{get_phonetic_method_defaults, get_fixed_method_defaults}, keycodes::{VC_E, VC_H, VC_L, VC_P}};
+
+    #[test]
+    fn test_layout_change() {
+        // Load the context with a Phonetic layout.
+        let config = get_phonetic_method_defaults();
+        let mut context = RitiContext::new_with_config(&config);
+
+        context.get_suggestion_for_key(VC_H, 0);
+        context.get_suggestion_for_key(VC_E, 0);
+        context.get_suggestion_for_key(VC_L, 0);
+        let suggestion = context.get_suggestion_for_key(VC_P, 0);
+        context.finish_input_session();
+        assert_eq!(suggestion.get_suggestions(), ["হেল্প"]);
+
+        // Change the layout to Fixed layout
+        let config = get_fixed_method_defaults();
+        context.update_engine(&config);
+
+        context.get_suggestion_for_key(VC_H, 0);
+        context.get_suggestion_for_key(VC_E, 0);
+        context.get_suggestion_for_key(VC_L, 0);
+        let suggestion = context.get_suggestion_for_key(VC_P, 0);
+        context.finish_input_session();
+        assert_eq!(suggestion.get_suggestions(), ["হীলপ"]);
+    }
+}
