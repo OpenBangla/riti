@@ -135,20 +135,22 @@ impl PhoneticSuggestion {
         self.suggestion_with_dict(&splitted_string);
 
         // Emoji addition with corresponding emoticon.
-        if let Some(emoji) = self.emojicon.get(term) {
+        if let Some(emoji) = self.emojicon.get_by_emoticon(term) {
             // Add the emoticon
             self.suggestions.insert(0, term.to_owned());
             self.suggestions.insert(0, emoji.to_owned());
             // Mark that we have added the typed text already (as the emoticon).
             typed_added = true;
-        } else if let Some(emoji) = gh_emoji::get(splitted_string.1) {
+        } else if let Some(emojis) = self.emojicon.get_by_name(splitted_string.1) {
             // Emoji addition with it's name
             // Add paddings
-            let emoji = format!("{}{}{}", splitted_string.0, emoji, splitted_string.2);
+            let emojis = emojis.map(|s| format!("{}{}{}", splitted_string.0, s, splitted_string.2));
             if self.suggestions.len() > 3 {
-                self.suggestions.insert(3, emoji);
+                let mut remaining = self.suggestions.split_off(3);
+                self.suggestions.extend(emojis);
+                self.suggestions.append(&mut remaining);
             } else {
-                self.suggestions.push(emoji);
+                self.suggestions.extend(emojis);
             }
         }
 
@@ -333,10 +335,10 @@ mod tests {
         assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ)"]);
 
         suggestion.suggest("smile", &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["স্মিলে", "😄"]);
+        assert_eq!(suggestion.suggestions, ["স্মিলে", "😀", "😄"]);
 
         suggestion.suggest("cool", &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["চুল", "চোল", "চল", "🆒", "চূল", "ছুল", "ছোল", "ছল", "ছুঁল"]);
+        assert_eq!(suggestion.suggestions, ["চুল", "চোল", "চল", "😎", "🆒", "চূল", "ছুল", "ছোল", "ছল", "ছুঁল"]);
 
         suggestion.suggest(".", &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["।"]);

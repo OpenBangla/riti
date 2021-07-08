@@ -111,7 +111,7 @@ mod tests {
         context.get_suggestion_for_key(VC_L, 0);
         let suggestion = context.get_suggestion_for_key(VC_P, 0);
         context.finish_input_session();
-        assert_eq!(suggestion.get_suggestions(), ["হেল্প"]);
+        assert_eq!(suggestion.get_suggestions(), ["হেল্প", "🆘"]);
 
         // Change the layout to Fixed layout
         let config = get_fixed_method_defaults();
