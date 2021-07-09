@@ -1,4 +1,5 @@
 use edit_distance::edit_distance;
+use emojicon::{Emojicon, BengaliEmoji};
 
 use super::{chars::*, database::Database, parser::LayoutParser};
 use crate::{context::Method, keycodes::keycode_to_char};
@@ -21,6 +22,8 @@ pub(crate) struct FixedMethod {
     suggestions: Vec<String>,
     parser: LayoutParser,
     database: Database,
+    emojicon: Emojicon,
+    emojis: BengaliEmoji,
 }
 
 impl Method for FixedMethod {
@@ -101,6 +104,8 @@ impl FixedMethod {
             suggestions: Vec::with_capacity(10),
             parser,
             database: Database::new_with_config(config),
+            emojicon: Emojicon::new(),
+            emojis: BengaliEmoji::new(),
         }
     }
 
@@ -148,19 +153,20 @@ impl FixedMethod {
         // Remove the duplicates if present.
         self.suggestions.dedup();
 
-        // Reduce the number of suggestions
-        // and add the typed english word at the end.
-        if config.get_suggestion_include_english() {
-            self.suggestions.truncate(8);
-            self.suggestions.push(self.typed.clone());
-        } else {
-            self.suggestions.truncate(9);
-        }
-
         if !first_part.is_empty() || !last_part.is_empty() {
             for suggestion in self.suggestions.iter_mut() {
                 *suggestion = format!("{}{}{}", first_part, suggestion, last_part);
             }
+        }
+
+        // Reduce the number of suggestions and add the typed english word at the end.
+        // Also check that the typed text is not already included (may happen
+        // when the control characters are typed).
+        if config.get_suggestion_include_english() && self.buffer != self.typed {
+            self.suggestions.truncate(8);
+            self.suggestions.push(self.typed.clone());
+        } else {
+            self.suggestions.truncate(9);
         }
 
         Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
@@ -485,6 +491,8 @@ impl Default for FixedMethod {
             suggestions: Vec::new(),
             parser,
             database: Database::new_with_config(&config),
+            emojicon: Emojicon::new(),
+            emojis: BengaliEmoji::new(),
         }
     }
 }
@@ -502,7 +510,7 @@ fn is_left_standing_kar(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::FixedMethod;
-    use crate::{context::Method, keycodes::{VC_A, VC_M, VC_I}};
+    use crate::{context::Method, keycodes::{VC_A, VC_I, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT}};
     use crate::fixed::chars::*;
     use crate::config::get_fixed_method_defaults;
 
@@ -552,9 +560,13 @@ mod tests {
         method.get_suggestion(VC_A, 0, &config);
         method.get_suggestion(VC_M, 0, &config);
         method.get_suggestion(VC_I, 0, &config);
-
         assert_eq!(method.typed, "ami");
-        assert_eq!(method.current_suggestion(&config).get_suggestions(), &["আমি", "আমিন", "আমির", "আমিষ", "ami"]);
+        assert_eq!(method.current_suggestion(&config).get_suggestions(), ["আমি", "আমিন", "আমির", "আমিষ", "ami"]);
+        method.finish_input_session();
+
+        method.get_suggestion(VC_PAREN_LEFT, 0, &config);
+        method.get_suggestion(VC_PAREN_RIGHT, 0, &config);
+        assert_eq!(method.current_suggestion(&config).get_suggestions(), ["()"]);
     }
 
     #[test]
