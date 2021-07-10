@@ -2,6 +2,7 @@
 
 use ahash::RandomState;
 use edit_distance::edit_distance;
+use emojicon::Emojicon;
 use okkhor::parser::Parser;
 use std::collections::{hash_map::Entry, HashMap};
 
@@ -20,6 +21,7 @@ pub(crate) struct PhoneticSuggestion {
     phonetic: Parser,
     // Auto Correct caches.
     corrects: HashMap<String, String>,
+    emojicon: Emojicon,
 }
 
 impl PhoneticSuggestion {
@@ -31,6 +33,7 @@ impl PhoneticSuggestion {
             cache: HashMap::with_capacity_and_hasher(20, RandomState::new()),
             phonetic: Parser::new_phonetic(),
             corrects: HashMap::with_capacity(10),
+            emojicon: Emojicon::new(),
         }
     }
 
@@ -120,6 +123,7 @@ impl PhoneticSuggestion {
         config: &Config,
     ) -> (Vec<String>, usize) {
         let splitted_string = split_string(term, false);
+        let mut typed_added = false;
 
         // Convert preceding and trailing meta characters into Bengali(phonetic representation).
         let splitted_string: (&str, &str, &str) = (
@@ -130,18 +134,28 @@ impl PhoneticSuggestion {
 
         self.suggestion_with_dict(&splitted_string);
 
-        // Emoticons Auto Corrects
-        if let Some(emoticon) = self.database.search_corrected(term) {
-            if emoticon == term {
-                self.suggestions.insert(0, emoticon.to_string());
+        // Emoji addition with corresponding emoticon.
+        if let Some(emoji) = self.emojicon.get_by_emoticon(term) {
+            // Add the emoticon
+            self.suggestions.insert(0, term.to_owned());
+            self.suggestions.insert(0, emoji.to_owned());
+            // Mark that we have added the typed text already (as the emoticon).
+            typed_added = true;
+        } else if let Some(emojis) = self.emojicon.get_by_name(splitted_string.1) {
+            // Emoji addition with it's name
+            // Add preceding and trailing meta characters.
+            let emojis = emojis.map(|s| format!("{}{}{}", splitted_string.0, s, splitted_string.2));
+            if self.suggestions.len() > 3 {
+                let mut remaining = self.suggestions.split_off(3);
+                self.suggestions.extend(emojis);
+                self.suggestions.append(&mut remaining);
+            } else {
+                self.suggestions.extend(emojis);
             }
         }
 
-        // Include written English word if the feature is enabled.
-        if config.get_suggestion_include_english()
-            // Watch out for emoticons!
-            && !self.suggestions.iter().any(|i| i == term)
-        {
+        // Include written English word if the feature is enabled and it is not included already.
+        if config.get_suggestion_include_english() && !typed_added {
             self.suggestions.push(term.to_string());
         }
 
@@ -272,6 +286,7 @@ impl Default for PhoneticSuggestion {
             cache: HashMap::with_hasher(RandomState::new()),
             phonetic: Parser::new_phonetic(),
             corrects: HashMap::new(),
+            emojicon: Emojicon::new(),
         }
     }
 }
@@ -293,12 +308,12 @@ mod tests {
         config.set_suggestion_include_english(true);
 
         suggestion.suggest(":)", &mut selections, &config);
-        assert_eq!(suggestion.suggestions, [":)", "ঃ)"]);
+        assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ)"]);
 
         suggestion.suggest("{a}", &mut selections, &config);
         assert_eq!(
             suggestion.suggestions,
-            ["{আ}", "{আঃ}", "{া}", "{এ}", "{অ্যা}", "{অ্যাঁ}", "{a}"]
+            ["{আ}", "{আঃ}", "{া}", "{🅰️}", "{এ}", "{অ্যা}", "{অ্যাঁ}", "{a}"]
         );
     }
 
@@ -311,13 +326,19 @@ mod tests {
     }
 
     #[test]
-    fn test_emoticon() {
+    fn test_emoticon_and_emoji() {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let config = get_phonetic_method_defaults();
 
         suggestion.suggest(":)", &mut selections, &config);
-        assert_eq!(suggestion.suggestions, [":)", "ঃ)"]);
+        assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ)"]);
+
+        suggestion.suggest("smile", &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["স্মিলে", "😀", "😄"]);
+
+        suggestion.suggest("cool", &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["চুল", "চোল", "চল", "😎", "🆒", "চূল", "ছুল", "ছোল", "ছল", "ছুঁল"]);
 
         suggestion.suggest(".", &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["।"]);
