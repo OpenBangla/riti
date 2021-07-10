@@ -137,7 +137,10 @@ impl PhoneticSuggestion {
         // Emoji addition with corresponding emoticon.
         if let Some(emoji) = self.emojicon.get_by_emoticon(term) {
             // Add the emoticon
-            self.suggestions.insert(0, term.to_owned());
+            // Sometimes the emoticon is captured as preceding meta characters and already included.
+            if term != splitted_string.0 {
+                self.suggestions.insert(0, term.to_owned());
+            }
             self.suggestions.insert(0, emoji.to_owned());
             // Mark that we have added the typed text already (as the emoticon).
             typed_added = true;
@@ -310,6 +313,9 @@ mod tests {
         suggestion.suggest(":)", &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ)"]);
 
+        suggestion.suggest(";)", &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["😉", ";)"]);
+
         suggestion.suggest("{a}", &mut selections, &config);
         assert_eq!(
             suggestion.suggestions,
@@ -333,6 +339,9 @@ mod tests {
 
         suggestion.suggest(":)", &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ)"]);
+
+        suggestion.suggest(";)", &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["😉", ";)"]);
 
         suggestion.suggest("smile", &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["স্মিলে", "😀", "😄"]);
