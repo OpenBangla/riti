@@ -36,8 +36,7 @@ impl Method for FixedMethod {
             return self.current_suggestion(config);
         }
 
-        // If include english typed word feature is enabled.
-        if config.get_suggestion_include_english() {
+        if config.get_fixed_suggestion() {
             self.typed.push(keycode_to_char(key));
         }
 
@@ -153,9 +152,26 @@ impl FixedMethod {
         // Remove the duplicates if present.
         self.suggestions.dedup();
 
+        // Add preceding and trailing meta characters.
         if !first_part.is_empty() || !last_part.is_empty() {
             for suggestion in self.suggestions.iter_mut() {
                 *suggestion = format!("{}{}{}", first_part, suggestion, last_part);
+            }
+        }
+
+        // Emoji addition with Emoticons.
+        if let Some(emoji) = self.emojicon.get_by_emoticon(&self.typed) {
+            self.suggestions.push(emoji.to_owned());
+        } else if let Some(emojis) = self.emojis.get(word) {
+            // Emoji addition with it's Bengali name.
+            // Add preceding and trailing meta characters.
+            let emojis = emojis.map(|s| format!("{}{}{}", first_part, s, last_part));
+            if self.suggestions.len() > 2 {
+                let mut remaining = self.suggestions.split_off(2);
+                self.suggestions.extend(emojis);
+                self.suggestions.append(&mut remaining);
+            } else {
+                self.suggestions.extend(emojis);
             }
         }
 
@@ -510,7 +526,7 @@ fn is_left_standing_kar(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::FixedMethod;
-    use crate::{context::Method, keycodes::{VC_A, VC_I, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT}};
+    use crate::{context::Method, keycodes::{VC_A, VC_I, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_SEMICOLON}};
     use crate::fixed::chars::*;
     use crate::config::get_fixed_method_defaults;
 
@@ -567,6 +583,25 @@ mod tests {
         method.get_suggestion(VC_PAREN_LEFT, 0, &config);
         method.get_suggestion(VC_PAREN_RIGHT, 0, &config);
         assert_eq!(method.current_suggestion(&config).get_suggestions(), ["()"]);
+    }
+
+    #[test]
+    fn test_emojis() {
+        let mut method = FixedMethod::default();
+        let mut config = get_fixed_method_defaults();
+        config.set_fixed_traditional_kar(false);
+
+        method.get_suggestion(VC_SEMICOLON, 0, &config);
+        let suggestion = method.get_suggestion(VC_PAREN_RIGHT, 0, &config);
+        method.finish_input_session();
+        assert_eq!(suggestion.get_suggestions(), [";)", "😉"]);
+
+
+        method.buffer = "হাসি".to_owned();
+        assert_eq!(method.create_dictionary_suggestion(&config).get_suggestions(), ["হাসি", "হাসিত", "😀", "😁", "😃", "😄", "হাসিব", "হাসিল", "হাসিস"]);
+
+        method.buffer = "{লজ্জা}".to_owned();
+        assert_eq!(method.create_dictionary_suggestion(&config).get_suggestions(), ["{লজ্জা}", "{লজ্জালু}", "{😳}", "{লজ্জাকর}", "{লজ্জানত}", "{লজ্জাজনক}", "{লজ্জাহীন}", "{লজ্জাশরম}", "{লজ্জাবান}"]);
     }
 
     #[test]

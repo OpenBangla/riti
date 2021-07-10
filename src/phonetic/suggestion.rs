@@ -143,7 +143,7 @@ impl PhoneticSuggestion {
             typed_added = true;
         } else if let Some(emojis) = self.emojicon.get_by_name(splitted_string.1) {
             // Emoji addition with it's name
-            // Add paddings
+            // Add preceding and trailing meta characters.
             let emojis = emojis.map(|s| format!("{}{}{}", splitted_string.0, s, splitted_string.2));
             if self.suggestions.len() > 3 {
                 let mut remaining = self.suggestions.split_off(3);
