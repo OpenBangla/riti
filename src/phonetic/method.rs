@@ -1,10 +1,11 @@
 // Phonetic Method
 use std::collections::HashMap;
-use std::fs::{read_to_string, write};
+use std::fs::{read, write};
 use ahash::RandomState;
 
 use crate::context::Method;
 use crate::config::{Config, get_phonetic_method_defaults};
+use crate::data::Data;
 use crate::keycodes::keycode_to_char;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::suggestion::Suggestion;
@@ -23,8 +24,8 @@ impl PhoneticMethod {
     /// Creates a new `PhoneticMethod` struct.
     pub(crate) fn new(config: &Config) -> Self {
         let selections =
-            if let Ok(file) = read_to_string(config.get_user_phonetic_selection_data()) {
-                serde_json::from_str(&file).unwrap()
+            if let Ok(file) = read(config.get_user_phonetic_selection_data()) {
+                serde_json::from_slice(&file).unwrap()
             } else {
                 HashMap::with_hasher(RandomState::new())
             };
@@ -38,10 +39,10 @@ impl PhoneticMethod {
     }
 
     /// Returns `Suggestion` struct with suggestions.
-    fn create_suggestion(&mut self, config: &Config) -> Suggestion {
+    fn create_suggestion(&mut self, data: &Data, config: &Config) -> Suggestion {
         if config.get_phonetic_suggestion() {
             let (suggestions, selection) =
-                self.suggestion.suggest(&self.buffer, &mut self.selections, config);
+                self.suggestion.suggest(&self.buffer, data, &mut self.selections, config);
 
             self.prev_selection = selection;
 
@@ -55,9 +56,9 @@ impl PhoneticMethod {
 }
 
 impl Method for PhoneticMethod {
-    fn get_suggestion(&mut self, key: u16, _modifier: u8, config: &Config) -> Suggestion {
+    fn get_suggestion(&mut self, key: u16, _modifier: u8, data: &Data, config: &Config) -> Suggestion {
         self.buffer.push(keycode_to_char(key));
-        self.create_suggestion(config)
+        self.create_suggestion(data, config)
     }
 
     fn candidate_committed(&mut self, index: usize, config: &Config) {
@@ -80,7 +81,9 @@ impl Method for PhoneticMethod {
     }
 
     fn update_engine(&mut self, config: &Config) {
-        self.suggestion.database.update(config);
+        if let Ok(file) = read(config.get_user_phonetic_autocorrect()) {
+           self.suggestion.user_autocorrect = serde_json::from_slice(&file).unwrap();
+        } 
     }
 
     fn ongoing_input_session(&self) -> bool {
@@ -91,7 +94,7 @@ impl Method for PhoneticMethod {
         self.buffer.clear();
     }
 
-    fn backspace_event(&mut self, config: &Config) -> Suggestion {
+    fn backspace_event(&mut self, data: &Data, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
             // Remove the last character.
             self.buffer.pop();
@@ -101,7 +104,7 @@ impl Method for PhoneticMethod {
                 return Suggestion::empty();
             }
 
-            self.create_suggestion(config)
+            self.create_suggestion(data, config)
         } else {
             Suggestion::empty()
         }
@@ -127,16 +130,18 @@ mod tests {
     use super::PhoneticMethod;
     use crate::context::Method;
     use crate::config::get_phonetic_method_defaults;
+    use crate::data::Data;
 
     #[test]
     fn test_backspace() {
+        let config = get_phonetic_method_defaults();
+        let data = Data::new(&config);
         let mut method = PhoneticMethod {
             buffer: "ab".to_string(),
             ..Default::default()
         };
-        let config = get_phonetic_method_defaults();
 
-        assert!(!method.backspace_event(&config).is_empty()); // a
-        assert!(method.backspace_event(&config).is_empty()); // Empty
+        assert!(!method.backspace_event(&data, &config).is_empty()); // a
+        assert!(method.backspace_event(&data, &config).is_empty()); // Empty
     }
 }
