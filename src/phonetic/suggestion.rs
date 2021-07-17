@@ -5,21 +5,25 @@ use edit_distance::edit_distance;
 use okkhor::parser::Parser;
 use std::collections::{hash_map::Entry, HashMap};
 use std::fs::read;
+use regex::Regex;
 
-use super::database::Database;
 use crate::config::{Config, get_phonetic_method_defaults};
 use crate::data::Data;
+use crate::phonetic::regex::parse;
 use crate::utility::{push_checked, split_string, Utility};
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) suggestions: Vec<String>,
-    pub(crate) database: Database,
     // Phonetic buffer. It's used to avoid allocations
     // for phonetic conversion every time.
     pbuffer: String,
+    // Regex buffer. It's used to avoid allocations
+    // for regex conversion every time.
+    regex: String,
     // Cache for storing dictionary searches.
     cache: HashMap<String, Vec<String>, RandomState>,
     phonetic: Parser,
+    table: HashMap<&'static str, Vec<&'static str>, RandomState>,
     // Auto Correct caches.
     corrects: HashMap<String, String>,
     // The user's auto-correct entries.
@@ -36,13 +40,45 @@ impl PhoneticSuggestion {
                 HashMap::with_hasher(RandomState::new())
             };
         
+        let table = vec![
+            ("a", vec!["a", "aa", "e", "oi", "o", "nya", "y"]),
+            ("b", vec!["b", "bh"]),
+            ("c", vec!["c", "ch", "k"]),
+            ("d", vec!["d", "dh", "dd", "ddh"]),
+            ("e", vec!["i", "ii", "e", "y"]),
+            ("f", vec!["ph"]),
+            ("g", vec!["g", "gh", "j"]),
+            ("h", vec!["h"]),
+            ("i", vec!["i", "ii", "y"]),
+            ("j", vec!["j", "jh", "z"]),
+            ("k", vec!["k", "kh"]),
+            ("l", vec!["l"]),
+            ("m", vec!["h", "m"]),
+            ("n", vec!["n", "nya", "nga", "nn"]),
+            ("o", vec!["a", "u", "uu", "oi", "o", "ou", "y"]),
+            ("p", vec!["p", "ph"]),
+            ("q", vec!["k"]),
+            ("r", vec!["rri", "h", "r", "rr", "rrh"]),
+            ("s", vec!["s", "sh", "ss"]),
+            ("t", vec!["t", "th", "tt", "tth", "khandatta"]),
+            ("u", vec!["u", "uu", "y"]),
+            ("v", vec!["bh"]),
+            ("w", vec!["o"]),
+            ("x", vec!["e", "k"]),
+            ("y", vec!["i", "y"]),
+            ("z", vec!["h", "j", "jh", "z"]),
+        ]
+        .into_iter()
+        .collect();
+        
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
-            database: Database::new_with_config(config),
             pbuffer: String::with_capacity(60),
+            regex: String::with_capacity(1024),
             cache: HashMap::with_capacity_and_hasher(20, RandomState::new()),
             phonetic: Parser::new_phonetic(),
             corrects: HashMap::with_capacity(10),
+            table,
             user_autocorrect,
         }
     }
@@ -197,7 +233,7 @@ impl PhoneticSuggestion {
                 suggestions.push(corrected);
             }
 
-            suggestions.append(&mut self.database.search_dictionary(splitted_string.1));
+            self.include_from_dictionary(splitted_string.1, &mut suggestions, &data);
             // Add the suggestions into the cache.
             self.cache
                 .insert(splitted_string.1.to_string(), suggestions);
@@ -289,6 +325,18 @@ impl PhoneticSuggestion {
             .unwrap_or_default()
     }
 
+    /// Find words from the dictionary with given word.
+    pub(crate) fn include_from_dictionary(&mut self, word: &str, suggestions: &mut Vec<String>, data: &Data) {
+        // Build the Regex string.
+        parse(word, &mut self.regex);
+        let rgx = Regex::new(&self.regex).unwrap();
+
+        suggestions.extend(self.table
+            .get(word.get(0..1).unwrap_or_default())
+            .unwrap_or(&Vec::new())
+            .iter()
+            .flat_map(|&item| data.get_words_for(item).filter(|i| rgx.is_match(i)).cloned()));
+    }
 
     /// Search for a `term` in AutoCorrect dictionary.
     ///
@@ -306,13 +354,8 @@ impl Default for PhoneticSuggestion {
     fn default() -> Self {
         let config = get_phonetic_method_defaults();
         PhoneticSuggestion {
-            suggestions: Vec::with_capacity(10),
-            database: Database::new_with_config(&config),
-            pbuffer: String::with_capacity(60),
-            cache: HashMap::with_hasher(RandomState::new()),
-            phonetic: Parser::new_phonetic(),
-            corrects: HashMap::new(),
             user_autocorrect: HashMap::with_hasher(RandomState::new()),
+            ..PhoneticSuggestion::new(&config)
         }
     }
 }
@@ -596,6 +639,24 @@ mod tests {
         let (suggestions, _) = suggestion.suggest("6t``", &data, &mut selections, &config);
         assert_eq!(suggestions, ["৬ৎ"]);
     }
+
+    #[test]
+    fn test_database() {
+        let config = get_phonetic_method_defaults();
+        let mut suggestion = PhoneticSuggestion::default();
+        let data = Data::new(&config);
+        let mut suggestions = Vec::new();
+
+        suggestion.include_from_dictionary("a", &mut suggestions, &data);
+        assert_eq!(
+            suggestions,
+            ["অ্যা", "অ্যাঁ", "আ", "আঃ", "া", "এ",]
+        );
+        suggestions.clear();
+
+        suggestion.include_from_dictionary("(", &mut suggestions, &data);
+        assert_eq!(suggestions, Vec::<String>::new());
+    }
 }
 
 #[cfg(feature = "bench")]
@@ -603,8 +664,8 @@ mod benches {
     extern crate test;
 
     use super::PhoneticSuggestion;
-    use crate::utility::split_string;
-    use test::Bencher;
+    use crate::{data::Data, utility::split_string, config::get_phonetic_method_defaults};
+    use test::{black_box, Bencher};
 
     #[bench]
     fn bench_phonetic_a(b: &mut Bencher) {
@@ -642,6 +703,42 @@ mod benches {
         b.iter(|| {
             suggestion.cache.clear();
             suggestion.suggestion_with_dict(&term, &data);
+        })
+    }
+
+    #[bench]
+    fn bench_phonetic_database_a(b: &mut Bencher) {
+        let config = get_phonetic_method_defaults();
+        let mut suggestion = PhoneticSuggestion::default();
+        let data = Data::new(&config);
+        b.iter(|| {
+            let mut suggestions = Vec::new();
+            suggestion.include_from_dictionary("a", &mut suggestions, &data);
+            black_box(suggestions);
+        })
+    }
+
+    #[bench]
+    fn bench_phonetic_database_aro(b: &mut Bencher) {
+        let config = get_phonetic_method_defaults();
+        let mut suggestion = PhoneticSuggestion::default();
+        let data = Data::new(&config);
+        b.iter(|| {
+            let mut suggestions = Vec::new();
+            suggestion.include_from_dictionary("arO", &mut suggestions, &data);
+            black_box(suggestions);
+        })
+    }
+
+    #[bench]
+    fn bench_phonetic_database_bistari(b: &mut Bencher) {
+        let config = get_phonetic_method_defaults();
+        let mut suggestion = PhoneticSuggestion::default();
+        let data = Data::new(&config);
+        b.iter(|| {
+            let mut suggestions = Vec::new();
+            suggestion.include_from_dictionary("bistari", &mut suggestions, &data);
+            black_box(suggestions);
         })
     }
 }

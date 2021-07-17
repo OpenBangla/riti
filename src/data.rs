@@ -24,8 +24,8 @@ impl Data {
         }
     }
 
-    pub(crate) fn get_words_for(&self, table: &str) -> impl Iterator<Item = &str> {
-        self.table[table].iter().map(String::as_str)
+    pub(crate) fn get_words_for(&self, table: &str) -> impl Iterator<Item = &String> {
+        self.table[table].iter()
     }
 
     pub(crate) fn find_suffix(&self, string: &str) -> Option<&str> {
