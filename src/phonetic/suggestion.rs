@@ -23,7 +23,7 @@ pub(crate) struct PhoneticSuggestion {
     // Cache for storing dictionary searches.
     cache: HashMap<String, Vec<String>, RandomState>,
     phonetic: Parser,
-    table: HashMap<&'static str, Vec<&'static str>, RandomState>,
+    table: HashMap<&'static str, &'static [&'static str], RandomState>,
     // Auto Correct caches.
     corrects: HashMap<String, String>,
     // The user's auto-correct entries.
@@ -40,34 +40,35 @@ impl PhoneticSuggestion {
                 HashMap::with_hasher(RandomState::new())
             };
         
-        let table = vec![
-            ("a", vec!["a", "aa", "e", "oi", "o", "nya", "y"]),
-            ("b", vec!["b", "bh"]),
-            ("c", vec!["c", "ch", "k"]),
-            ("d", vec!["d", "dh", "dd", "ddh"]),
-            ("e", vec!["i", "ii", "e", "y"]),
-            ("f", vec!["ph"]),
-            ("g", vec!["g", "gh", "j"]),
-            ("h", vec!["h"]),
-            ("i", vec!["i", "ii", "y"]),
-            ("j", vec!["j", "jh", "z"]),
-            ("k", vec!["k", "kh"]),
-            ("l", vec!["l"]),
-            ("m", vec!["h", "m"]),
-            ("n", vec!["n", "nya", "nga", "nn"]),
-            ("o", vec!["a", "u", "uu", "oi", "o", "ou", "y"]),
-            ("p", vec!["p", "ph"]),
-            ("q", vec!["k"]),
-            ("r", vec!["rri", "h", "r", "rr", "rrh"]),
-            ("s", vec!["s", "sh", "ss"]),
-            ("t", vec!["t", "th", "tt", "tth", "khandatta"]),
-            ("u", vec!["u", "uu", "y"]),
-            ("v", vec!["bh"]),
-            ("w", vec!["o"]),
-            ("x", vec!["e", "k"]),
-            ("y", vec!["i", "y"]),
-            ("z", vec!["h", "j", "jh", "z"]),
-        ]
+        let table: Vec<(&str, &[&str])> = vec![
+            ("a", &["a", "aa", "e", "oi", "o", "nya", "y"]),
+            ("b", &["b", "bh"]),
+            ("c", &["c", "ch", "k"]),
+            ("d", &["d", "dh", "dd", "ddh"]),
+            ("e", &["i", "ii", "e", "y"]),
+            ("f", &["ph"]),
+            ("g", &["g", "gh", "j"]),
+            ("h", &["h"]),
+            ("i", &["i", "ii", "y"]),
+            ("j", &["j", "jh", "z"]),
+            ("k", &["k", "kh"]),
+            ("l", &["l"]),
+            ("m", &["h", "m"]),
+            ("n", &["n", "nya", "nga", "nn"]),
+            ("o", &["a", "u", "uu", "oi", "o", "ou", "y"]),
+            ("p", &["p", "ph"]),
+            ("q", &["k"]),
+            ("r", &["rri", "h", "r", "rr", "rrh"]),
+            ("s", &["s", "sh", "ss"]),
+            ("t", &["t", "th", "tt", "tth", "khandatta"]),
+            ("u", &["u", "uu", "y"]),
+            ("v", &["bh"]),
+            ("w", &["o"]),
+            ("x", &["e", "k"]),
+            ("y", &["i", "y"]),
+            ("z", &["h", "j", "jh", "z"]),
+        ];
+        let table = table
         .into_iter()
         .collect();
         
@@ -333,7 +334,8 @@ impl PhoneticSuggestion {
 
         suggestions.extend(self.table
             .get(word.get(0..1).unwrap_or_default())
-            .unwrap_or(&Vec::new())
+            .map(|s| *s)
+            .unwrap_or_default()
             .iter()
             .flat_map(|&item| data.get_words_for(item).filter(|i| rgx.is_match(i)).cloned()));
     }
