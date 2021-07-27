@@ -3,7 +3,7 @@ use std::{env::var, fs::read_to_string, path::PathBuf};
 use serde_json::Value;
 
 /// Config struct for configuring RitiContext.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Config {
     layout: String,
     database_dir: PathBuf,
@@ -210,5 +210,54 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
         fixed_old_reph: true,
         fixed_kar_order: false,
         phonetic_suggestion: false,
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            layout: Default::default(),
+            database_dir: Default::default(),
+            user_dir: get_user_data_dir(),
+            include_english: false,
+            fixed_suggestion: false,
+            fixed_vowel: false,
+            fixed_chandra: false,
+            fixed_kar: false,
+            fixed_numpad: false,
+            fixed_old_reph: false,
+            fixed_kar_order: false,
+            phonetic_suggestion: false,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::env::set_var;
+
+    use super::*;
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn test_data_dir_linux() {
+        assert_eq!(
+            get_user_data_dir(),
+            PathBuf::from(var("HOME").unwrap() + "/.local/share/openbangla-keyboard")
+        );
+        set_var("XDG_DATA_HOME", "/non/existent");
+        assert_eq!(
+            get_user_data_dir(),
+            PathBuf::from("/non/existent/openbangla-keyboard")
+        );
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn test_data_dir_windows() {
+        assert_eq!(
+            get_user_data_dir(),
+            PathBuf::from(var("localappdata").unwrap() + "/OpenBangla Keyboard")
+        )
     }
 }
