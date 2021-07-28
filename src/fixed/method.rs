@@ -1,6 +1,7 @@
 use edit_distance::edit_distance;
 
-use super::{chars::*, database::Database, parser::LayoutParser};
+use super::search::search_dictionary;
+use super::{chars::*, parser::LayoutParser};
 use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 use crate::config::{Config, get_fixed_method_defaults};
 use crate::suggestion::Suggestion;
@@ -20,7 +21,6 @@ pub(crate) struct FixedMethod {
     pending_kar: Option<PendingKar>,
     suggestions: Vec<String>,
     parser: LayoutParser,
-    database: Database,
 }
 
 impl Method for FixedMethod {
@@ -99,7 +99,6 @@ impl FixedMethod {
             pending_kar: None,
             suggestions: Vec::with_capacity(10),
             parser,
-            database: Database::new_with_config(config),
         }
     }
 
@@ -119,7 +118,8 @@ impl FixedMethod {
         // Add the user's typed word.
         self.suggestions.push(word.to_string());
         // Add suggestions from the dictionary.
-        let mut suggestions = self.database.search_dictionary(word);
+        let mut suggestions = Vec::new();
+        search_dictionary(word, &mut suggestions, &data);
 
         // Change the Kar joinings if Traditional Kar Joining is set.
         if config.get_fixed_traditional_kar() {
@@ -501,7 +501,6 @@ impl Default for FixedMethod {
             pending_kar: None,
             suggestions: Vec::new(),
             parser,
-            database: Database::new_with_config(&config),
         }
     }
 }
