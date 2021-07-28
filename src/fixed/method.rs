@@ -117,28 +117,9 @@ impl FixedMethod {
 
         // Add the user's typed word.
         self.suggestions.push(word.to_string());
-        // Add suggestions from the dictionary.
-        let mut suggestions = Vec::new();
-        search_dictionary(word, &mut suggestions, &data);
 
-        // Change the Kar joinings if Traditional Kar Joining is set.
-        if config.get_fixed_traditional_kar() {
-            for suggestion in suggestions.iter_mut() {
-                // Check if the word has any of the ligature making Kars.
-                if suggestion.chars().any(is_ligature_making_kar) {
-                    let mut temp = String::with_capacity(suggestion.capacity());
-                    for ch in suggestion.chars() {
-                        if is_ligature_making_kar(ch) {
-                            temp.push(ZWNJ);
-                        }
-                        temp.push(ch);
-                    }
-                    *suggestion = temp;
-                }
-            }
-        }
-
-        self.suggestions.append(&mut suggestions);
+        // Add suggestions from the dictionary while changing the Kar joinings if Traditional Kar Joining is set.
+        search_dictionary(word, &mut self.suggestions, config.get_fixed_traditional_kar(), &data);
 
         // Sort the suggestions.
         self.suggestions
@@ -503,11 +484,6 @@ impl Default for FixedMethod {
             parser,
         }
     }
-}
-
-/// Is the provided `c` is a ligature making Kar?
-fn is_ligature_making_kar(c: char) -> bool {
-    c == B_U_KAR || c == B_UU_KAR || c == B_RRI_KAR
 }
 
 /// Is the provided `c` is a left standing Kar?
