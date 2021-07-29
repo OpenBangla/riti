@@ -28,7 +28,7 @@ impl PhoneticSuggestion {
     pub(crate) fn new(config: &Config) -> Self {
         PhoneticSuggestion {
             suggestions: Vec::with_capacity(10),
-            database: Database::new_with_config(&config),
+            database: Database::new_with_config(config),
             pbuffer: String::with_capacity(60),
             cache: HashMap::with_capacity_and_hasher(20, RandomState::new()),
             phonetic: Parser::new_phonetic(),

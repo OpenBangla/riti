@@ -124,7 +124,7 @@ pub(crate) fn parse(input: &str, output: &mut String) {
                         matched = true;
                         break;
                     } else if find.len() > chunk.len()
-                        || (find.len() == chunk.len() && find.cmp(&chunk) == Ordering::Less)
+                        || (find.len() == chunk.len() && find.cmp(chunk) == Ordering::Less)
                     {
                         left = mid + 1;
                     } else {

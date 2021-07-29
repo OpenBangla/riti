@@ -234,8 +234,6 @@ impl Default for Config {
 
 #[cfg(test)]
 mod tests {
-    use std::env::set_var;
-
     use super::*;
 
     #[test]
@@ -245,7 +243,7 @@ mod tests {
             get_user_data_dir(),
             PathBuf::from(var("HOME").unwrap() + "/.local/share/openbangla-keyboard")
         );
-        set_var("XDG_DATA_HOME", "/non/existent");
+        std::env::set_var("XDG_DATA_HOME", "/non/existent");
         assert_eq!(
             get_user_data_dir(),
             PathBuf::from("/non/existent/openbangla-keyboard")
