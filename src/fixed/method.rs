@@ -124,7 +124,7 @@ impl FixedMethod {
         // Add the user's typed word.
         self.suggestions.push(word.to_string());
         // Add suggestions from the dictionary.
-        let mut suggestions = self.database.search_dictionary(&word);
+        let mut suggestions = self.database.search_dictionary(word);
 
         // Change the Kar joinings if Traditional Kar Joining is set.
         if config.get_fixed_traditional_kar() {
@@ -147,7 +147,7 @@ impl FixedMethod {
 
         // Sort the suggestions.
         self.suggestions
-            .sort_unstable_by_key(|s| edit_distance(&word, s));
+            .sort_unstable_by_key(|s| edit_distance(word, s));
 
         // Remove the duplicates if present.
         self.suggestions.dedup();
@@ -269,7 +269,7 @@ impl FixedMethod {
                                 });
                             }
                             self.pending_kar = None;
-                            self.process_key_value(&value, config);
+                            self.process_key_value(value, config);
                             return;
                         }
                     }
