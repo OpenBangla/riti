@@ -19,9 +19,10 @@ pub(crate) struct LayoutParser {
 }
 
 impl LayoutParser {
-    pub(crate) fn new(layout: Value) -> Self {
-        let layout = serde_json::from_value(layout).unwrap();
-        LayoutParser { layout }
+    pub(crate) fn parse(json_value: Value) -> Option<Self> {
+        serde_json::from_value(json_value)
+            .map(|layout| LayoutParser { layout })
+            .ok()
     }
 
     fn layout_get_value(&self, key: &str, modifier: LayoutModifiers) -> Option<String> {
@@ -202,17 +203,18 @@ impl fmt::Display for LayoutModifiers {
 
 #[cfg(test)]
 mod tests {
-    use super::{LayoutModifiers, LayoutParser};    
+    use super::{LayoutModifiers, LayoutParser};
     use crate::keycodes::*;
-    use serde_json::{self, Value};
+    use serde_json::Value;
 
     #[test]
     fn test_key_bindings() {
         // Load the layout
-        let layout =
-            serde_json::from_str::<Value>(include_str!("../../data/Probhat.json")).unwrap();
-        let layout = layout.get("layout").unwrap().to_owned();
-        let parser = LayoutParser::new(layout);
+        let parser = serde_json::from_str::<Value>(include_str!("../../data/Probhat.json"))
+            .ok()
+            .and_then(|v| v.get("layout").cloned())
+            .and_then(LayoutParser::parse)
+            .unwrap();
         let fixed_numpad = true;
 
         assert_eq!(
@@ -277,10 +279,11 @@ mod tests {
     #[test]
     fn test_all_keys() {
         // Load the layout
-        let layout =
-            serde_json::from_str::<Value>(include_str!("../../data/Probhat.json")).unwrap();
-        let layout = layout.get("layout").unwrap().to_owned();
-        let parser = LayoutParser::new(layout);
+        let parser = serde_json::from_str::<Value>(include_str!("../../data/Probhat.json"))
+            .ok()
+            .and_then(|v| v.get("layout").cloned())
+            .and_then(LayoutParser::parse)
+            .unwrap();
         let fixed_numpad = true;
 
         assert!(parser

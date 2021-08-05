@@ -90,8 +90,7 @@ impl Method for FixedMethod {
 impl FixedMethod {
     /// Creates a new instance of `FixedMethod` with the given layout.
     pub(crate) fn new(config: &Config) -> Self {
-        let layout = config.get_layout().unwrap();
-        let parser = LayoutParser::new(layout);
+        let parser = config.get_layout().and_then(LayoutParser::parse).unwrap();
 
         FixedMethod {
             buffer: String::with_capacity(20 * 3), // A Bengali character is 3 bytes in size.
@@ -473,8 +472,7 @@ impl FixedMethod {
 impl Default for FixedMethod {
     fn default() -> Self {
         let config = get_fixed_method_defaults();
-        let layout = config.get_layout().unwrap();
-        let parser = LayoutParser::new(layout);
+        let parser = config.get_layout().and_then(LayoutParser::parse).unwrap();
 
         FixedMethod {
             buffer: String::new(),
