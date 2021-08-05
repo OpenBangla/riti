@@ -1,11 +1,12 @@
 // Fixed keyboard layout parser.
 
-use serde_json::{Map, Value};
+use std::collections::HashMap;
 use std::fmt;
 
-use crate::keycodes::*;
 use crate::config::Config;
+use crate::keycodes::*;
 use crate::utility::Modifiers;
+use serde_json::Value;
 use LayoutModifiers::*;
 
 #[derive(Debug, PartialEq)]
@@ -15,31 +16,27 @@ pub(crate) enum LayoutModifiers {
 }
 
 pub(crate) struct LayoutParser {
-    layout: Map<String, Value>,
+    layout: HashMap<String, String>,
 }
 
 impl LayoutParser {
-    pub(crate) fn new(layout: &Value) -> Self {
-        let layout = layout.as_object().unwrap().clone();
+    pub(crate) fn new(layout: Value) -> Self {
+        let layout = serde_json::from_value(layout).unwrap();
         LayoutParser { layout }
     }
 
     fn layout_get_value(&self, key: &str, modifier: LayoutModifiers) -> Option<String> {
         self.layout
             .get(&format!("Key_{}_{}", key, modifier))
-            .unwrap()
-            .as_str()
-            .map(|s| s.to_string())
             .filter(|s| !s.is_empty())
+            .cloned()
     }
 
     fn layout_get_value_numpad(&self, key: &str, config: &Config) -> Option<String> {
         self.layout
             .get(key)
-            .unwrap()
-            .as_str()
-            .map(|s| s.to_string())
             .filter(|s| config.get_fixed_numpad() && !s.is_empty())
+            .cloned()
     }
 
     pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers, config: &Config) -> Option<String> {
@@ -216,7 +213,7 @@ mod tests {
         // Load the layout
         let layout =
             serde_json::from_str::<Value>(include_str!("../../data/Probhat.json")).unwrap();
-        let layout = layout.get("layout").unwrap();
+        let layout = layout.get("layout").unwrap().to_owned();
         let parser = LayoutParser::new(layout);
         let config = get_fixed_method_defaults();
 
@@ -284,7 +281,7 @@ mod tests {
         // Load the layout
         let layout =
             serde_json::from_str::<Value>(include_str!("../../data/Probhat.json")).unwrap();
-        let layout = layout.get("layout").unwrap();
+        let layout = layout.get("layout").unwrap().to_owned();
         let parser = LayoutParser::new(layout);
         let config = get_fixed_method_defaults();
 
