@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::config::Config;
 use crate::keycodes::*;
 use crate::utility::Modifiers;
 use serde_json::Value;
@@ -32,14 +31,14 @@ impl LayoutParser {
             .cloned()
     }
 
-    fn layout_get_value_numpad(&self, key: &str, config: &Config) -> Option<String> {
+    fn layout_get_value_numpad(&self, key: &str, fixed_numpad: bool) -> Option<String> {
         self.layout
             .get(key)
-            .filter(|s| config.get_fixed_numpad() && !s.is_empty())
+            .filter(|s| fixed_numpad && !s.is_empty())
             .cloned()
     }
 
-    pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers, config: &Config) -> Option<String> {
+    pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers, fixed_numpad: bool) -> Option<String> {
         match (key, modifier) {
             // Numerics
             (VC_0, modifier) => self.layout_get_value("0", modifier),
@@ -162,21 +161,21 @@ impl LayoutParser {
             (VC_QUESTION, modifier) => self.layout_get_value("Question", modifier),
 
             // NumPad
-            (VC_KP_0, _) => self.layout_get_value_numpad("Num0", config),
-            (VC_KP_1, _) => self.layout_get_value_numpad("Num1", config),
-            (VC_KP_2, _) => self.layout_get_value_numpad("Num2", config),
-            (VC_KP_3, _) => self.layout_get_value_numpad("Num3", config),
-            (VC_KP_4, _) => self.layout_get_value_numpad("Num4", config),
-            (VC_KP_5, _) => self.layout_get_value_numpad("Num5", config),
-            (VC_KP_6, _) => self.layout_get_value_numpad("Num6", config),
-            (VC_KP_7, _) => self.layout_get_value_numpad("Num7", config),
-            (VC_KP_8, _) => self.layout_get_value_numpad("Num8", config),
-            (VC_KP_9, _) => self.layout_get_value_numpad("Num9", config),
-            (VC_KP_DIVIDE, _) => self.layout_get_value_numpad("NumDivide", config),
-            (VC_KP_MULTIPLY, _) => self.layout_get_value_numpad("NumMultiply", config),
-            (VC_KP_SUBTRACT, _) => self.layout_get_value_numpad("NumSubtract", config),
-            (VC_KP_ADD, _) => self.layout_get_value_numpad("NumAdd", config),
-            (VC_KP_DECIMAL, _) => self.layout_get_value_numpad("NumDecimal", config),
+            (VC_KP_0, _) => self.layout_get_value_numpad("Num0", fixed_numpad),
+            (VC_KP_1, _) => self.layout_get_value_numpad("Num1", fixed_numpad),
+            (VC_KP_2, _) => self.layout_get_value_numpad("Num2", fixed_numpad),
+            (VC_KP_3, _) => self.layout_get_value_numpad("Num3", fixed_numpad),
+            (VC_KP_4, _) => self.layout_get_value_numpad("Num4", fixed_numpad),
+            (VC_KP_5, _) => self.layout_get_value_numpad("Num5", fixed_numpad),
+            (VC_KP_6, _) => self.layout_get_value_numpad("Num6", fixed_numpad),
+            (VC_KP_7, _) => self.layout_get_value_numpad("Num7", fixed_numpad),
+            (VC_KP_8, _) => self.layout_get_value_numpad("Num8", fixed_numpad),
+            (VC_KP_9, _) => self.layout_get_value_numpad("Num9", fixed_numpad),
+            (VC_KP_DIVIDE, _) => self.layout_get_value_numpad("NumDivide", fixed_numpad),
+            (VC_KP_MULTIPLY, _) => self.layout_get_value_numpad("NumMultiply", fixed_numpad),
+            (VC_KP_SUBTRACT, _) => self.layout_get_value_numpad("NumSubtract", fixed_numpad),
+            (VC_KP_ADD, _) => self.layout_get_value_numpad("NumAdd", fixed_numpad),
+            (VC_KP_DECIMAL, _) => self.layout_get_value_numpad("NumDecimal", fixed_numpad),
 
             _ => None,
         }
@@ -203,8 +202,7 @@ impl fmt::Display for LayoutModifiers {
 
 #[cfg(test)]
 mod tests {
-    use super::{LayoutModifiers, LayoutParser};
-    use crate::config::get_fixed_method_defaults;
+    use super::{LayoutModifiers, LayoutParser};    
     use crate::keycodes::*;
     use serde_json::{self, Value};
 
@@ -215,49 +213,49 @@ mod tests {
             serde_json::from_str::<Value>(include_str!("../../data/Probhat.json")).unwrap();
         let layout = layout.get("layout").unwrap().to_owned();
         let parser = LayoutParser::new(layout);
-        let config = get_fixed_method_defaults();
+        let fixed_numpad = true;
 
         assert_eq!(
-            parser.get_char_for_key(VC_A, LayoutModifiers::Normal, &config),
+            parser.get_char_for_key(VC_A, LayoutModifiers::Normal, fixed_numpad),
             Some("া".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_A_SHIFT, LayoutModifiers::Normal, &config),
+            parser.get_char_for_key(VC_A_SHIFT, LayoutModifiers::Normal, fixed_numpad),
             Some("অ".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_A, LayoutModifiers::AltGr, &config),
+            parser.get_char_for_key(VC_A, LayoutModifiers::AltGr, fixed_numpad),
             Some("ঌ".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_A_SHIFT, LayoutModifiers::AltGr, &config),
+            parser.get_char_for_key(VC_A_SHIFT, LayoutModifiers::AltGr, fixed_numpad),
             Some("ৠ".to_string())
         );
 
         assert_eq!(
-            parser.get_char_for_key(VC_4, LayoutModifiers::Normal, &config),
+            parser.get_char_for_key(VC_4, LayoutModifiers::Normal, fixed_numpad),
             Some("৪".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_4, LayoutModifiers::AltGr, &config),
+            parser.get_char_for_key(VC_4, LayoutModifiers::AltGr, fixed_numpad),
             Some("৷".to_string())
         );
 
         assert_eq!(
-            parser.get_char_for_key(VC_DOLLAR, LayoutModifiers::Normal, &config),
+            parser.get_char_for_key(VC_DOLLAR, LayoutModifiers::Normal, fixed_numpad),
             Some("৳".to_string())
         );
         assert_eq!(
-            parser.get_char_for_key(VC_DOLLAR, LayoutModifiers::AltGr, &config),
+            parser.get_char_for_key(VC_DOLLAR, LayoutModifiers::AltGr, fixed_numpad),
             Some("৲".to_string())
         );
 
         assert_eq!(
-            parser.get_char_for_key(VC_BACK_SLASH, LayoutModifiers::Normal, &config),
+            parser.get_char_for_key(VC_BACK_SLASH, LayoutModifiers::Normal, fixed_numpad),
             Some("‌".to_string())
         ); // ZWNJ
         assert_eq!(
-            parser.get_char_for_key(VC_BAR, LayoutModifiers::Normal, &config),
+            parser.get_char_for_key(VC_BAR, LayoutModifiers::Normal, fixed_numpad),
             Some("॥".to_string())
         );
     }
@@ -283,661 +281,661 @@ mod tests {
             serde_json::from_str::<Value>(include_str!("../../data/Probhat.json")).unwrap();
         let layout = layout.get("layout").unwrap().to_owned();
         let parser = LayoutParser::new(layout);
-        let config = get_fixed_method_defaults();
+        let fixed_numpad = true;
 
         assert!(parser
-            .get_char_for_key(VC_GRAVE, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_GRAVE, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_GRAVE, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_GRAVE, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_TILDE, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_TILDE, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_TILDE, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_TILDE, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_1, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_1, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_1, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_1, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_2, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_2, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_2, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_2, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_3, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_3, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_3, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_3, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_4, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_4, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_4, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_4, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_5, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_5, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_5, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_5, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_6, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_6, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_6, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_6, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_7, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_7, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_7, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_7, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_8, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_8, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_8, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_8, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_9, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_9, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_9, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_9, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_0, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_0, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_0, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_0, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_EXCLAIM, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_EXCLAIM, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_EXCLAIM, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_EXCLAIM, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_AT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_AT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_AT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_AT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_HASH, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_HASH, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_HASH, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_HASH, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_DOLLAR, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_DOLLAR, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_DOLLAR, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_DOLLAR, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PERCENT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_PERCENT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PERCENT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_PERCENT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_CIRCUM, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_CIRCUM, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_CIRCUM, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_CIRCUM, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_AMPERSAND, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_AMPERSAND, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_AMPERSAND, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_AMPERSAND, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_ASTERISK, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_ASTERISK, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_ASTERISK, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_ASTERISK, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PAREN_LEFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_PAREN_LEFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PAREN_LEFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_PAREN_LEFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PAREN_RIGHT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_PAREN_RIGHT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PAREN_RIGHT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_PAREN_RIGHT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_UNDERSCORE, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_UNDERSCORE, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_UNDERSCORE, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_UNDERSCORE, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PLUS, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_PLUS, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PLUS, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_PLUS, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_MINUS, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_MINUS, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_MINUS, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_MINUS, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_EQUALS, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_EQUALS, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_EQUALS, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_EQUALS, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_A, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_A, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_A, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_A, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_B, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_B, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_B, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_B, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_C, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_C, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_C, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_C, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_D, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_D, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_D, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_D, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_E, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_E, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_E, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_E, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_F, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_F, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_F, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_F, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_G, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_G, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_G, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_G, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_H, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_H, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_H, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_H, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_I, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_I, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_I, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_I, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_J, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_J, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_J, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_J, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_K, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_K, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_K, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_K, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_L, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_L, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_L, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_L, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_M, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_M, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_M, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_M, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_N, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_N, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_N, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_N, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_O, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_O, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_O, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_O, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_P, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_P, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_P, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_P, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Q, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_Q, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Q, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_Q, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_R, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_R, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_R, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_R, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_S, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_S, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_S, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_S, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_T, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_T, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_T, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_T, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_U, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_U, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_U, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_U, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_V, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_V, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_V, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_V, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_W, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_W, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_W, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_W, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_X, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_X, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_X, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_X, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Y, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_Y, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Y, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_Y, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Z, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_Z, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Z, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_Z, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_A_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_A_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_A_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_A_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_B_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_B_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_B_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_B_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_C_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_C_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_C_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_C_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_D_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_D_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_D_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_D_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_E_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_E_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_E_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_E_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_F_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_F_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_F_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_F_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_G_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_G_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_G_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_G_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_H_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_H_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_H_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_H_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_I_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_I_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_I_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_I_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_J_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_J_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_J_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_J_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_K_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_K_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_K_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_K_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_L_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_L_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_L_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_L_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_M_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_M_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_M_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_M_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_N_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_N_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_N_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_N_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_O_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_O_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_O_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_O_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_P_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_P_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_P_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_P_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Q_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_Q_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Q_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_Q_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_R_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_R_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_R_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_R_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_S_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_S_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_S_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_S_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_T_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_T_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_T_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_T_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_U_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_U_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_U_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_U_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_V_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_V_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_V_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_V_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_W_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_W_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_W_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_W_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_X_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_X_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_X_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_X_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Y_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_Y_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Y_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_Y_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Z_SHIFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_Z_SHIFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_Z_SHIFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_Z_SHIFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BRACKET_LEFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_BRACKET_LEFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BRACKET_LEFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_BRACKET_LEFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BRACKET_RIGHT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_BRACKET_RIGHT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BRACKET_RIGHT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_BRACKET_RIGHT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BACK_SLASH, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_BACK_SLASH, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BACK_SLASH, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_BACK_SLASH, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BRACE_LEFT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_BRACE_LEFT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BRACE_LEFT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_BRACE_LEFT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BRACE_RIGHT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_BRACE_RIGHT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BRACE_RIGHT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_BRACE_RIGHT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BAR, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_BAR, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_BAR, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_BAR, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_SEMICOLON, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_SEMICOLON, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_SEMICOLON, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_SEMICOLON, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_APOSTROPHE, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_APOSTROPHE, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_APOSTROPHE, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_APOSTROPHE, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_COMMA, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_COMMA, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_COMMA, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_COMMA, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PERIOD, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_PERIOD, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_PERIOD, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_PERIOD, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_SLASH, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_SLASH, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_SLASH, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_SLASH, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_COLON, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_COLON, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_COLON, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_COLON, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_QUOTE, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_QUOTE, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_QUOTE, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_QUOTE, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_LESS, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_LESS, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_LESS, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_LESS, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_GREATER, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_GREATER, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_GREATER, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_GREATER, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_QUESTION, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_QUESTION, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_QUESTION, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_QUESTION, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_DIVIDE, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_DIVIDE, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_DIVIDE, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_DIVIDE, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_MULTIPLY, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_MULTIPLY, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_MULTIPLY, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_MULTIPLY, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_SUBTRACT, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_SUBTRACT, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_SUBTRACT, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_SUBTRACT, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_ADD, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_ADD, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_ADD, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_ADD, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_DECIMAL, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_DECIMAL, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_DECIMAL, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_DECIMAL, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_1, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_1, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_1, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_1, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_2, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_2, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_2, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_2, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_3, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_3, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_3, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_3, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_4, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_4, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_4, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_4, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_5, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_5, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_5, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_5, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_6, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_6, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_6, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_6, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_7, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_7, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_7, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_7, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_8, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_8, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_8, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_8, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_9, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_9, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_9, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_9, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_0, LayoutModifiers::Normal, &config)
+            .get_char_for_key(VC_KP_0, LayoutModifiers::Normal, fixed_numpad)
             .is_some());
         assert!(parser
-            .get_char_for_key(VC_KP_0, LayoutModifiers::AltGr, &config)
+            .get_char_for_key(VC_KP_0, LayoutModifiers::AltGr, fixed_numpad)
             .is_some());
     }
 }

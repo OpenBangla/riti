@@ -27,7 +27,7 @@ impl Method for FixedMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8, data: &Data, config: &Config) -> Suggestion {
         let modifier = get_modifiers(modifier);
 
-        if let Some(value) = self.parser.get_char_for_key(key, modifier.into(), config) {
+        if let Some(value) = self.parser.get_char_for_key(key, modifier.into(), config.get_fixed_numpad()) {
             self.process_key_value(&value, config);
         } else {
             return self.current_suggestion(config);
