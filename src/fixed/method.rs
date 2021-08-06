@@ -1,7 +1,7 @@
 use edit_distance::edit_distance;
 
 use super::search::search_dictionary;
-use super::{chars::*, parser::LayoutParser};
+use super::{chars::*, layout::Layout};
 use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 use crate::config::{Config, get_fixed_method_defaults};
 use crate::suggestion::Suggestion;
@@ -20,14 +20,14 @@ pub(crate) struct FixedMethod {
     typed: String,
     pending_kar: Option<PendingKar>,
     suggestions: Vec<String>,
-    parser: LayoutParser,
+    layout: Layout,
 }
 
 impl Method for FixedMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8, data: &Data, config: &Config) -> Suggestion {
         let modifier = get_modifiers(modifier);
 
-        if let Some(value) = self.parser.get_char_for_key(key, modifier.into(), config.get_fixed_numpad()) {
+        if let Some(value) = self.layout.get_char_for_key(key, modifier.into(), config.get_fixed_numpad()) {
             self.process_key_value(&value, config);
         } else {
             return self.current_suggestion(config);
@@ -90,14 +90,14 @@ impl Method for FixedMethod {
 impl FixedMethod {
     /// Creates a new instance of `FixedMethod` with the given layout.
     pub(crate) fn new(config: &Config) -> Self {
-        let parser = config.get_layout().and_then(LayoutParser::parse).unwrap();
+        let layout = config.get_layout().and_then(Layout::parse).unwrap();
 
         FixedMethod {
             buffer: String::with_capacity(20 * 3), // A Bengali character is 3 bytes in size.
             typed: String::with_capacity(20),
             pending_kar: None,
             suggestions: Vec::with_capacity(10),
-            parser,
+            layout,
         }
     }
 
@@ -472,14 +472,14 @@ impl FixedMethod {
 impl Default for FixedMethod {
     fn default() -> Self {
         let config = get_fixed_method_defaults();
-        let parser = config.get_layout().and_then(LayoutParser::parse).unwrap();
+        let layout = config.get_layout().and_then(Layout::parse).unwrap();
 
         FixedMethod {
             buffer: String::new(),
             typed: String::new(),
             pending_kar: None,
             suggestions: Vec::new(),
-            parser,
+            layout,
         }
     }
 }
