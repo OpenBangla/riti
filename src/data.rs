@@ -5,6 +5,7 @@ use emojicon::{Emojicon, BengaliEmoji};
 
 use crate::config::Config;
 
+/// Data which is shared between the methods.
 pub(crate) struct Data {
     table: HashMap<String, Vec<String>, RandomState>,
     suffix: HashMap<String, String, RandomState>,
