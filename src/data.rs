@@ -53,6 +53,7 @@ impl Data {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::Data;
     use crate::config::get_phonetic_method_defaults;
