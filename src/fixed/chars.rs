@@ -152,3 +152,8 @@ pub(crate) const B_CURRENCYGANDA: char = '\u{09FB}';
 /* Unicode Addition */
 pub(crate) const ZWJ: char = '\u{200D}';
 pub(crate) const ZWNJ: char = '\u{200C}';
+
+/// Is the provided `c` is a ligature making Kar?
+pub(crate) fn is_ligature_making_kar(c: char) -> bool {
+    c == B_U_KAR || c == B_UU_KAR || c == B_RRI_KAR
+}

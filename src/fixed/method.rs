@@ -1,8 +1,8 @@
 use edit_distance::edit_distance;
-use emojicon::{Emojicon, BengaliEmoji};
 
-use super::{chars::*, database::Database, parser::LayoutParser};
-use crate::{context::Method, keycodes::keycode_to_char};
+use super::search::search_dictionary;
+use super::{chars::*, parser::LayoutParser};
+use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 use crate::config::{Config, get_fixed_method_defaults};
 use crate::suggestion::Suggestion;
 use crate::utility::{get_modifiers, split_string, Utility};
@@ -21,13 +21,10 @@ pub(crate) struct FixedMethod {
     pending_kar: Option<PendingKar>,
     suggestions: Vec<String>,
     parser: LayoutParser,
-    database: Database,
-    emojicon: Emojicon,
-    emojis: BengaliEmoji,
 }
 
 impl Method for FixedMethod {
-    fn get_suggestion(&mut self, key: u16, modifier: u8, config: &Config) -> Suggestion {
+    fn get_suggestion(&mut self, key: u16, modifier: u8, data: &Data, config: &Config) -> Suggestion {
         let modifier = get_modifiers(modifier);
 
         if let Some(value) = self.parser.get_char_for_key(key, modifier.into(), config) {
@@ -40,7 +37,7 @@ impl Method for FixedMethod {
             self.typed.push(keycode_to_char(key));
         }
 
-        self.create_suggestion(config)
+        self.create_suggestion(data, config)
     }
 
     fn candidate_committed(&mut self, _index: usize, _: &Config) {
@@ -63,7 +60,7 @@ impl Method for FixedMethod {
         self.pending_kar = None;
     }
 
-    fn backspace_event(&mut self, config: &Config) -> Suggestion {
+    fn backspace_event(&mut self, data: &Data, config: &Config) -> Suggestion {
         if self.pending_kar.is_some() {
             // Clear pending_kar.
             self.pending_kar = None;
@@ -71,7 +68,7 @@ impl Method for FixedMethod {
             if self.buffer.is_empty() {
                 return Suggestion::empty();
             }
-            return self.create_suggestion(config);
+            return self.create_suggestion(data, config);
         }
         if !self.buffer.is_empty() {
             // Remove the last character from buffer.
@@ -83,7 +80,7 @@ impl Method for FixedMethod {
                 return Suggestion::empty();
             }
 
-            self.create_suggestion(config)
+            self.create_suggestion(data, config)
         } else {
             Suggestion::empty()
         }
@@ -102,48 +99,27 @@ impl FixedMethod {
             pending_kar: None,
             suggestions: Vec::with_capacity(10),
             parser,
-            database: Database::new_with_config(config),
-            emojicon: Emojicon::new(),
-            emojis: BengaliEmoji::new(),
         }
     }
 
-    fn create_suggestion(&mut self, config: &Config) -> Suggestion {
+    fn create_suggestion(&mut self, data: &Data, config: &Config) -> Suggestion {
         if config.get_fixed_suggestion() {
-            self.create_dictionary_suggestion(config)
+            self.create_dictionary_suggestion(data, config)
         } else {
             Suggestion::new_lonely(self.buffer.clone())
         }
     }
 
-    fn create_dictionary_suggestion(&mut self, config: &Config) -> Suggestion {
+    fn create_dictionary_suggestion(&mut self, data: &Data, config: &Config) -> Suggestion {
         let (first_part, word, last_part) = split_string(&self.buffer, true);
 
         self.suggestions.clear();
 
         // Add the user's typed word.
         self.suggestions.push(word.to_string());
-        // Add suggestions from the dictionary.
-        let mut suggestions = self.database.search_dictionary(word);
 
-        // Change the Kar joinings if Traditional Kar Joining is set.
-        if config.get_fixed_traditional_kar() {
-            for suggestion in suggestions.iter_mut() {
-                // Check if the word has any of the ligature making Kars.
-                if suggestion.chars().any(is_ligature_making_kar) {
-                    let mut temp = String::with_capacity(suggestion.capacity());
-                    for ch in suggestion.chars() {
-                        if is_ligature_making_kar(ch) {
-                            temp.push(ZWNJ);
-                        }
-                        temp.push(ch);
-                    }
-                    *suggestion = temp;
-                }
-            }
-        }
-
-        self.suggestions.append(&mut suggestions);
+        // Add suggestions from the dictionary while changing the Kar joinings if Traditional Kar Joining is set.
+        search_dictionary(word, &mut self.suggestions, config.get_fixed_traditional_kar(), &data);
 
         // Sort the suggestions.
         self.suggestions
@@ -160,9 +136,9 @@ impl FixedMethod {
         }
 
         // Emoji addition with Emoticons.
-        if let Some(emoji) = self.emojicon.get_by_emoticon(&self.typed) {
+        if let Some(emoji) = data.get_emoji_by_emoticon(&self.typed) {
             self.suggestions.push(emoji.to_owned());
-        } else if let Some(emojis) = self.emojis.get(word) {
+        } else if let Some(emojis) = data.get_emoji_by_bengali(word) {
             // Emoji addition with it's Bengali name.
             // Add preceding and trailing meta characters.
             let emojis = emojis.map(|s| format!("{}{}{}", first_part, s, last_part));
@@ -506,16 +482,8 @@ impl Default for FixedMethod {
             pending_kar: None,
             suggestions: Vec::new(),
             parser,
-            database: Database::new_with_config(&config),
-            emojicon: Emojicon::new(),
-            emojis: BengaliEmoji::new(),
         }
     }
-}
-
-/// Is the provided `c` is a ligature making Kar?
-fn is_ligature_making_kar(c: char) -> bool {
-    c == B_U_KAR || c == B_UU_KAR || c == B_RRI_KAR
 }
 
 /// Is the provided `c` is a left standing Kar?
@@ -526,7 +494,7 @@ fn is_left_standing_kar(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::FixedMethod;
-    use crate::{context::Method, keycodes::{VC_A, VC_I, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_SEMICOLON}};
+    use crate::{context::Method, data::Data, keycodes::{VC_A, VC_I, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_SEMICOLON}};
     use crate::fixed::chars::*;
     use crate::config::get_fixed_method_defaults;
 
@@ -534,35 +502,36 @@ mod tests {
     fn test_suggestions() {
         let mut method = FixedMethod::default();
         let config = get_fixed_method_defaults();
+        let data = Data::new(&config);
 
         method.buffer = "[".to_string();
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["["]
         );
 
         method.buffer = "[আমি]".to_string();
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["[আমি]", "[আমিন]", "[আমির]", "[আমিষ]"]
         );
 
         method.buffer = "আমি:".to_string();
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["আমি:", "আমিন:", "আমির:", "আমিষ:"]
         );
 
         method.buffer = "আমি।".to_string();
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["আমি।", "আমিন।", "আমির।", "আমিষ।"]
         );
 
         // User written word should be the first one.
         method.buffer = "কম্পিউ".to_string();
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["কম্পিউ", "কম্পিউটার", "কম্পিউটিং", "কম্পিউটেশন", "কম্পিউটার্স"]
         );
     }
@@ -571,17 +540,18 @@ mod tests {
     fn test_suggestions_with_english_word() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
+        let data = Data::new(&config);
         config.set_suggestion_include_english(true);
 
-        method.get_suggestion(VC_A, 0, &config);
-        method.get_suggestion(VC_M, 0, &config);
-        method.get_suggestion(VC_I, 0, &config);
+        method.get_suggestion(VC_A, 0, &data, &config);
+        method.get_suggestion(VC_M, 0, &data, &config);
+        method.get_suggestion(VC_I, 0, &data, &config);
         assert_eq!(method.typed, "ami");
         assert_eq!(method.current_suggestion(&config).get_suggestions(), ["আমি", "আমিন", "আমির", "আমিষ", "ami"]);
         method.finish_input_session();
 
-        method.get_suggestion(VC_PAREN_LEFT, 0, &config);
-        method.get_suggestion(VC_PAREN_RIGHT, 0, &config);
+        method.get_suggestion(VC_PAREN_LEFT, 0, &data, &config);
+        method.get_suggestion(VC_PAREN_RIGHT, 0, &data, &config);
         assert_eq!(method.current_suggestion(&config).get_suggestions(), ["()"]);
     }
 
@@ -589,19 +559,20 @@ mod tests {
     fn test_emojis() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
+        let data = Data::new(&config);
         config.set_fixed_traditional_kar(false);
 
-        method.get_suggestion(VC_SEMICOLON, 0, &config);
-        let suggestion = method.get_suggestion(VC_PAREN_RIGHT, 0, &config);
+        method.get_suggestion(VC_SEMICOLON, 0, &data, &config);
+        let suggestion = method.get_suggestion(VC_PAREN_RIGHT, 0, &data, &config);
         method.finish_input_session();
         assert_eq!(suggestion.get_suggestions(), [";)", "😉"]);
 
 
         method.buffer = "হাসি".to_owned();
-        assert_eq!(method.create_dictionary_suggestion(&config).get_suggestions(), ["হাসি", "হাসিত", "😀", "😁", "😃", "😄", "হাসিব", "হাসিল", "হাসিস"]);
+        assert_eq!(method.create_dictionary_suggestion(&data, &config).get_suggestions(), ["হাসি", "হাসিত", "😀", "😁", "😃", "😄", "হাসিব", "হাসিল", "হাসিস"]);
 
         method.buffer = "{লজ্জা}".to_owned();
-        assert_eq!(method.create_dictionary_suggestion(&config).get_suggestions(), ["{লজ্জা}", "{লজ্জালু}", "{😳}", "{লজ্জাকর}", "{লজ্জানত}", "{লজ্জাজনক}", "{লজ্জাহীন}", "{লজ্জাশরম}", "{লজ্জাবান}"]);
+        assert_eq!(method.create_dictionary_suggestion(&data, &config).get_suggestions(), ["{লজ্জা}", "{লজ্জালু}", "{😳}", "{লজ্জাকর}", "{লজ্জানত}", "{লজ্জাজনক}", "{লজ্জাহীন}", "{লজ্জাশরম}", "{লজ্জাবান}"]);
     }
 
     #[test]
@@ -613,11 +584,12 @@ mod tests {
         };
 
         let mut config = get_fixed_method_defaults();
+        let data = Data::new(&config);
         config.set_fixed_suggestion(false);
 
-        assert!(!method.backspace_event(&config).is_empty()); // আম
-        assert!(!method.backspace_event(&config).is_empty()); // আ
-        assert!(method.backspace_event(&config).is_empty()); // Empty
+        assert!(!method.backspace_event(&data, &config).is_empty()); // আম
+        assert!(!method.backspace_event(&data, &config).is_empty()); // আ
+        assert!(method.backspace_event(&data, &config).is_empty()); // Empty
         assert!(method.buffer.is_empty());
         assert!(method.typed.is_empty());
     }
@@ -738,13 +710,14 @@ mod tests {
     fn test_suggestion_traditional_kar() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
+        let data = Data::new(&config);
 
         /* With Traditional Kar Joining */
         method.process_key_value("হ", &config);
         method.process_key_value("ৃ", &config);
         method.process_key_value("দ", &config);
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["হ‌ৃদ", "হ‌ৃদি", "হ‌ৃদয়"]
         );
         method.buffer.clear();
@@ -754,7 +727,7 @@ mod tests {
         method.process_key_value("ল", &config);
         method.process_key_value("া", &config);
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["হ‌ুলা", "হ‌ুলানো", "হ‌ুলাহ‌ুলি"]
         );
         method.buffer.clear();
@@ -762,7 +735,7 @@ mod tests {
         method.process_key_value("র", &config);
         method.process_key_value("ূ", &config);
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["র‌ূ", "র‌ূপ", "র‌ূহ"]
         );
         method.buffer.clear();
@@ -774,7 +747,7 @@ mod tests {
         method.process_key_value("ৃ", &config);
         method.process_key_value("দ", &config);
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["হৃদ", "হৃদি", "হৃদয়"]
         );
         method.buffer.clear();
@@ -784,7 +757,7 @@ mod tests {
         method.process_key_value("ল", &config);
         method.process_key_value("া", &config);
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["হুলা", "হুলানো", "হুলাহুলি"]
         );
         method.buffer.clear();
@@ -792,7 +765,7 @@ mod tests {
         method.process_key_value("র", &config);
         method.process_key_value("ূ", &config);
         assert_eq!(
-            method.create_dictionary_suggestion(&config).get_suggestions(),
+            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
             ["রূ", "রূপ", "রূহ"]
         );
         method.buffer.clear();
@@ -802,6 +775,7 @@ mod tests {
     fn test_old_kar_order() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
+        let data = Data::new(&config);
         config.set_fixed_old_kar_order(true);
 
         method.buffer = "".to_string();
@@ -837,17 +811,17 @@ mod tests {
         // Backspace
         method.buffer = "".to_string();
         method.process_key_value("ে", &config);
-        assert!(method.backspace_event(&config).is_empty());
+        assert!(method.backspace_event(&data, &config).is_empty());
         assert!(method.buffer.is_empty());
         assert!(method.typed.is_empty());
 
         method.buffer = "ক".to_string();
         method.process_key_value("ি", &config);
-        assert!(!method.backspace_event(&config).is_empty());
+        assert!(!method.backspace_event(&data, &config).is_empty());
         assert_eq!(method.buffer, "ক".to_string());
 
         method.buffer = "ক".to_string();
-        assert!(method.backspace_event(&config).is_empty());
+        assert!(method.backspace_event(&data, &config).is_empty());
         assert!(method.buffer.is_empty());
         assert!(method.typed.is_empty());
 

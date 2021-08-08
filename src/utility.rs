@@ -1,3 +1,5 @@
+use std::{fs::File, io::Read};
+
 use crate::context::{MODIFIER_ALT_GR, MODIFIER_SHIFT};
 
 /// Some utility functions which we implement on the `char` type.
@@ -85,6 +87,16 @@ pub(crate) fn split_string(input: &str, include_colon: bool) -> (&str, &str, &st
     let (middle_part, last_part) = rest.split_at(last_index);
 
     (first_part, middle_part, last_part)
+}
+
+/// Read the entire contents of a file into a bytes vector.
+///
+/// Optimized to allocate the required amount of capacity beforehand.
+pub(crate) fn read(file: &mut File) -> Vec<u8> {
+    let len = file.metadata().map(|m| m.len() + 1).unwrap();
+    let mut buf = Vec::with_capacity(len as usize);
+    file.read_to_end(&mut buf).unwrap();
+    buf
 }
 
 #[cfg(test)]

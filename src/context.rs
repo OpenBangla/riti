@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::{config::Config, fixed::method::FixedMethod};
+use crate::{config::Config, data::Data, fixed::method::FixedMethod};
 use crate::phonetic::method::PhoneticMethod;
 use crate::suggestion::Suggestion;
 
@@ -8,19 +8,21 @@ use crate::suggestion::Suggestion;
 pub struct RitiContext {
     method: RefCell<Box<dyn Method>>,
     config: Config,
+    data: Data,
 }
 
 impl RitiContext {
     /// A new `RitiContext` instance.
     pub fn new_with_config(config: &Config) -> Self {
         let config = config.to_owned();
+        let data = Data::new(&config);
         let method = RefCell::new(<dyn Method>::new(&config));
-        RitiContext { method, config }
+        RitiContext { method, config, data }
     }
 
     /// Get suggestion for key.
     pub fn get_suggestion_for_key(&self, key: u16, modifier: u8) -> Suggestion {
-        self.method.borrow_mut().get_suggestion(key, modifier, &self.config)
+        self.method.borrow_mut().get_suggestion(key, modifier, &self.data, &self.config)
     }
 
     /// A candidate of the suggestion list was committed.
@@ -63,17 +65,17 @@ impl RitiContext {
     /// If the internal buffer becomes empty, this function will
     /// end the ongoing input session.
     pub fn backspace_event(&self) -> Suggestion {
-        self.method.borrow_mut().backspace_event(&self.config)
+        self.method.borrow_mut().backspace_event(&self.data, &self.config)
     }
 }
 
 pub(crate) trait Method {
-    fn get_suggestion(&mut self, key: u16, modifier: u8, config: &Config) -> Suggestion;
+    fn get_suggestion(&mut self, key: u16, modifier: u8, data: &Data, config: &Config) -> Suggestion;
     fn candidate_committed(&mut self, index: usize, config: &Config);
     fn update_engine(&mut self, config: &Config);
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);
-    fn backspace_event(&mut self, config: &Config) -> Suggestion;
+    fn backspace_event(&mut self, data: &Data, config: &Config) -> Suggestion;
 }
 
 impl dyn Method {
