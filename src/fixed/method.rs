@@ -118,7 +118,7 @@ impl FixedMethod {
         self.suggestions.push(word.to_string());
 
         // Add suggestions from the dictionary while changing the Kar joinings if Traditional Kar Joining is set.
-        search_dictionary(word, &mut self.suggestions, config.get_fixed_traditional_kar(), &data);
+        search_dictionary(word, &mut self.suggestions, config.get_fixed_traditional_kar(), data);
 
         // Sort the suggestions.
         self.suggestions
