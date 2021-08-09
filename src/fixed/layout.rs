@@ -14,7 +14,7 @@ pub(crate) enum LayoutModifiers {
     AltGr,
 }
 
-/// A Fized Layout
+/// A Fixed Layout
 /// 
 /// Provides the character for a specific input key combination.
 /// Initiated by parsing a fixed method layout file(JSON formatted)
