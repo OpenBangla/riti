@@ -210,7 +210,7 @@ impl PhoneticSuggestion {
             self.suggestions.push(term.to_string());
         }
 
-        let selection = self.get_prev_selection(&splitted_string, &data, selections);
+        let selection = self.get_prev_selection(&splitted_string, data, selections);
 
         (self.suggestions.clone(), selection)
     }
@@ -234,7 +234,7 @@ impl PhoneticSuggestion {
                 suggestions.push(corrected);
             }
 
-            self.include_from_dictionary(splitted_string.1, &mut suggestions, &data);
+            self.include_from_dictionary(splitted_string.1, &mut suggestions, data);
             // Add the suggestions into the cache.
             self.cache
                 .insert(splitted_string.1.to_string(), suggestions);
@@ -334,7 +334,7 @@ impl PhoneticSuggestion {
 
         suggestions.extend(self.table
             .get(word.get(0..1).unwrap_or_default())
-            .map(|s| *s)
+            .copied()
             .unwrap_or_default()
             .iter()
             .flat_map(|&item| data.get_words_for(item).filter(|i| rgx.is_match(i)).cloned()));

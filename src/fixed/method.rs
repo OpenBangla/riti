@@ -1,7 +1,7 @@
 use edit_distance::edit_distance;
 
 use super::search::search_dictionary;
-use super::{chars::*, parser::LayoutParser};
+use super::{chars::*, layout::Layout};
 use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 use crate::config::{Config, get_fixed_method_defaults};
 use crate::suggestion::Suggestion;
@@ -20,14 +20,14 @@ pub(crate) struct FixedMethod {
     typed: String,
     pending_kar: Option<PendingKar>,
     suggestions: Vec<String>,
-    parser: LayoutParser,
+    layout: Layout,
 }
 
 impl Method for FixedMethod {
     fn get_suggestion(&mut self, key: u16, modifier: u8, data: &Data, config: &Config) -> Suggestion {
         let modifier = get_modifiers(modifier);
 
-        if let Some(value) = self.parser.get_char_for_key(key, modifier.into(), config) {
+        if let Some(value) = self.layout.get_char_for_key(key, modifier.into(), config.get_fixed_numpad()) {
             self.process_key_value(&value, config);
         } else {
             return self.current_suggestion(config);
@@ -90,15 +90,14 @@ impl Method for FixedMethod {
 impl FixedMethod {
     /// Creates a new instance of `FixedMethod` with the given layout.
     pub(crate) fn new(config: &Config) -> Self {
-        let layout = config.get_layout().unwrap();
-        let parser = LayoutParser::new(&layout);
+        let layout = config.get_layout().and_then(Layout::parse).unwrap();
 
         FixedMethod {
             buffer: String::with_capacity(20 * 3), // A Bengali character is 3 bytes in size.
             typed: String::with_capacity(20),
             pending_kar: None,
             suggestions: Vec::with_capacity(10),
-            parser,
+            layout,
         }
     }
 
@@ -119,7 +118,7 @@ impl FixedMethod {
         self.suggestions.push(word.to_string());
 
         // Add suggestions from the dictionary while changing the Kar joinings if Traditional Kar Joining is set.
-        search_dictionary(word, &mut self.suggestions, config.get_fixed_traditional_kar(), &data);
+        search_dictionary(word, &mut self.suggestions, config.get_fixed_traditional_kar(), data);
 
         // Sort the suggestions.
         self.suggestions
@@ -382,7 +381,7 @@ impl FixedMethod {
         self.buffer.push_str(value);
     }
 
-    /// Checks if the Reph is moveable by the Reph insertion algorithm.  
+    /// Checks if the Reph is moveable by the Reph insertion algorithm.
     fn is_reph_moveable(&self) -> bool {
         let mut buf_chars = self.buffer.chars().rev();
         let right_most = buf_chars.next().unwrap();
@@ -473,15 +472,14 @@ impl FixedMethod {
 impl Default for FixedMethod {
     fn default() -> Self {
         let config = get_fixed_method_defaults();
-        let layout = config.get_layout().unwrap();
-        let parser = LayoutParser::new(&layout);
+        let layout = config.get_layout().and_then(Layout::parse).unwrap();
 
         FixedMethod {
             buffer: String::new(),
             typed: String::new(),
             pending_kar: None,
             suggestions: Vec::new(),
-            parser,
+            layout,
         }
     }
 }
