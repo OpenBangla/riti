@@ -1,11 +1,11 @@
 // Phonetic Method
-use std::collections::HashMap;
-use std::fs::{File, write};
-use std::time::SystemTime;
 use ahash::RandomState;
+use std::collections::HashMap;
+use std::fs::{write, File};
+use std::time::SystemTime;
 
+use crate::config::Config;
 use crate::context::Method;
-use crate::config::{Config, get_phonetic_method_defaults};
 use crate::data::Data;
 use crate::keycodes::keycode_to_char;
 use crate::phonetic::suggestion::PhoneticSuggestion;
@@ -17,7 +17,7 @@ pub(crate) struct PhoneticMethod {
     suggestion: PhoneticSuggestion,
     // Candidate selections.
     selections: HashMap<String, String, RandomState>,
-    // Last modification of the candidate selections file.
+    // Last modification of the user's auto correct file.
     modified: SystemTime,
     // Previously selected candidate index of the current suggestion list.
     prev_selection: usize,
@@ -26,19 +26,31 @@ pub(crate) struct PhoneticMethod {
 impl PhoneticMethod {
     /// Creates a new `PhoneticMethod` struct.
     pub(crate) fn new(config: &Config) -> Self {
-        let (modified, selections) = {
-            if let Ok(mut file) = File::open(config.get_user_phonetic_selection_data()) {
+        // Load candidate selections file.
+        let selections = if let Ok(file) = std::fs::read(config.get_user_phonetic_selection_data())
+        {
+            serde_json::from_slice(&file).unwrap()
+        } else {
+            HashMap::with_hasher(RandomState::new())
+        };
+
+        // Load user's auto correct file.
+        let (modified, autocorrect) = {
+            if let Ok(mut file) = File::open(config.get_user_phonetic_autocorrect()) {
                 let modified = file.metadata().unwrap().modified().unwrap();
-                let selections = serde_json::from_slice(&read(&mut file)).unwrap();
-                (modified, selections)
+                let autocorrect = serde_json::from_slice(&read(&mut file)).unwrap();
+                (modified, autocorrect)
             } else {
-                (SystemTime::UNIX_EPOCH, HashMap::with_hasher(RandomState::new()))
+                (
+                    SystemTime::UNIX_EPOCH,
+                    HashMap::with_hasher(RandomState::new()),
+                )
             }
         };
 
         PhoneticMethod {
             buffer: String::with_capacity(20),
-            suggestion: PhoneticSuggestion::new(config),
+            suggestion: PhoneticSuggestion::new(autocorrect),
             selections,
             modified,
             prev_selection: 0,
@@ -49,7 +61,8 @@ impl PhoneticMethod {
     fn create_suggestion(&mut self, data: &Data, config: &Config) -> Suggestion {
         if config.get_phonetic_suggestion() {
             let (suggestions, selection) =
-                self.suggestion.suggest(&self.buffer, data, &mut self.selections, config);
+                self.suggestion
+                    .suggest(&self.buffer, data, &mut self.selections, config);
 
             self.prev_selection = selection;
 
@@ -63,7 +76,13 @@ impl PhoneticMethod {
 }
 
 impl Method for PhoneticMethod {
-    fn get_suggestion(&mut self, key: u16, _modifier: u8, data: &Data, config: &Config) -> Suggestion {
+    fn get_suggestion(
+        &mut self,
+        key: u16,
+        _modifier: u8,
+        data: &Data,
+        config: &Config,
+    ) -> Suggestion {
         self.buffer.push(keycode_to_char(key));
         self.create_suggestion(data, config)
     }
@@ -90,12 +109,13 @@ impl Method for PhoneticMethod {
     fn update_engine(&mut self, config: &Config) {
         if let Ok(mut file) = File::open(config.get_user_phonetic_autocorrect()) {
             let modified = file.metadata().unwrap().modified().unwrap();
-            // Update the selections if only the file was modified in the meantime.
+            // Update the auto correct entries if only the file was modified in the meantime.
             if modified > self.modified {
-                self.suggestion.user_autocorrect = serde_json::from_slice(&read(&mut file)).unwrap();
+                self.suggestion.user_autocorrect =
+                    serde_json::from_slice(&read(&mut file)).unwrap();
                 self.modified = modified;
             }
-        } 
+        }
     }
 
     fn ongoing_input_session(&self) -> bool {
@@ -126,11 +146,9 @@ impl Method for PhoneticMethod {
 // Implement Default trait on PhoneticMethod for testing convenience.
 impl Default for PhoneticMethod {
     fn default() -> Self {
-        let config = get_phonetic_method_defaults();
-
         PhoneticMethod {
             buffer: String::new(),
-            suggestion: PhoneticSuggestion::new(&config),
+            suggestion: PhoneticSuggestion::new(HashMap::with_hasher(RandomState::new())),
             selections: HashMap::with_hasher(RandomState::new()),
             modified: SystemTime::UNIX_EPOCH,
             prev_selection: 0,
@@ -141,8 +159,8 @@ impl Default for PhoneticMethod {
 #[cfg(test)]
 mod tests {
     use super::PhoneticMethod;
-    use crate::context::Method;
     use crate::config::get_phonetic_method_defaults;
+    use crate::context::Method;
     use crate::data::Data;
 
     #[test]
