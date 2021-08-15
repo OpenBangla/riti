@@ -9,7 +9,7 @@ pub struct Suggestion {
     auxiliary: String,
     // Suggestion is of two variants, the 'normal' one includes a list of suggestion and
     // the 'lonely' one is just a String.
-    suggestion: Either<Vec<String>, String>,
+    suggestion: Either<Vec<Rank>, String>,
     // Index of the previously selected suggestion.
     selection: usize,
 }
@@ -22,7 +22,7 @@ impl Suggestion {
     /// `suggestions`: Vector of suggestions.
     ///
     /// `selection`: Index of the previously selected suggestion.
-    pub fn new(auxiliary: String, suggestions: Vec<String>, selection: usize) -> Self {
+    pub fn new(auxiliary: String, suggestions: Vec<Rank>, selection: usize) -> Self {
         Suggestion {
             auxiliary,
             suggestion: Either::Left(suggestions),
@@ -67,9 +67,9 @@ impl Suggestion {
         }
     }
 
-    /// Get the suggestions as a slice.
-    pub fn get_suggestions(&self) -> &[String] {
-        self.suggestion.as_ref().left().unwrap()
+    /// Get the suggestions as an iterator.
+    pub fn get_suggestions(&self) -> impl Iterator<Item = &str> {
+        self.suggestion.as_ref().left().unwrap().iter().map(|r| r.to_string())
     }
 
     /// Get the only suggestion of the *lonely* `Suggestion`.
@@ -93,8 +93,8 @@ impl Suggestion {
     }
 }
 
-#[derive(Debug)]
-enum Rank {
+#[derive(Clone, Debug)]
+pub enum Rank {
     First(String),
     Emoji(String, u8),
     Other(String, u8),
@@ -102,6 +102,7 @@ enum Rank {
 }
 
 impl Rank {
+    /// Returns the suggestion item.
     pub(crate) fn to_string(&self) -> &str {
         match self {
             Rank::First(s) => s,
@@ -111,21 +112,42 @@ impl Rank {
         }
     }
 
+    /// A first ranked suggestion.
     pub(crate) fn first_ranked(item: String) -> Self {
         Rank::First(item)
     }
 
+    /// A suggestion with a ranking calculated according to the `base` word.
+    ///
+    /// Uses edit distance to rank the `item`. 
     pub(crate) fn new_suggestion(item: String, base: &str) -> Self {
         let distance = edit_distance(base, &item) * 10;
         Rank::Other(item, distance as u8)
     }
 
-    pub(crate) fn new_emoji(item: String) -> Self {
+    /// An Emoji suggestion.
+    pub(crate) fn emoji(item: String) -> Self {
         Rank::Emoji(item, 1)
     }
 
+    /// An Emoji suggestion with custom ranking.
+    pub(crate) fn emoji_ranked(item: String, rank: u8) -> Self {
+        Rank::Emoji(item, rank)
+    }
+
+    /// A suggestion with a low `rank` ranking. 
     pub(crate) fn last_ranked(item: String, rank: u8) -> Self {
         Rank::Last(item, rank)
+    }
+
+    /// Gives a mutable reference of the Rank's item.
+    pub(crate) fn change_item(&mut self) -> &mut String {
+        match self {
+            Rank::First(s) => s,
+            Rank::Emoji(s, _) => s,
+            Rank::Other(s, _) => s,
+            Rank::Last(s, _) => s,
+        }
     }
 }
 
@@ -198,12 +220,12 @@ mod tests {
     #[test]
     fn test_ranked_sort() {
         let mut suggestion: Vec<Rank> = ["ফইড়ে", "ফীরে", "ফিরে"].iter().map(|&s| Rank::new_suggestion(s.to_owned(), "ফিরে")).collect();
-        suggestion.push(Rank::new_emoji("🔥".to_owned()));
+        suggestion.push(Rank::emoji("🔥".to_owned()));
         suggestion.sort_unstable();
         assert_eq!(suggestion, ["ফিরে", "🔥", "ফীরে", "ফইড়ে"]);
 
         suggestion = ["অ্যা", "অ্যাঁ", "আ", "আঃ", "া", "এ"].iter().map(|&s| Rank::new_suggestion(s.to_owned(), "আ")).collect();
-        suggestion.push(Rank::new_emoji("🅰️".to_owned()));
+        suggestion.push(Rank::emoji("🅰️".to_owned()));
         suggestion.sort_unstable();
         assert_eq!(suggestion, ["আ", "🅰️", "আঃ", "া", "এ", "অ্যা", "অ্যাঁ"]);
     }
