@@ -211,7 +211,7 @@ impl FixedMethod {
                             _ => None,
                         };
                         return;
-                    } else if rmc == B_E_KAR && (character == B_AA_KAR || character == B_OI_KAR) {
+                    } else if rmc == B_E_KAR && (character == B_AA_KAR || character == B_OU_KAR) {
                         // Join two-part dependent vowel signs.
                         self.buffer.pop();
                         match character {
@@ -784,6 +784,10 @@ mod tests {
         method.buffer = "তে".to_string();
         method.process_key_value("া", &config);
         assert_eq!(method.buffer, "তো".to_string());
+
+        method.buffer = "মে".to_string();
+        method.process_key_value(&B_OU_KAR.to_string(), &config);
+        assert_eq!(method.buffer, "মৌ".to_string());
 
         method.buffer = "মে".to_string();
         method.process_key_value("ৗ", &config);
