@@ -463,7 +463,8 @@ mod tests {
                 "খ্যাঁটর",
             ]
         );
-/*
+
+        /* TODO: Fix this
         suggestion.suggest("kkhetre", &data, &mut selections, &config);
         assert_eq!(
             suggestion.suggestions,
