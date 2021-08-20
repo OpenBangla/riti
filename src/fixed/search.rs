@@ -1,12 +1,13 @@
 use regex::Regex;
 
 use super::chars::is_ligature_making_kar;
-use crate::{data::Data, fixed::chars::ZWNJ};
+use crate::{data::Data, fixed::chars::ZWNJ, suggestion::Rank};
 
-/// Find words from the dictionary `data` with given word and append them in the `suggestions`.
+/// Find words from the dictionary `data` with given word, rank them according to the `base` word and append them in the `suggestions`.
 pub(crate) fn search_dictionary(
     word: &str,
-    suggestions: &mut Vec<String>,
+    base: &str,
+    suggestions: &mut Vec<Rank>,
     traditional_kar: bool,
     data: &Data,
 ) {
@@ -94,7 +95,7 @@ pub(crate) fn search_dictionary(
     if traditional_kar {
         suggestions.extend(words.map(|w| {
             // Check if the word has any of the ligature making Kars.
-            if w.chars().any(is_ligature_making_kar) {
+            let word = if w.chars().any(is_ligature_making_kar) {
                 let mut temp = String::with_capacity(w.capacity());
                 for ch in w.chars() {
                     if is_ligature_making_kar(ch) {
@@ -105,10 +106,12 @@ pub(crate) fn search_dictionary(
                 temp
             } else {
                 w.clone()
-            }
+            };
+
+            Rank::new_suggestion(word, base)
         }));
     } else {
-        suggestions.extend(words.cloned());
+        suggestions.extend(words.map(|s| Rank::new_suggestion(s.clone(), base)));
     }
 }
 
@@ -122,7 +125,7 @@ fn clean_string(string: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{clean_string, search_dictionary};
-    use crate::{config::get_fixed_method_defaults, data::Data};
+    use crate::{config::get_fixed_method_defaults, data::Data, suggestion::Rank};
 
     #[test]
     fn test_database() {
@@ -130,20 +133,20 @@ mod tests {
         let data = Data::new(&config);
         let mut suggestion = Vec::new();
 
-        search_dictionary("ই", &mut suggestion, false, &data);
+        search_dictionary("ই", "", &mut suggestion, false, &data);
         assert_eq!(suggestion, ["ই"]);
         suggestion.clear();
 
-        search_dictionary("আমা", &mut suggestion, false, &data);
+        search_dictionary("আমা", "", &mut suggestion, false, &data);
         assert_eq!(suggestion, ["আমা", "আমান", "আমার", "আমায়"]);
         suggestion.clear();
 
-        search_dictionary("খ(১", &mut suggestion, false, &data);
-        assert_eq!(suggestion, Vec::<String>::new());
+        search_dictionary("খ(১", "", &mut suggestion, false, &data);
+        assert_eq!(suggestion, Vec::<Rank>::new());
         suggestion.clear();
 
-        search_dictionary("1", &mut suggestion, false, &data);
-        assert_eq!(suggestion, Vec::<String>::new());
+        search_dictionary("1", "", &mut suggestion, false, &data);
+        assert_eq!(suggestion, Vec::<Rank>::new());
         suggestion.clear();
     }
 
@@ -169,7 +172,7 @@ mod benches {
 
         b.iter(|| {
             let mut suggestions = Vec::new();
-            search_dictionary("আমা", &mut suggestions, false, &data);
+            search_dictionary("আমা", "", &mut suggestions, false, &data);
             black_box(suggestions);
         })
     }
@@ -181,7 +184,7 @@ mod benches {
 
         b.iter(|| {
             let mut suggestions = Vec::new();
-            search_dictionary("কম্পি", &mut suggestions, false, &data);
+            search_dictionary("কম্পি", "", &mut suggestions, false, &data);
             black_box(suggestions);
         })
     }
@@ -193,7 +196,7 @@ mod benches {
 
         b.iter(|| {
             let mut suggestions = Vec::new();
-            search_dictionary("আইনস্", &mut suggestions, false, &data);
+            search_dictionary("আইনস্", "", &mut suggestions, false, &data);
             black_box(suggestions);
         })
     }

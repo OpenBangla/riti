@@ -1,11 +1,9 @@
-use edit_distance::edit_distance;
-
 use super::search::search_dictionary;
 use super::{chars::*, layout::Layout};
-use crate::{context::Method, data::Data, keycodes::keycode_to_char};
-use crate::config::{Config, get_fixed_method_defaults};
-use crate::suggestion::Suggestion;
+use crate::config::{get_fixed_method_defaults, Config};
+use crate::suggestion::{Rank, Suggestion};
 use crate::utility::{get_modifiers, split_string, Utility};
+use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
@@ -19,15 +17,24 @@ pub(crate) struct FixedMethod {
     buffer: String,
     typed: String,
     pending_kar: Option<PendingKar>,
-    suggestions: Vec<String>,
+    suggestions: Vec<Rank>,
     layout: Layout,
 }
 
 impl Method for FixedMethod {
-    fn get_suggestion(&mut self, key: u16, modifier: u8, data: &Data, config: &Config) -> Suggestion {
+    fn get_suggestion(
+        &mut self,
+        key: u16,
+        modifier: u8,
+        data: &Data,
+        config: &Config,
+    ) -> Suggestion {
         let modifier = get_modifiers(modifier);
 
-        if let Some(value) = self.layout.get_char_for_key(key, modifier.into(), config.get_fixed_numpad()) {
+        if let Some(value) =
+            self.layout
+                .get_char_for_key(key, modifier.into(), config.get_fixed_numpad())
+        {
             self.process_key_value(&value, config);
         } else {
             return self.current_suggestion(config);
@@ -115,14 +122,16 @@ impl FixedMethod {
         self.suggestions.clear();
 
         // Add the user's typed word.
-        self.suggestions.push(word.to_string());
+        self.suggestions.push(Rank::first_ranked(word.to_string()));
 
         // Add suggestions from the dictionary while changing the Kar joinings if Traditional Kar Joining is set.
-        search_dictionary(word, &mut self.suggestions, config.get_fixed_traditional_kar(), data);
-
-        // Sort the suggestions.
-        self.suggestions
-            .sort_unstable_by_key(|s| edit_distance(word, s));
+        search_dictionary(
+            word,
+            word,
+            &mut self.suggestions,
+            config.get_fixed_traditional_kar(),
+            data,
+        );
 
         // Remove the duplicates if present.
         self.suggestions.dedup();
@@ -130,32 +139,33 @@ impl FixedMethod {
         // Add preceding and trailing meta characters.
         if !first_part.is_empty() || !last_part.is_empty() {
             for suggestion in self.suggestions.iter_mut() {
-                *suggestion = format!("{}{}{}", first_part, suggestion, last_part);
+                *suggestion.change_item() =
+                    format!("{}{}{}", first_part, suggestion.to_string(), last_part);
             }
         }
 
         // Emoji addition with Emoticons.
         if let Some(emoji) = data.get_emoji_by_emoticon(&self.typed) {
-            self.suggestions.push(emoji.to_owned());
+            self.suggestions.push(Rank::emoji(emoji.to_owned()));
         } else if let Some(emojis) = data.get_emoji_by_bengali(word) {
             // Emoji addition with it's Bengali name.
             // Add preceding and trailing meta characters.
-            let emojis = emojis.map(|s| format!("{}{}{}", first_part, s, last_part));
-            if self.suggestions.len() > 2 {
-                let mut remaining = self.suggestions.split_off(2);
-                self.suggestions.extend(emojis);
-                self.suggestions.append(&mut remaining);
-            } else {
-                self.suggestions.extend(emojis);
-            }
+            let emojis = emojis
+                .zip(1..)
+                .map(|(s, r)| Rank::emoji_ranked(format!("{}{}{}", first_part, s, last_part), r));
+            self.suggestions.extend(emojis);
         }
+
+        // Sort the suggestions.
+        self.suggestions.sort_unstable();
 
         // Reduce the number of suggestions and add the typed english word at the end.
         // Also check that the typed text is not already included (may happen
         // when the control characters are typed).
         if config.get_suggestion_include_english() && self.buffer != self.typed {
             self.suggestions.truncate(8);
-            self.suggestions.push(self.typed.clone());
+            self.suggestions
+                .push(Rank::last_ranked(self.typed.clone(), 1));
         } else {
             self.suggestions.truncate(9);
         }
@@ -492,9 +502,13 @@ fn is_left_standing_kar(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::FixedMethod;
-    use crate::{context::Method, data::Data, keycodes::{VC_A, VC_I, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_SEMICOLON}};
-    use crate::fixed::chars::*;
     use crate::config::get_fixed_method_defaults;
+    use crate::fixed::chars::*;
+    use crate::{
+        context::Method,
+        data::Data,
+        keycodes::{VC_A, VC_I, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_SEMICOLON},
+    };
 
     #[test]
     fn test_suggestions() {
@@ -503,33 +517,26 @@ mod tests {
         let data = Data::new(&config);
 
         method.buffer = "[".to_string();
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["["]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["["]);
 
         method.buffer = "[আমি]".to_string();
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["[আমি]", "[আমিন]", "[আমির]", "[আমিষ]"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["[আমি]", "[আমিন]", "[আমির]", "[আমিষ]"]);
 
         method.buffer = "আমি:".to_string();
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["আমি:", "আমিন:", "আমির:", "আমিষ:"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["আমি:", "আমিন:", "আমির:", "আমিষ:"]);
 
         method.buffer = "আমি।".to_string();
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["আমি।", "আমিন।", "আমির।", "আমিষ।"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["আমি।", "আমিন।", "আমির।", "আমিষ।"]);
 
         // User written word should be the first one.
         method.buffer = "কম্পিউ".to_string();
+        method.create_dictionary_suggestion(&data, &config);
         assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
+            method.suggestions,
             ["কম্পিউ", "কম্পিউটার", "কম্পিউটিং", "কম্পিউটেশন", "কম্পিউটার্স"]
         );
     }
@@ -545,12 +552,12 @@ mod tests {
         method.get_suggestion(VC_M, 0, &data, &config);
         method.get_suggestion(VC_I, 0, &data, &config);
         assert_eq!(method.typed, "ami");
-        assert_eq!(method.current_suggestion(&config).get_suggestions(), ["আমি", "আমিন", "আমির", "আমিষ", "ami"]);
+        assert_eq!(method.suggestions, ["আমি", "আমিন", "আমির", "আমিষ", "ami"]);
         method.finish_input_session();
 
         method.get_suggestion(VC_PAREN_LEFT, 0, &data, &config);
         method.get_suggestion(VC_PAREN_RIGHT, 0, &data, &config);
-        assert_eq!(method.current_suggestion(&config).get_suggestions(), ["()"]);
+        assert_eq!(method.suggestions, ["()"]);
     }
 
     #[test]
@@ -561,16 +568,43 @@ mod tests {
         config.set_fixed_traditional_kar(false);
 
         method.get_suggestion(VC_SEMICOLON, 0, &data, &config);
-        let suggestion = method.get_suggestion(VC_PAREN_RIGHT, 0, &data, &config);
+        method.get_suggestion(VC_PAREN_RIGHT, 0, &data, &config);
+        assert_eq!(method.suggestions, [";)", "😉"]);
         method.finish_input_session();
-        assert_eq!(suggestion.get_suggestions(), [";)", "😉"]);
-
 
         method.buffer = "হাসি".to_owned();
-        assert_eq!(method.create_dictionary_suggestion(&data, &config).get_suggestions(), ["হাসি", "হাসিত", "😀", "😁", "😃", "😄", "হাসিব", "হাসিল", "হাসিস"]);
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(
+            method.suggestions,
+            [
+                "হাসি",
+                "😁",
+                "😄",
+                "😃",
+                "😀",
+                "হাসিল",
+                "হাসিত",
+                "হাসিস",
+                "হাসিব"
+            ]
+        );
 
         method.buffer = "{লজ্জা}".to_owned();
-        assert_eq!(method.create_dictionary_suggestion(&data, &config).get_suggestions(), ["{লজ্জা}", "{লজ্জালু}", "{😳}", "{লজ্জাকর}", "{লজ্জানত}", "{লজ্জাজনক}", "{লজ্জাহীন}", "{লজ্জাশরম}", "{লজ্জাবান}"]);
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(
+            method.suggestions,
+            [
+                "{লজ্জা}",
+                "{😳}",
+                "{লজ্জাকর}",
+                "{লজ্জালু}",
+                "{লজ্জানত}",
+                "{লজ্জাবশত}",
+                "{লজ্জাবান}",
+                "{লজ্জাবোধ}",
+                "{লজ্জাবতী}"
+            ]
+        );
     }
 
     #[test]
@@ -714,28 +748,22 @@ mod tests {
         method.process_key_value("হ", &config);
         method.process_key_value("ৃ", &config);
         method.process_key_value("দ", &config);
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["হ‌ৃদ", "হ‌ৃদি", "হ‌ৃদয়"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["হ‌ৃদ", "হ‌ৃদি", "হ‌ৃদয়"]);
         method.buffer.clear();
 
         method.process_key_value("হ", &config);
         method.process_key_value("ু", &config);
         method.process_key_value("ল", &config);
         method.process_key_value("া", &config);
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["হ‌ুলা", "হ‌ুলানো", "হ‌ুলাহ‌ুলি"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["হ‌ুলা", "হ‌ুলানো", "হ‌ুলাহ‌ুলি"]);
         method.buffer.clear();
 
         method.process_key_value("র", &config);
         method.process_key_value("ূ", &config);
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["র‌ূ", "র‌ূপ", "র‌ূহ"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["র‌ূ", "র‌ূপ", "র‌ূহ"]);
         method.buffer.clear();
 
         /* Without Traditional Kar Joining */
@@ -744,28 +772,22 @@ mod tests {
         method.process_key_value("হ", &config);
         method.process_key_value("ৃ", &config);
         method.process_key_value("দ", &config);
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["হৃদ", "হৃদি", "হৃদয়"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["হৃদ", "হৃদি", "হৃদয়"]);
         method.buffer.clear();
 
         method.process_key_value("হ", &config);
         method.process_key_value("ু", &config);
         method.process_key_value("ল", &config);
         method.process_key_value("া", &config);
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["হুলা", "হুলানো", "হুলাহুলি"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["হুলা", "হুলানো", "হুলাহুলি"]);
         method.buffer.clear();
 
         method.process_key_value("র", &config);
         method.process_key_value("ূ", &config);
-        assert_eq!(
-            method.create_dictionary_suggestion(&data, &config).get_suggestions(),
-            ["রূ", "রূপ", "রূহ"]
-        );
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(method.suggestions, ["রূ", "রূপ", "রূহ"]);
         method.buffer.clear();
     }
 

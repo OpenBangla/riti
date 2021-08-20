@@ -90,7 +90,7 @@ impl Method for PhoneticMethod {
     fn candidate_committed(&mut self, index: usize, config: &Config) {
         // Check if user has selected a different suggestion
         if self.prev_selection != index && config.get_phonetic_suggestion() {
-            let suggestion = split_string(&self.suggestion.suggestions[index], true)
+            let suggestion = split_string(self.suggestion.suggestions[index].to_string(), true)
                 .1
                 .to_string();
             self.selections
