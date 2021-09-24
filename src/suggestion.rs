@@ -1,17 +1,20 @@
-use std::cmp::Ordering;
 use edit_distance::edit_distance;
-use either::Either;
+use std::cmp::Ordering;
 
 /// Suggestions which are intended to be shown by the IM's candidate window.
+/// Suggestion is of two variants, the 'Full' one includes a list of suggestion and
+/// the 'Single' one is just a String.
 #[derive(Debug)]
-pub struct Suggestion {
-    // Auxiliary text
-    auxiliary: String,
-    // Suggestion is of two variants, the 'normal' one includes a list of suggestion and
-    // the 'lonely' one is just a String.
-    suggestion: Either<Vec<Rank>, String>,
-    // Index of the previously selected suggestion.
-    selection: usize,
+pub enum Suggestion {
+    Full {
+        auxiliary: String,
+        suggestions: Vec<Rank>,
+        // Index of the last selected suggestion.
+        selection: usize,
+    },
+    Single {
+        suggestion: String,
+    },
 }
 
 impl Suggestion {
@@ -21,11 +24,11 @@ impl Suggestion {
     ///
     /// `suggestions`: Vector of suggestions.
     ///
-    /// `selection`: Index of the previously selected suggestion.
+    /// `selection`: Index of the last selected suggestion.
     pub fn new(auxiliary: String, suggestions: Vec<Rank>, selection: usize) -> Self {
-        Suggestion {
+        Self::Full {
             auxiliary,
-            suggestion: Either::Left(suggestions),
+            suggestions,
             selection,
         }
     }
@@ -36,19 +39,13 @@ impl Suggestion {
     ///
     /// `suggestion`: The suggestion.
     pub fn new_lonely(suggestion: String) -> Self {
-        Suggestion {
-            auxiliary: String::new(),
-            suggestion: Either::Right(suggestion),
-            selection: 0,
-        }
+        Self::Single { suggestion }
     }
 
     /// Constructs an empty `Suggestion` struct.
     pub fn empty() -> Self {
-        Suggestion {
-            auxiliary: String::new(),
-            suggestion: Either::Right(String::new()),
-            selection: 0,
+        Self::Single {
+            suggestion: String::new(),
         }
     }
 
@@ -56,40 +53,58 @@ impl Suggestion {
     ///
     /// A *lonely* `Suggestion` struct means that the struct has only one suggestion.
     pub fn is_lonely(&self) -> bool {
-        self.suggestion.is_right()
+        match &self {
+            Self::Single { .. } => true,
+            _ => false,
+        }
     }
 
     /// Returns `true` if the `Suggestion` struct is empty.
     pub fn is_empty(&self) -> bool {
-        match &self.suggestion {
-            Either::Left(list) => list.is_empty(),
-            Either::Right(suggestion) => suggestion.is_empty(),
+        match &self {
+            Self::Full { suggestions, .. } => suggestions.is_empty(),
+            Self::Single { suggestion } => suggestion.is_empty(),
         }
     }
 
     /// Get the suggestions as an iterator.
     pub fn get_suggestions(&self) -> impl Iterator<Item = &str> {
-        self.suggestion.as_ref().left().unwrap().iter().map(|r| r.to_string())
+        match &self {
+            Self::Full { suggestions, .. } => suggestions.iter().map(Rank::to_string),
+            _ => panic!(),
+        }
     }
 
     /// Get the only suggestion of the *lonely* `Suggestion`.
     pub fn get_lonely_suggestion(&self) -> &str {
-        self.suggestion.as_ref().right().unwrap()
+        match &self {
+            Self::Single { suggestion } => suggestion,
+            _ => panic!(),
+        }
     }
 
     /// Get the auxiliary text.
     pub fn get_auxiliary_text(&self) -> &str {
-        &self.auxiliary
+        match &self {
+            Self::Full { auxiliary, .. } => auxiliary,
+            _ => panic!(),
+        }
     }
 
     /// Returns index of the suggestion, which was previously selected.
     pub fn previously_selected_index(&self) -> usize {
-        self.selection
+        match &self {
+            Self::Full { selection, .. } => *selection,
+            _ => panic!(),
+        }
     }
 
     /// Get the length of the suggestions contained.
     pub fn len(&self) -> usize {
-        self.suggestion.as_ref().left().unwrap().len()
+        match &self {
+            Self::Full { suggestions, .. } => suggestions.len(),
+            _ => panic!(),
+        }
     }
 }
 
