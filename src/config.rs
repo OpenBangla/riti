@@ -17,6 +17,8 @@ pub struct Config {
     fixed_old_reph: bool,
     fixed_numpad: bool,
     fixed_kar_order: bool,
+    // Output in ANSI encoding
+    ansi: bool,
 }
 
 impl Config {
@@ -55,7 +57,8 @@ impl Config {
     }
 
     pub(crate) fn get_suggestion_include_english(&self) -> bool {
-        self.include_english
+        // Mutually exclusive
+        self.include_english && !self.ansi
     }
 
     pub(crate) fn set_suggestion_include_english(&mut self, include: bool) {
@@ -162,6 +165,16 @@ impl Config {
                 .map(|v| v["layout"].to_owned())
         }
     }
+
+    /// Checks if ANSI encoding is enabled.
+    pub fn get_ansi(&self) -> bool {
+        self.ansi
+    }
+
+    /// Set the ANSI encoding configuration.
+    pub fn set_ansi(&mut self, ansi: bool) {
+        self.ansi = ansi;
+    }
 }
 
 pub(crate) fn get_user_data_dir() -> PathBuf {
@@ -183,17 +196,9 @@ pub(crate) fn get_user_data_dir() -> PathBuf {
 pub(crate) fn get_phonetic_method_defaults() -> Config {
     Config {
         layout: "avro_phonetic".to_owned(),
-        user_dir: get_user_data_dir(),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
-        include_english: false,
         phonetic_suggestion: true,
-        fixed_suggestion: false,
-        fixed_vowel: false,
-        fixed_chandra: false,
-        fixed_kar: false,
-        fixed_numpad: false,
-        fixed_old_reph: false,
-        fixed_kar_order: false,
+        ..Default::default()
     }
 }
 
@@ -202,8 +207,6 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
     Config {
         layout: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
-        user_dir: get_user_data_dir(),
-        include_english: false,
         fixed_suggestion: true,
         fixed_vowel: true,
         fixed_chandra: true,
@@ -211,7 +214,7 @@ pub(crate) fn get_fixed_method_defaults() -> Config {
         fixed_numpad: true,
         fixed_old_reph: true,
         fixed_kar_order: false,
-        phonetic_suggestion: false,
+        ..Default::default()
     }
 }
 
@@ -230,6 +233,7 @@ impl Default for Config {
             fixed_old_reph: false,
             fixed_kar_order: false,
             phonetic_suggestion: false,
+            ansi: false,
         }
     }
 }
@@ -259,5 +263,17 @@ mod tests {
             get_user_data_dir(),
             PathBuf::from(var("localappdata").unwrap() + "/OpenBangla Keyboard")
         )
+    }
+
+    #[test]
+    fn test_mutually_exclusive() {
+        let mut config = Config::default();
+
+        config.set_suggestion_include_english(true);
+        config.set_ansi(false);
+        assert!(config.get_suggestion_include_english());
+
+        config.set_ansi(true);
+        assert!(!config.get_suggestion_include_english());
     }
 }
