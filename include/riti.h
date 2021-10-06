@@ -265,6 +265,8 @@ struct RitiContext;
 
 /*
  Suggestions which are intended to be shown by the IM's candidate window.
+ Suggestion is of two variants, the 'Full' one includes a list of suggestion and
+ the 'Single' one is just a String.
  */
 struct Suggestion;
 
@@ -319,13 +321,10 @@ Suggestion *riti_context_backspace_event(RitiContext *ptr);
 
 void riti_suggestion_free(Suggestion *ptr);
 
-char **riti_suggestion_get_suggestions(const Suggestion *ptr);
-
 /*
- Free the string array `ptr` of `len` length previously allocated by other function.
+ Get the suggestion of the `index` from suggestions.
  */
-void riti_string_array_free(char **ptr,
-                            uintptr_t len);
+char *riti_suggestion_get_suggestion(const Suggestion *ptr, uintptr_t index);
 
 /*
  Get the only suggestion of the *lonely* `Suggestion`.

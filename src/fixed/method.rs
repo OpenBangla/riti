@@ -170,13 +170,13 @@ impl FixedMethod {
             self.suggestions.truncate(9);
         }
 
-        Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
+        Suggestion::new(self.buffer.clone(), &self.suggestions, 0)
     }
 
     fn current_suggestion(&self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
             if config.get_fixed_suggestion() {
-                Suggestion::new(self.buffer.clone(), self.suggestions.clone(), 0)
+                Suggestion::new(self.buffer.clone(), &self.suggestions, 0)
             } else {
                 Suggestion::new_lonely(self.buffer.clone())
             }

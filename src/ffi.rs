@@ -129,47 +129,18 @@ pub extern "C" fn riti_suggestion_free(ptr: *mut Suggestion) {
     }
 }
 
+/// Get the suggestion of the `index` from suggestions.
 #[no_mangle]
-pub extern "C" fn riti_suggestion_get_suggestions(ptr: *const Suggestion) -> *mut *mut c_char {
+pub extern "C" fn riti_suggestion_get_suggestion(ptr: *const Suggestion, index: usize) -> *mut c_char {
     let suggestion = unsafe {
         assert!(!ptr.is_null());
         &*ptr
     };
 
-    let mut res_vec = Vec::with_capacity(suggestion.len());
-
-    for string in suggestion.get_suggestions() {
-        unsafe {
-            res_vec.push(CString::from_vec_unchecked(string.as_bytes().into()).into_raw());
-        }
-    }
-
-    // Shrink capacity close to the length and ensure that it's equal in size.
-    res_vec.shrink_to_fit();
-    assert_eq!(res_vec.capacity(), res_vec.len());
-
-    // Here we leak the memory for giving the ownership.
-    let res = res_vec.as_mut_ptr();
-    std::mem::forget(res_vec);
-    res
-}
-
-/// Free the string array `ptr` of `len` length previously allocated by other function.
-#[no_mangle]
-pub extern "C" fn riti_string_array_free(ptr: *mut *mut c_char, len: usize) {
-    if ptr.is_null() {
-        return;
-    }
+    let string = suggestion.get_suggestions()[index].clone();
 
     unsafe {
-        // Safe because we ensure that the capacity and the length of the vector 
-        // is same while returning a pointer of that vector.
-        let vec = Vec::from_raw_parts(ptr, len, len);
-        
-        // Now reconstitute the values to properly deallocate them.
-        for item in vec {
-            CString::from_raw(item);
-        }
+        CString::from_vec_unchecked(string.into()).into_raw()
     }
 }
 
