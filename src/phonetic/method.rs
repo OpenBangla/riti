@@ -66,7 +66,7 @@ impl PhoneticMethod {
 
             self.prev_selection = selection;
 
-            Suggestion::new(self.buffer.clone(), suggestions, self.prev_selection)
+            Suggestion::new(self.buffer.clone(), &suggestions, self.prev_selection)
         } else {
             let suggestion = self.suggestion.suggest_only_phonetic(&self.buffer);
 

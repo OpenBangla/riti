@@ -8,7 +8,7 @@ use std::cmp::Ordering;
 pub enum Suggestion {
     Full {
         auxiliary: String,
-        suggestions: Vec<Rank>,
+        suggestions: Vec<String>,
         // Index of the last selected suggestion.
         selection: usize,
     },
@@ -25,10 +25,10 @@ impl Suggestion {
     /// `suggestions`: Vector of suggestions.
     ///
     /// `selection`: Index of the last selected suggestion.
-    pub fn new(auxiliary: String, suggestions: Vec<Rank>, selection: usize) -> Self {
+    pub fn new(auxiliary: String, suggestions: &[Rank], selection: usize) -> Self {
         Self::Full {
             auxiliary,
-            suggestions,
+            suggestions: suggestions.iter().map(|r| r.to_string().to_owned()).collect(),
             selection,
         }
     }
@@ -68,9 +68,9 @@ impl Suggestion {
     }
 
     /// Get the suggestions as an iterator.
-    pub fn get_suggestions(&self) -> impl Iterator<Item = &str> {
+    pub fn get_suggestions(&self) -> &[String] {
         match &self {
-            Self::Full { suggestions, .. } => suggestions.iter().map(Rank::to_string),
+            Self::Full { suggestions, .. } => suggestions,
             _ => panic!(),
         }
     }
