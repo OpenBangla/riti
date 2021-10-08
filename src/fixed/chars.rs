@@ -13,6 +13,8 @@
 /* We have changed some Character names according to Bangla language or phonetic equivalent.
  * Actual names are denoted by comments */
 
+#![allow(dead_code)]
+
 /* Various signs */
 pub(crate) const B_SIGN_ANJI: char = '\u{0980}';
 pub(crate) const B_CHANDRA: char = '\u{0981}';

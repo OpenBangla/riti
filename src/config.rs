@@ -179,6 +179,7 @@ pub(crate) fn get_user_data_dir() -> PathBuf {
         .into()
 }
 
+#[cfg(test)]
 pub(crate) fn get_phonetic_method_defaults() -> Config {
     Config {
         layout: "avro_phonetic".to_owned(),
@@ -196,6 +197,7 @@ pub(crate) fn get_phonetic_method_defaults() -> Config {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn get_fixed_method_defaults() -> Config {
     Config {
         layout: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),

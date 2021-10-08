@@ -1,5 +1,4 @@
 #![cfg_attr(feature = "bench", feature(test))]
-#![allow(dead_code)]
 
 pub mod context;
 pub mod config;
