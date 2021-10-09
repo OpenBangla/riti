@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Key codes
 
 // Begin Alphanumeric Zone

@@ -1,6 +1,6 @@
 use super::search::search_dictionary;
 use super::{chars::*, layout::Layout};
-use crate::config::{get_fixed_method_defaults, Config};
+use crate::config::Config;
 use crate::suggestion::{Rank, Suggestion};
 use crate::utility::{get_modifiers, split_string, Utility};
 use crate::{context::Method, data::Data, keycodes::keycode_to_char};
@@ -479,9 +479,10 @@ impl FixedMethod {
 }
 
 // Implement Default trait on FixedMethod for testing convenience.
+#[cfg(test)]
 impl Default for FixedMethod {
     fn default() -> Self {
-        let config = get_fixed_method_defaults();
+        let config = crate::config::get_fixed_method_defaults();
         let layout = config.get_layout().and_then(Layout::parse).unwrap();
 
         FixedMethod {

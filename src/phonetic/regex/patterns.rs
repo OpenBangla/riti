@@ -22,6 +22,7 @@ pub(crate) enum Type {
     Suffix,
 }
 
+#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq)]
 pub(crate) enum Scope {
     Vowel,
