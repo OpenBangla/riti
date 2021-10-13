@@ -8,8 +8,8 @@ use std::collections::HashMap;
 use crate::config::Config;
 use crate::data::Data;
 use crate::phonetic::regex::parse;
-use crate::utility::{push_checked, split_string, Utility};
 use crate::suggestion::Rank;
+use crate::utility::{push_checked, split_string, Utility};
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) suggestions: Vec<Rank>,
@@ -171,13 +171,19 @@ impl PhoneticSuggestion {
         } else if let Some(emojis) = data.get_emoji_by_name(splitted_string.1) {
             // Emoji addition with it's name
             // Add preceding and trailing meta characters.
-            let emojis = emojis.zip(1..).map(|(s, r)| Rank::emoji_ranked(format!("{}{}{}", splitted_string.0, s, splitted_string.2), r));
+            let emojis = emojis.zip(1..).map(|(s, r)| {
+                Rank::emoji_ranked(
+                    format!("{}{}{}", splitted_string.0, s, splitted_string.2),
+                    r,
+                )
+            });
             self.suggestions.extend(emojis);
         }
 
         // Include written English word if the feature is enabled and it is not included already.
         if config.get_suggestion_include_english() && !typed_added {
-            self.suggestions.push(Rank::last_ranked(term.to_string(), 3));
+            self.suggestions
+                .push(Rank::last_ranked(term.to_string(), 3));
         }
 
         // Sort the suggestions.
@@ -219,7 +225,7 @@ impl PhoneticSuggestion {
         }
 
         let suffixed_suggestions = self.add_suffix_to_suggestions(splitted_string.1, data);
- 
+
         // Middle Items: Dictionary suggestions
         for suggestion in suffixed_suggestions {
             push_checked(&mut self.suggestions, suggestion);
@@ -231,7 +237,12 @@ impl PhoneticSuggestion {
         // Add those preceding and trailing meta characters.
         if !splitted_string.0.is_empty() || !splitted_string.2.is_empty() {
             for item in self.suggestions.iter_mut() {
-                *item.change_item() = format!("{}{}{}", splitted_string.0, item.to_string(), splitted_string.2);
+                *item.change_item() = format!(
+                    "{}{}{}",
+                    splitted_string.0,
+                    item.to_string(),
+                    splitted_string.2
+                );
             }
         }
     }
@@ -345,8 +356,8 @@ mod tests {
     use super::PhoneticSuggestion;
     use crate::config::get_phonetic_method_defaults;
     use crate::data::Data;
-    use crate::utility::split_string;
     use crate::suggestion::Rank;
+    use crate::utility::split_string;
 
     #[test]
     fn test_suggestion_with_english() {
@@ -411,7 +422,10 @@ mod tests {
         let data = Data::new(&config);
 
         suggestion.suggest("a", &data, &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["আ", "🅰️","আঃ", "া", "এ", "অ্যা", "অ্যাঁ"]);
+        assert_eq!(
+            suggestion.suggestions,
+            ["আ", "🅰️", "আঃ", "া", "এ", "অ্যা", "অ্যাঁ"]
+        );
 
         suggestion.suggest("as", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["আস", "আশ", "এস", "আঁশ"]);
@@ -514,10 +528,19 @@ mod tests {
         let config = get_phonetic_method_defaults();
         let data = Data::new(&config);
 
-        cache.insert("computer".to_string(), vec![Rank::first_ranked("কম্পিউটার".to_string())]);
+        cache.insert(
+            "computer".to_string(),
+            vec![Rank::first_ranked("কম্পিউটার".to_string())],
+        );
         cache.insert("i".to_string(), vec![Rank::first_ranked("ই".to_string())]);
-        cache.insert("hothat".to_string(), vec![Rank::first_ranked("হঠাৎ".to_string())]);
-        cache.insert("ebong".to_string(), vec![Rank::first_ranked("এবং".to_string())]);
+        cache.insert(
+            "hothat".to_string(),
+            vec![Rank::first_ranked("হঠাৎ".to_string())],
+        );
+        cache.insert(
+            "ebong".to_string(),
+            vec![Rank::first_ranked("এবং".to_string())],
+        );
 
         let mut suggestion = PhoneticSuggestion {
             cache,
@@ -566,14 +589,20 @@ mod tests {
         selections.insert("ebong".to_string(), "এবং".to_string());
 
         // Avoid meta characters
-        suggestion.suggestions = vec![Rank::Other("*অন্ন?!".to_string(), 0), Rank::Other("*অন্য?!".to_string(), 0)];
+        suggestion.suggestions = vec![
+            Rank::Other("*অন্ন?!".to_string(), 0),
+            Rank::Other("*অন্য?!".to_string(), 0),
+        ];
         assert_eq!(
             suggestion.get_prev_selection(&split_string("*onno?!", false), &data, &mut selections),
             1
         );
 
         // With Suffix
-        suggestion.suggestions = vec![Rank::Other("ইএই".to_string(),1), Rank::Other("ইয়েই".to_string(), 2)];
+        suggestion.suggestions = vec![
+            Rank::Other("ইএই".to_string(), 1),
+            Rank::Other("ইয়েই".to_string(), 2),
+        ];
         assert_eq!(
             suggestion.get_prev_selection(&split_string("iei", false), &data, &mut selections),
             1
@@ -589,7 +618,10 @@ mod tests {
             2
         );
 
-        suggestion.suggestions = vec![Rank::Other("এবংমালা".to_string(), 0), Rank::Other("এবঙমালা".to_string(), 0)];
+        suggestion.suggestions = vec![
+            Rank::Other("এবংমালা".to_string(), 0),
+            Rank::Other("এবঙমালা".to_string(), 0),
+        ];
         assert_eq!(
             suggestion.get_prev_selection(
                 &split_string("ebongmala", false),
@@ -600,7 +632,10 @@ mod tests {
         );
 
         // With Suffix + Avoid meta characters
-        suggestion.suggestions = vec![Rank::Other("*অন্নগুলো?!".to_string(), 0), Rank::Other("*অন্যগুলো?!".to_string(), 0)];
+        suggestion.suggestions = vec![
+            Rank::Other("*অন্নগুলো?!".to_string(), 0),
+            Rank::Other("*অন্যগুলো?!".to_string(), 0),
+        ];
         assert_eq!(
             suggestion.get_prev_selection(
                 &split_string("*onnogulo?!", false),
