@@ -352,6 +352,13 @@ impl FixedMethod {
                 return;
             }
 
+            // ঔ making with Hasanta + AU Length Mark 
+            if character == B_LENGTH_MARK && rmc == B_HASANTA {
+                self.buffer.pop();
+                self.buffer.push(B_OU);
+                return;
+            }
+
             // Old style Kar ordering
             if config.get_fixed_old_kar_order() {
                 if character == B_HASANTA && is_left_standing_kar(rmc) {
@@ -702,6 +709,10 @@ mod tests {
         method.buffer = "্".to_string();
         method.process_key_value(&B_U_KAR.to_string(), &config);
         assert_eq!(method.buffer, "উ".to_string());
+
+        method.buffer = "্".to_string();
+        method.process_key_value(&B_LENGTH_MARK.to_string(), &config);
+        assert_eq!(method.buffer, "ঔ".to_string());
 
         // Double Hasanta for Hasanta + ZWNJ
         method.buffer = B_HASANTA.to_string();
