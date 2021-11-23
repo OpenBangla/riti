@@ -197,6 +197,13 @@ impl FixedMethod {
             if rmc == B_R && self.buffer.chars().rev().nth(1).unwrap_or_default() != B_HASANTA {
                 self.buffer.push(ZWJ);
             }
+            if config.get_fixed_old_kar_order() && is_left_standing_kar(rmc) {
+                if let Some(kar) = self.buffer.pop() {
+                    self.buffer.push_str(value);
+                    self.buffer.push(kar);
+                    return;
+                }
+            }
             self.buffer.push_str(value);
             return;
         }
@@ -832,6 +839,9 @@ mod tests {
         method.buffer = "তি".to_string();
         method.process_key_value("্র", &config);
         assert_eq!(method.buffer, "ত্রি".to_string());
+        method.buffer = "তি".to_string();
+        method.process_key_value("\u{09CD}\u{09AF}", &config);
+        assert_eq!(method.buffer, "ত্যি".to_string());
 
         // Backspace
         method.buffer = "".to_string();
