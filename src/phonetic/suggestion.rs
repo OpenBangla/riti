@@ -158,26 +158,28 @@ impl PhoneticSuggestion {
 
         self.suggestion_with_dict(&splitted_string, data);
 
-        // Emoji addition with corresponding emoticon.
-        if let Some(emoji) = data.get_emoji_by_emoticon(term) {
-            // Add the emoticon
-            // Sometimes the emoticon is captured as preceding meta characters and already included.
-            if term != splitted_string.0 {
-                self.suggestions.push(Rank::last_ranked(term.to_owned(), 1));
+        // Emoji addition with corresponding emoticon (if ANSI mode is not enabled).
+        if !config.get_ansi() {
+            if let Some(emoji) = data.get_emoji_by_emoticon(term) {
+                // Add the emoticon
+                // Sometimes the emoticon is captured as preceding meta characters and already included.
+                if term != splitted_string.0 {
+                    self.suggestions.push(Rank::last_ranked(term.to_owned(), 1));
+                }
+                self.suggestions.push(Rank::emoji(emoji.to_owned()));
+                // Mark that we have added the typed text already (as the emoticon).
+                typed_added = true;
+            } else if let Some(emojis) = data.get_emoji_by_name(splitted_string.1) {
+                // Emoji addition with it's name
+                // Add preceding and trailing meta characters.
+                let emojis = emojis.zip(1..).map(|(s, r)| {
+                    Rank::emoji_ranked(
+                        format!("{}{}{}", splitted_string.0, s, splitted_string.2),
+                        r,
+                    )
+                });
+                self.suggestions.extend(emojis);
             }
-            self.suggestions.push(Rank::emoji(emoji.to_owned()));
-            // Mark that we have added the typed text already (as the emoticon).
-            typed_added = true;
-        } else if let Some(emojis) = data.get_emoji_by_name(splitted_string.1) {
-            // Emoji addition with it's name
-            // Add preceding and trailing meta characters.
-            let emojis = emojis.zip(1..).map(|(s, r)| {
-                Rank::emoji_ranked(
-                    format!("{}{}{}", splitted_string.0, s, splitted_string.2),
-                    r,
-                )
-            });
-            self.suggestions.extend(emojis);
         }
 
         // Include written English word if the feature is enabled and it is not included already.
