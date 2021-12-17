@@ -383,6 +383,28 @@ mod tests {
     }
 
     #[test]
+    fn test_suggestion_ansi() {
+        let mut suggestion = PhoneticSuggestion::default();
+        let mut selections = HashMap::with_hasher(RandomState::new());
+        let mut config = get_phonetic_method_defaults();
+        let data = Data::new(&config);
+        config.set_suggestion_include_english(true);
+        config.set_ansi(true);
+
+        suggestion.suggest(":)", &data, &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["ঃ)"]);
+
+        suggestion.suggest(";)", &data, &mut selections, &config);
+        assert_eq!(suggestion.suggestions, [";)"]);
+
+        suggestion.suggest("{a}", &data, &mut selections, &config);
+        assert_eq!(
+            suggestion.suggestions,
+            ["{আ}", "{আঃ}", "{া}", "{এ}", "{অ্যা}", "{অ্যাঁ}"]
+        );
+    }
+
+    #[test]
     fn test_suggestion_only_phonetic() {
         let mut suggestion = PhoneticSuggestion::default();
 
