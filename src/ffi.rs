@@ -378,7 +378,7 @@ pub extern "C" fn riti_config_set_fixed_old_kar_order(ptr: *mut Config, option: 
 }
 
 #[no_mangle]
-pub extern "C" fn riti_config_set_ansi_encoding_encoding(ptr: *mut Config, option: bool) {
+pub extern "C" fn riti_config_set_ansi_encoding(ptr: *mut Config, option: bool) {
     let config = unsafe {
         assert!(!ptr.is_null());
         &mut *ptr
