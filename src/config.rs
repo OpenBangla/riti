@@ -167,12 +167,12 @@ impl Config {
     }
 
     /// Checks if ANSI encoding is enabled.
-    pub fn get_ansi(&self) -> bool {
+    pub fn get_ansi_encoding(&self) -> bool {
         self.ansi
     }
 
     /// Set the ANSI encoding configuration.
-    pub fn set_ansi(&mut self, ansi: bool) {
+    pub fn set_ansi_encoding(&mut self, ansi: bool) {
         self.ansi = ansi;
     }
 }
@@ -270,10 +270,10 @@ mod tests {
         let mut config = Config::default();
 
         config.set_suggestion_include_english(true);
-        config.set_ansi(false);
+        config.set_ansi_encoding(false);
         assert!(config.get_suggestion_include_english());
 
-        config.set_ansi(true);
+        config.set_ansi_encoding(true);
         assert!(!config.get_suggestion_include_english());
     }
 }

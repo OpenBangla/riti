@@ -112,7 +112,7 @@ impl FixedMethod {
         if config.get_fixed_suggestion() {
             self.create_dictionary_suggestion(data, config)
         } else {
-            Suggestion::new_lonely(self.buffer.clone(), config.get_ansi())
+            Suggestion::new_lonely(self.buffer.clone(), config.get_ansi_encoding())
         }
     }
 
@@ -144,7 +144,7 @@ impl FixedMethod {
             }
         }
 
-        if !config.get_ansi() {
+        if !config.get_ansi_encoding() {
             // Emoji addition with Emoticons.
             if let Some(emoji) = data.get_emoji_by_emoticon(&self.typed) {
                 self.suggestions.push(Rank::emoji(emoji.to_owned()));
@@ -172,15 +172,15 @@ impl FixedMethod {
             self.suggestions.truncate(9);
         }
 
-        Suggestion::new(self.buffer.clone(), &self.suggestions, 0, config.get_ansi())
+        Suggestion::new(self.buffer.clone(), &self.suggestions, 0, config.get_ansi_encoding())
     }
 
     fn current_suggestion(&self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
             if config.get_fixed_suggestion() {
-                Suggestion::new(self.buffer.clone(), &self.suggestions, 0, config.get_ansi())
+                Suggestion::new(self.buffer.clone(), &self.suggestions, 0, config.get_ansi_encoding())
             } else {
-                Suggestion::new_lonely(self.buffer.clone(), config.get_ansi())
+                Suggestion::new_lonely(self.buffer.clone(), config.get_ansi_encoding())
             }
         } else {
             Suggestion::empty()
@@ -616,7 +616,7 @@ mod tests {
         let mut config = get_fixed_method_defaults();
         let data = Data::new(&config);
         config.set_suggestion_include_english(true);
-        config.set_ansi(true);
+        config.set_ansi_encoding(true);
 
         method.get_suggestion(VC_A, 0, &data, &config);
         method.get_suggestion(VC_M, 0, &data, &config);

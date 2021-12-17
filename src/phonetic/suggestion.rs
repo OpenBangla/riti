@@ -159,7 +159,7 @@ impl PhoneticSuggestion {
         self.suggestion_with_dict(&splitted_string, data);
 
         // Emoji addition with corresponding emoticon (if ANSI mode is not enabled).
-        if !config.get_ansi() {
+        if !config.get_ansi_encoding() {
             if let Some(emoji) = data.get_emoji_by_emoticon(term) {
                 // Add the emoticon
                 // Sometimes the emoticon is captured as preceding meta characters and already included.
@@ -389,7 +389,7 @@ mod tests {
         let mut config = get_phonetic_method_defaults();
         let data = Data::new(&config);
         config.set_suggestion_include_english(true);
-        config.set_ansi(true);
+        config.set_ansi_encoding(true);
 
         suggestion.suggest(":)", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["ঃ)"]);
