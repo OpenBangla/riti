@@ -1,5 +1,6 @@
 use edit_distance::edit_distance;
 use std::cmp::Ordering;
+use poriborton::bijoy2000::unicode_to_bijoy;
 
 /// Suggestions which are intended to be shown by the IM's candidate window.
 /// Suggestion is of two variants, the 'Full' one includes a list of suggestion and
@@ -11,9 +12,13 @@ pub enum Suggestion {
         suggestions: Vec<String>,
         // Index of the last selected suggestion.
         selection: usize,
+        // ANSI output
+        ansi: bool,
     },
     Single {
         suggestion: String,
+        // ANSI output
+        ansi: bool,
     },
 }
 
@@ -25,11 +30,14 @@ impl Suggestion {
     /// `suggestions`: Vector of suggestions.
     ///
     /// `selection`: Index of the last selected suggestion.
-    pub fn new(auxiliary: String, suggestions: &[Rank], selection: usize) -> Self {
+    /// 
+    /// `ansi`: Enable ANSI encoding conversion.
+    pub fn new(auxiliary: String, suggestions: &[Rank], selection: usize, ansi: bool) -> Self {
         Self::Full {
             auxiliary,
             suggestions: suggestions.iter().map(|r| r.to_string().to_owned()).collect(),
             selection,
+            ansi,
         }
     }
 
@@ -38,14 +46,17 @@ impl Suggestion {
     /// *A lonely suggestion.* 😁
     ///
     /// `suggestion`: The suggestion.
-    pub fn new_lonely(suggestion: String) -> Self {
-        Self::Single { suggestion }
+    /// 
+    /// `ansi`: Enable ANSI encoding conversion.
+    pub fn new_lonely(suggestion: String, ansi: bool) -> Self {
+        Self::Single { suggestion, ansi }
     }
 
     /// Constructs an empty `Suggestion` struct.
     pub fn empty() -> Self {
         Self::Single {
             suggestion: String::new(),
+            ansi: false,
         }
     }
 
@@ -63,7 +74,7 @@ impl Suggestion {
     pub fn is_empty(&self) -> bool {
         match &self {
             Self::Full { suggestions, .. } => suggestions.is_empty(),
-            Self::Single { suggestion } => suggestion.is_empty(),
+            Self::Single { suggestion, ..} => suggestion.is_empty(),
         }
     }
 
@@ -78,7 +89,7 @@ impl Suggestion {
     /// Get the only suggestion of the *lonely* `Suggestion`.
     pub fn get_lonely_suggestion(&self) -> &str {
         match &self {
-            Self::Single { suggestion } => suggestion,
+            Self::Single { suggestion, .. } => suggestion,
             _ => panic!(),
         }
     }
@@ -88,6 +99,22 @@ impl Suggestion {
         match &self {
             Self::Full { auxiliary, .. } => auxiliary,
             _ => panic!(),
+        }
+    }
+
+    /// Get the pre-edit text from the list of the `index'.
+    ///
+    /// This returns the lone suggestion if the suggestion is a lonely one.
+    ///
+    /// The main purpose of the function is to convert the returning suggestion into
+    /// the ANSI encoding if it was specified when the instance of this `Suggestion`
+    /// was created.
+    pub fn get_pre_edit_text(&self, index: usize) -> String {
+        match self {
+            Self::Full { suggestions, ansi, .. } if *ansi => unicode_to_bijoy(&suggestions[index]),
+            Self::Full { suggestions, .. } => suggestions[index].to_owned(),
+            Self::Single { suggestion, ansi } if *ansi => unicode_to_bijoy(suggestion),
+            Self::Single { suggestion, .. } => suggestion.clone(),
         }
     }
 
@@ -220,6 +247,21 @@ impl Eq for Rank {}
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_ansi_encoding() {
+        let suggestion = Suggestion::new("test".to_owned(), &[Rank::first_ranked("হাই".to_owned())], 0, true);
+        assert_eq!(suggestion.get_pre_edit_text(0), "nvB");
+
+        let suggestion = Suggestion::new("test".to_owned(), &[Rank::first_ranked("হাই".to_owned())], 0, false);
+        assert_eq!(suggestion.get_pre_edit_text(0), "হাই");
+
+        let suggestion = Suggestion::new_lonely("হাই".to_owned(), true);
+        assert_eq!(suggestion.get_pre_edit_text(0), "nvB");
+
+        let suggestion = Suggestion::new_lonely("হাই".to_owned(), false);
+        assert_eq!(suggestion.get_pre_edit_text(0), "হাই");
+    }
 
     #[test]
     fn test_rank_trait_impl() {

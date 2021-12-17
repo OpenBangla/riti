@@ -165,6 +165,23 @@ pub extern "C" fn riti_suggestion_get_auxiliary_text(ptr: *const Suggestion) -> 
     unsafe { CString::from_vec_unchecked(suggestion.get_auxiliary_text().into()).into_raw() }
 }
 
+/// Get the pre-edit text from the list of the `index'.
+///
+/// This returns the lone suggestion if the suggestion is a lonely one.
+///
+/// The main purpose of the function is to convert the returning suggestion into
+/// the ANSI encoding if it was specified when the instance of this `Suggestion`
+/// was created.
+#[no_mangle]
+pub extern "C" fn riti_suggestion_get_pre_edit_text(ptr: *const Suggestion, index: usize) -> *mut c_char {
+    let suggestion = unsafe {
+        assert!(!ptr.is_null());
+        &*ptr
+    };
+
+    unsafe { CString::from_vec_unchecked(suggestion.get_pre_edit_text(index).into_bytes()).into_raw() }
+}
+
 /// Free the allocated string.
 #[no_mangle]
 pub extern "C" fn riti_string_free(ptr: *mut c_char) {
@@ -358,4 +375,14 @@ pub extern "C" fn riti_config_set_fixed_old_kar_order(ptr: *mut Config, option: 
     };
 
     config.set_fixed_old_kar_order(option);
+}
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_ansi_encoding(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_ansi(option);
 }
