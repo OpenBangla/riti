@@ -112,7 +112,7 @@ impl FixedMethod {
         if config.get_fixed_suggestion() {
             self.create_dictionary_suggestion(data, config)
         } else {
-            Suggestion::new_lonely(self.buffer.clone())
+            Suggestion::new_lonely(self.buffer.clone(), config.get_ansi_encoding())
         }
     }
 
@@ -144,16 +144,18 @@ impl FixedMethod {
             }
         }
 
-        // Emoji addition with Emoticons.
-        if let Some(emoji) = data.get_emoji_by_emoticon(&self.typed) {
-            self.suggestions.push(Rank::emoji(emoji.to_owned()));
-        } else if let Some(emojis) = data.get_emoji_by_bengali(word) {
-            // Emoji addition with it's Bengali name.
-            // Add preceding and trailing meta characters.
-            let emojis = emojis
-                .zip(1..)
-                .map(|(s, r)| Rank::emoji_ranked(format!("{}{}{}", first_part, s, last_part), r));
-            self.suggestions.extend(emojis);
+        if !config.get_ansi_encoding() {
+            // Emoji addition with Emoticons.
+            if let Some(emoji) = data.get_emoji_by_emoticon(&self.typed) {
+                self.suggestions.push(Rank::emoji(emoji.to_owned()));
+            } else if let Some(emojis) = data.get_emoji_by_bengali(word) {
+                // Emoji addition with it's Bengali name.
+                // Add preceding and trailing meta characters.
+                let emojis = emojis.zip(1..).map(|(s, r)| {
+                    Rank::emoji_ranked(format!("{}{}{}", first_part, s, last_part), r)
+                });
+                self.suggestions.extend(emojis);
+            }
         }
 
         // Sort the suggestions.
@@ -170,15 +172,15 @@ impl FixedMethod {
             self.suggestions.truncate(9);
         }
 
-        Suggestion::new(self.buffer.clone(), &self.suggestions, 0)
+        Suggestion::new(self.buffer.clone(), &self.suggestions, 0, config.get_ansi_encoding())
     }
 
     fn current_suggestion(&self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
             if config.get_fixed_suggestion() {
-                Suggestion::new(self.buffer.clone(), &self.suggestions, 0)
+                Suggestion::new(self.buffer.clone(), &self.suggestions, 0, config.get_ansi_encoding())
             } else {
-                Suggestion::new_lonely(self.buffer.clone())
+                Suggestion::new_lonely(self.buffer.clone(), config.get_ansi_encoding())
             }
         } else {
             Suggestion::empty()
@@ -618,6 +620,39 @@ mod tests {
                 "{লজ্জাবান}",
                 "{লজ্জাবোধ}",
                 "{লজ্জাবতী}"
+            ]
+        );
+    }
+
+    #[test]
+    fn test_suggestion_ansi() {
+        let mut method = FixedMethod::default();
+        let mut config = get_fixed_method_defaults();
+        let data = Data::new(&config);
+        config.set_suggestion_include_english(true);
+        config.set_ansi_encoding(true);
+
+        method.get_suggestion(VC_A, 0, &data, &config);
+        method.get_suggestion(VC_M, 0, &data, &config);
+        method.get_suggestion(VC_I, 0, &data, &config);
+        assert_eq!(method.typed, "ami");
+        assert_eq!(method.suggestions, ["আমি", "আমিন", "আমির", "আমিষ"]);
+        method.finish_input_session();
+
+        method.buffer = "হাসি".to_owned();
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(
+            method.suggestions,
+            [
+                "হাসি",
+                "হাসিস",
+                "হাসিত",
+                "হাসিল",
+                "হাসিব",
+                "হাসিনী",
+                "হাসিকা",
+                "হাসিয়া",
+                "হাসিয়ো"
             ]
         );
     }

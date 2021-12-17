@@ -334,6 +334,17 @@ char *riti_suggestion_get_lonely_suggestion(const Suggestion *ptr);
 char *riti_suggestion_get_auxiliary_text(const Suggestion *ptr);
 
 /*
+ Get the pre-edit text from the list of the `index'.
+
+ This returns the lone suggestion if the suggestion is a lonely one.
+
+ The main purpose of the function is to convert the returning suggestion into
+ the ANSI encoding if it was specified when the instance of this `Suggestion`
+ was created.
+ */
+char *riti_suggestion_get_pre_edit_text(const Suggestion *ptr, uintptr_t index);
+
+/*
  Free the allocated string.
  */
 void riti_string_free(char *ptr);
@@ -390,6 +401,8 @@ void riti_config_set_fixed_old_reph(Config *ptr, bool option);
 void riti_config_set_fixed_numpad(Config *ptr, bool option);
 
 void riti_config_set_fixed_old_kar_order(Config *ptr, bool option);
+
+void riti_config_set_ansi_encoding(Config *ptr, bool option);
 
 } // extern "C"
 

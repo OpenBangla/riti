@@ -66,11 +66,11 @@ impl PhoneticMethod {
 
             self.prev_selection = selection;
 
-            Suggestion::new(self.buffer.clone(), &suggestions, self.prev_selection)
+            Suggestion::new(self.buffer.clone(), &suggestions, self.prev_selection, config.get_ansi_encoding())
         } else {
             let suggestion = self.suggestion.suggest_only_phonetic(&self.buffer);
 
-            Suggestion::new_lonely(suggestion)
+            Suggestion::new_lonely(suggestion, config.get_ansi_encoding())
         }
     }
 }
