@@ -5,6 +5,14 @@ use crate::context::RitiContext;
 use crate::suggestion::Suggestion;
 use crate::config::Config;
 
+fn riti_free<T>(ptr: *mut T) {
+    if !ptr.is_null() {
+        unsafe {
+            Box::from_raw(ptr);
+        }
+    }
+}
+
 // FFI functions for handling the `RitiContext` structure.
 
 /// Creates a new instance of RitiContext with a Config which is properly
@@ -21,12 +29,7 @@ pub extern "C" fn riti_context_new_with_config(ptr: *const Config) -> *mut RitiC
 
 #[no_mangle]
 pub extern "C" fn riti_context_free(ptr: *mut RitiContext) {
-    if ptr.is_null() {
-        return;
-    }
-    unsafe {
-        Box::from_raw(ptr);
-    }
+    riti_free(ptr)
 }
 
 #[no_mangle]
@@ -121,12 +124,7 @@ pub extern "C" fn riti_context_backspace_event(ptr: *mut RitiContext) -> *mut Su
 
 #[no_mangle]
 pub extern "C" fn riti_suggestion_free(ptr: *mut Suggestion) {
-    if ptr.is_null() {
-        return;
-    }
-    unsafe {
-        Box::from_raw(ptr);
-    }
+    riti_free(ptr)
 }
 
 /// Get the suggestion of the `index` from suggestions.
@@ -190,7 +188,7 @@ pub extern "C" fn riti_string_free(ptr: *mut c_char) {
     }
 
     unsafe {
-        CString::from_raw(ptr);
+        drop(CString::from_raw(ptr));
     }
 }
 
@@ -253,12 +251,7 @@ pub extern "C" fn riti_config_new() -> *mut Config {
 /// Free the allocated Config struct.
 #[no_mangle]
 pub extern "C" fn riti_config_free(ptr: *mut Config) {
-    if ptr.is_null() {
-        return;
-    }
-    unsafe {
-        Box::from_raw(ptr);
-    }
+    riti_free(ptr)
 }
 
 #[no_mangle]
