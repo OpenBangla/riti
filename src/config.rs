@@ -19,6 +19,7 @@ pub struct Config {
     fixed_kar_order: bool,
     // Output in ANSI encoding
     ansi: bool,
+    smart_quote: bool,
 }
 
 impl Config {
@@ -175,6 +176,17 @@ impl Config {
     pub fn set_ansi_encoding(&mut self, ansi: bool) {
         self.ansi = ansi;
     }
+
+    /// Get the config's smart quote configuration.
+    #[must_use]
+    pub fn get_smart_quote(&self) -> bool {
+        self.smart_quote
+    }
+
+    /// Set the config's smart quote.
+    pub fn set_smart_quote(&mut self, smart_quote: bool) {
+        self.smart_quote = smart_quote;
+    }
 }
 
 pub(crate) fn get_user_data_dir() -> PathBuf {
@@ -234,6 +246,7 @@ impl Default for Config {
             fixed_kar_order: false,
             phonetic_suggestion: false,
             ansi: false,
+            smart_quote: true,
         }
     }
 }

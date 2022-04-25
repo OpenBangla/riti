@@ -379,3 +379,13 @@ pub extern "C" fn riti_config_set_ansi_encoding(ptr: *mut Config, option: bool) 
 
     config.set_ansi_encoding(option);
 }
+
+#[no_mangle]
+pub extern "C" fn riti_config_set_smart_quote(ptr: *mut Config, option: bool) {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    config.set_smart_quote(option);
+}
