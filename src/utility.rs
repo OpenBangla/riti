@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, borrow::Cow};
 
 use crate::context::{MODIFIER_ALT_GR, MODIFIER_SHIFT};
 
@@ -99,9 +99,63 @@ pub(crate) fn read(file: &mut File) -> Vec<u8> {
     buf
 }
 
+/// Convert preceding and trailing quotation marks(', ") into its curved form(‘, ’ “, ”).
+/// 
+/// Converts the first occurrence of a quotation mark while ignoring others if present.
+pub(crate) fn smart_quoter<'a>(splitted: (&'a str, &'a str, &'a str)) -> (Cow<'a, str>, &'a str, Cow<'a, str>) {
+    // If the middle part is empty, there is no need to convert.
+    if splitted.1.is_empty() {
+        return (splitted.0.into(), splitted.1, splitted.2.into());
+    }
+
+    // Convert preceding quotation mark(', ") into its curved form(‘, “).
+    // We only convert the first occurrence of a quotation mark.
+    let mut preceding = Cow::from(splitted.0);
+    for (index, ch) in splitted.0.char_indices() {
+        match ch {
+            '\'' => {
+                let str = preceding.to_mut();
+                str.remove(index);
+                str.insert_str(index, "‘");
+                break;
+            }
+            '"' => {
+                let str = preceding.to_mut();
+                str.remove(index);
+                str.insert_str(index, "“");
+                break;
+            }
+            _ => ()
+        }
+    }
+
+    // Convert trailing quotation mark(', ") into its curved form(’, ”).
+    // We only convert the first occurrence of a quotation mark.
+    let mut trailing = Cow::from(splitted.2);
+    for (index, ch) in splitted.2.char_indices().rev() {
+        match ch {
+            '\'' => {
+                let str = trailing.to_mut();
+                str.remove(index);
+                str.insert_str(index, "’");
+                break;
+            }
+            '"' => {
+                let str = trailing.to_mut();
+                str.remove(index);
+                str.insert_str(index, "”");
+                break;
+            }
+            _ => ()
+        }
+    }
+
+    return (preceding, splitted.1, trailing);
+}
+
 #[cfg(test)]
 mod test {
-    use super::{get_modifiers, split_string, Utility};
+    use super::{get_modifiers, split_string, Utility, smart_quoter};
     use crate::context::{MODIFIER_ALT_GR, MODIFIER_SHIFT};
 
     #[test]
@@ -143,5 +197,23 @@ mod test {
         assert_eq!(split_string("kt``", false), ("", "kt``", ""));
         assert_eq!(split_string("kt:``", false), ("", "kt:``", ""));
         assert_eq!(split_string("।ঃমেঃ।টাঃ।", false), ("।", "ঃমেঃ।টাঃ", "।"));
+    }
+
+    #[test]
+    fn test_smart_quoting() {
+        assert_eq!(smart_quoter(split_string("\"", true)), ("\"".into(), "", "".into()));
+
+        assert_eq!(smart_quoter(split_string("'Till", true)), ("‘".into(), "Till", "".into()));
+        assert_eq!(smart_quoter(split_string("\"Hey", true)), ("“".into(), "Hey", "".into()));
+        assert_eq!(smart_quoter(split_string("'\"Hey", true)), ("‘\"".into(), "Hey", "".into()));
+
+        assert_eq!(smart_quoter(split_string("finished'", true)), ("".into(), "finished", "’".into()));
+        assert_eq!(smart_quoter(split_string("Hey\"", true)), ("".into(), "Hey", "”".into()));
+        assert_eq!(smart_quoter(split_string("Hey'\"", true)), ("".into(), "Hey", "'”".into()));
+
+        assert_eq!(smart_quoter(split_string("'Awkward'", true)), ("‘".into(), "Awkward", "’".into()));
+        assert_eq!(smart_quoter(split_string("\"Nevertheless\"", true)), ("“".into(), "Nevertheless", "”".into()));
+
+        assert_eq!(smart_quoter(split_string("\"'EarlyBreak'\"", true)), ("“'".into(), "EarlyBreak", "'”".into()));
     }
 }
