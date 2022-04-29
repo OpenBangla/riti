@@ -2,7 +2,7 @@ use super::search::search_dictionary;
 use super::{chars::*, layout::Layout};
 use crate::config::Config;
 use crate::suggestion::{Rank, Suggestion};
-use crate::utility::{get_modifiers, Utility, SplittedString};
+use crate::utility::{get_modifiers, Utility, SplittedString, smart_quoter};
 use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
@@ -117,7 +117,13 @@ impl FixedMethod {
     }
 
     fn create_dictionary_suggestion(&mut self, data: &Data, config: &Config) -> Suggestion {
-        let string = SplittedString::split(&self.buffer, true);
+        let mut string = SplittedString::split(&self.buffer, true);
+
+        // Smart Quoting feature
+        if config.get_smart_quote() {
+            string = smart_quoter(string);
+        }
+
         let (first_part, word, last_part) = string.as_tuple();
 
         self.suggestions.clear();
@@ -525,7 +531,7 @@ mod tests {
     use crate::{
         context::Method,
         data::Data,
-        keycodes::{VC_A, VC_I, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_SEMICOLON},
+        keycodes::{VC_A, VC_I, VC_M, VC_K, VC_QUOTE, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_SEMICOLON},
     };
 
     #[test]
@@ -576,6 +582,27 @@ mod tests {
         method.get_suggestion(VC_PAREN_LEFT, 0, &data, &config);
         method.get_suggestion(VC_PAREN_RIGHT, 0, &data, &config);
         assert_eq!(method.suggestions, ["()"]);
+    }
+
+    #[test]
+    fn test_suggestion_smart_quote() {
+        let mut method = FixedMethod::default();
+        let mut config = get_fixed_method_defaults();
+        let data = Data::new(&config);
+        config.set_suggestion_include_english(true);
+        
+        config.set_smart_quote(true);
+        method.get_suggestion(VC_QUOTE, 0, &data, &config);
+        method.get_suggestion(VC_K, 0, &data, &config);
+        method.get_suggestion(VC_QUOTE, 0, &data, &config);
+        assert_eq!(method.suggestions, ["“ক”", "\"k\""]);
+        method.finish_input_session();
+
+        config.set_smart_quote(false);
+        method.get_suggestion(VC_QUOTE, 0, &data, &config);
+        method.get_suggestion(VC_K, 0, &data, &config);
+        method.get_suggestion(VC_QUOTE, 0, &data, &config);
+        assert_eq!(method.suggestions, ["\"ক\"", "\"k\""]);
     }
 
     #[test]
