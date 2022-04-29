@@ -2,7 +2,7 @@ use super::search::search_dictionary;
 use super::{chars::*, layout::Layout};
 use crate::config::Config;
 use crate::suggestion::{Rank, Suggestion};
-use crate::utility::{get_modifiers, split_string, Utility};
+use crate::utility::{get_modifiers, Utility, SplittedString};
 use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
@@ -117,7 +117,8 @@ impl FixedMethod {
     }
 
     fn create_dictionary_suggestion(&mut self, data: &Data, config: &Config) -> Suggestion {
-        let (first_part, word, last_part) = split_string(&self.buffer, true);
+        let string = SplittedString::split(&self.buffer, true);
+        let (first_part, word, last_part) = string.as_tuple();
 
         self.suggestions.clear();
 
