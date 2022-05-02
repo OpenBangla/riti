@@ -129,7 +129,7 @@ impl PhoneticSuggestion {
         let string = SplittedString::split(term, false);
 
         self.phonetic
-            .convert_into(string.middle(), &mut self.pbuffer);
+            .convert_into(string.word(), &mut self.pbuffer);
 
         format!(
             "{}{}{}",
@@ -170,7 +170,7 @@ impl PhoneticSuggestion {
                 self.suggestions.push(Rank::emoji(emoji.to_owned()));
                 // Mark that we have added the typed text already (as the emoticon).
                 typed_added = true;
-            } else if let Some(emojis) = data.get_emoji_by_name(string.middle()) {
+            } else if let Some(emojis) = data.get_emoji_by_name(string.word()) {
                 // Emoji addition with it's name
                 // Add preceding and trailing meta characters.
                 let emojis = emojis.zip(1..).map(|(s, r)| {
@@ -206,28 +206,28 @@ impl PhoneticSuggestion {
         self.suggestions.clear();
 
         self.phonetic
-            .convert_into(string.middle(), &mut self.pbuffer);
+            .convert_into(string.word(), &mut self.pbuffer);
 
         let phonetic = self.pbuffer.clone();
 
         // We always cache the suggestions for future reuse and for adding suffix to the suggestions.
-        if !self.cache.contains_key(string.middle()) {
+        if !self.cache.contains_key(string.word()) {
             let mut suggestions: Vec<Rank> = Vec::new();
 
             // Auto Correct item.
-            if let Some(correct) = self.search_corrected(string.middle(), data) {
+            if let Some(correct) = self.search_corrected(string.word(), data) {
                 let corrected = self.phonetic.convert(correct);
                 // Treat it as the first priority.
                 suggestions.push(Rank::first_ranked(corrected));
             }
 
-            self.include_from_dictionary(string.middle(), &phonetic, &mut suggestions, data);
+            self.include_from_dictionary(string.word(), &phonetic, &mut suggestions, data);
             // Add the suggestions into the cache.
             self.cache
-                .insert(string.middle().to_string(), suggestions);
+                .insert(string.word().to_string(), suggestions);
         }
 
-        let suffixed_suggestions = self.add_suffix_to_suggestions(string.middle(), data);
+        let suffixed_suggestions = self.add_suffix_to_suggestions(string.word(), data);
 
         // Middle Items: Dictionary suggestions
         for suggestion in suffixed_suggestions {
@@ -256,17 +256,17 @@ impl PhoneticSuggestion {
         data: &Data,
         selections: &mut HashMap<String, String, RandomState>,
     ) -> usize {
-        let len = string.middle().len();
+        let len = string.word().len();
         let mut selected = String::with_capacity(len * 3);
 
-        if let Some(item) = selections.get(string.middle()) {
+        if let Some(item) = selections.get(string.word()) {
             selected.push_str(item);
         } else if len >= 2 {
             for i in 1..len {
-                let test = &string.middle()[len - i..len];
+                let test = &string.word()[len - i..len];
 
                 if let Some(suffix) = data.find_suffix(test) {
-                    let key = &string.middle()[..len - test.len()];
+                    let key = &string.word()[..len - test.len()];
 
                     if let Some(base) = selections.get(key) {
                         let rmc = base.chars().last().unwrap();
@@ -293,7 +293,7 @@ impl PhoneticSuggestion {
                         selected.push_str(suffix);
 
                         // Save this for future reuse.
-                        selections.insert(string.middle().to_string(), selected.to_string());
+                        selections.insert(string.word().to_string(), selected.to_string());
                     }
                 }
             }

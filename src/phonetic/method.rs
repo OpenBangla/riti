@@ -91,10 +91,10 @@ impl Method for PhoneticMethod {
         // Check if user has selected a different suggestion
         if self.prev_selection != index && config.get_phonetic_suggestion() {
             let suggestion = SplittedString::split(self.suggestion.suggestions[index].to_string(), true)
-                .middle()
+                .word()
                 .to_string();
             self.selections
-                .insert(SplittedString::split(&self.buffer, false).middle().to_string(), suggestion);
+                .insert(SplittedString::split(&self.buffer, false).word().to_string(), suggestion);
             write(
                 config.get_user_phonetic_selection_data(),
                 serde_json::to_string(&self.selections).unwrap(),

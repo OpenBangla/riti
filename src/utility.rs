@@ -62,10 +62,14 @@ pub(crate) fn read(file: &mut File) -> Vec<u8> {
     buf
 }
 
+/// A meta characters splitted string.
+/// 
+/// Meta characters (`-]~!@#%&*()_=+[{}'\";<>/?|.,।`) are splitted 
+/// from a string as preceding and trailing parts.
 #[derive(Debug)]
 pub(crate) struct SplittedString<'a> {
     preceding: Cow<'a, str>,
-    middle: &'a str,
+    word: &'a str,
     trailing: Cow<'a, str>,
 }
 
@@ -84,7 +88,7 @@ impl SplittedString<'_> {
                 // the string has no middle or last part
                 return SplittedString {
                     preceding: input.into(),
-                    middle: "",
+                    word: "",
                     trailing: "".into(),
                 };
             }
@@ -106,50 +110,55 @@ impl SplittedString<'_> {
                 break;
             }
         }
-        let (middle, trailing) = rest.split_at(last_index);
+        let (word, trailing) = rest.split_at(last_index);
 
         SplittedString {
             preceding: preceding.into(),
-            middle,
+            word,
             trailing: trailing.into(),
         }
     }
 
+    /// Takes a closure to transform preceding and trailing parts. 
     pub(crate) fn map(&mut self, func: impl Fn(&str, &str) -> (String, String)) {
         let (p, t) = (func)(self.preceding.deref(), self.trailing.deref());
         self.preceding = Cow::Owned(p);
         self.trailing = Cow::Owned(t);
     }
 
+    /// Returns trailing meta characters. 
     pub(crate) fn preceding(&self) -> &str {
         self.preceding.deref()
     }
 
-    pub(crate) fn middle(&self) -> &str {
-        self.middle
+    /// Returns word without any preceding and trailing meta characters.
+    pub(crate) fn word(&self) -> &str {
+        self.word
     }
 
+    /// Returns trailing meta characters.
     pub(crate) fn trailing(&self) -> &str {
         self.trailing.deref()
     }
 
+    /// Returns splitted string as a tuple in `(preceding, word, trailing)` order.
     pub(crate) fn as_tuple(&self) -> (&str, &str, &str) {
-        (self.preceding(), self.middle(), self.trailing())
+        (self.preceding(), self.word(), self.trailing())
     }
 }
 
 impl PartialEq<(&str, &str, &str)> for SplittedString<'_> {
     fn eq(&self, other: &(&str, &str, &str)) -> bool {
-        self.preceding == other.0 && self.middle == other.1 && self.trailing == other.2
+        self.preceding == other.0 && self.word == other.1 && self.trailing == other.2
     }
 }
 
-/// Convert preceding and trailing quotation marks(', ") into its curved form(‘, ’ “, ”) aka Smart Quote.
+/// Convert preceding and trailing quotation marks(', ") into their curved form(‘, ’, “, ”) aka Smart Quote.
 pub(crate) fn smart_quoter(
     mut splitted: SplittedString,
 ) -> SplittedString {
     // If the middle part is empty, there is no need to convert.
-    if splitted.middle().is_empty() {
+    if splitted.word().is_empty() {
         return splitted;
     }
 
