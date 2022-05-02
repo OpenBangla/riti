@@ -154,9 +154,7 @@ impl PartialEq<(&str, &str, &str)> for SplittedString<'_> {
 }
 
 /// Convert preceding and trailing quotation marks(', ") into their curved form(‘, ’, “, ”) aka Smart Quote.
-pub(crate) fn smart_quoter(
-    mut splitted: SplittedString,
-) -> SplittedString {
+pub(crate) fn smart_quoter(mut splitted: SplittedString) -> SplittedString {
     // If the middle part is empty, there is no need to convert.
     if splitted.word().is_empty() {
         return splitted;
