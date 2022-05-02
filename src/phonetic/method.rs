@@ -10,7 +10,7 @@ use crate::data::Data;
 use crate::keycodes::keycode_to_char;
 use crate::phonetic::suggestion::PhoneticSuggestion;
 use crate::suggestion::Suggestion;
-use crate::utility::{read, split_string};
+use crate::utility::{read, SplittedString};
 
 pub(crate) struct PhoneticMethod {
     buffer: String,
@@ -90,11 +90,11 @@ impl Method for PhoneticMethod {
     fn candidate_committed(&mut self, index: usize, config: &Config) {
         // Check if user has selected a different suggestion
         if self.prev_selection != index && config.get_phonetic_suggestion() {
-            let suggestion = split_string(self.suggestion.suggestions[index].to_string(), true)
-                .1
+            let suggestion = SplittedString::split(self.suggestion.suggestions[index].to_string(), true)
+                .word()
                 .to_string();
             self.selections
-                .insert(split_string(&self.buffer, false).1.to_string(), suggestion);
+                .insert(SplittedString::split(&self.buffer, false).word().to_string(), suggestion);
             write(
                 config.get_user_phonetic_selection_data(),
                 serde_json::to_string(&self.selections).unwrap(),

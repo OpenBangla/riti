@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use std::{borrow::Cow, fs::File, io::Read, ops::Deref};
 
 use crate::context::{MODIFIER_ALT_GR, MODIFIER_SHIFT};
 
@@ -52,43 +52,6 @@ pub(crate) fn get_modifiers(modifier: u8) -> Modifiers {
     (shift, alt_gr)
 }
 
-/// Split the string into three parts.
-/// This function splits preceding and trailing meta characters.
-///
-/// `include_colon` argument controls the inclusion of colon as a trailing meta character.
-pub(crate) fn split_string(input: &str, include_colon: bool) -> (&str, &str, &str) {
-    const META: &str = "-]~!@#%&*()_=+[{}'\";<>/?|.,।";
-
-    let first_index = match input.find(|c| !META.contains(c)) {
-        Some(i) => i,
-        None => {
-            // If no non-META/alphanumeric char is found,
-            // the string has no middle or last part
-            return (input, "", "");
-        }
-    };
-    let (first_part, rest) = input.split_at(first_index);
-
-    let mut escape = false;
-    let mut last_index = rest.len();
-    for (i, c) in rest.char_indices().rev() {
-        if !escape && c == '`' {
-            // escape
-            escape = true; // not updating the last index for escape
-        } else if ((include_colon || escape) && c == ':') || META.contains(c) {
-            // meta
-            escape = false;
-            last_index = i;
-        } else {
-            // alphanumeric
-            break;
-        }
-    }
-    let (middle_part, last_part) = rest.split_at(last_index);
-
-    (first_part, middle_part, last_part)
-}
-
 /// Read the entire contents of a file into a bytes vector.
 ///
 /// Optimized to allocate the required amount of capacity beforehand.
@@ -99,9 +62,140 @@ pub(crate) fn read(file: &mut File) -> Vec<u8> {
     buf
 }
 
+/// A meta characters splitted string.
+/// 
+/// Meta characters (`-]~!@#%&*()_=+[{}'\";<>/?|.,।`) are splitted 
+/// from a string as preceding and trailing parts.
+#[derive(Debug)]
+pub(crate) struct SplittedString<'a> {
+    preceding: Cow<'a, str>,
+    word: &'a str,
+    trailing: Cow<'a, str>,
+}
+
+impl SplittedString<'_> {
+    /// Split the string into three parts.
+    /// This function splits preceding and trailing meta characters.
+    ///
+    /// `include_colon` argument controls the inclusion of colon as a trailing meta character.
+    pub(crate) fn split(input: &str, include_colon: bool) -> SplittedString {
+        const META: &str = "-]~!@#%&*()_=+[{}'\";<>/?|.,।";
+
+        let first_index = match input.find(|c| !META.contains(c)) {
+            Some(i) => i,
+            None => {
+                // If no non-META/alphanumeric char is found,
+                // the string has no middle or last part
+                return SplittedString {
+                    preceding: input.into(),
+                    word: "",
+                    trailing: "".into(),
+                };
+            }
+        };
+        let (preceding, rest) = input.split_at(first_index);
+
+        let mut escape = false;
+        let mut last_index = rest.len();
+        for (i, c) in rest.char_indices().rev() {
+            if !escape && c == '`' {
+                // escape
+                escape = true; // not updating the last index for escape
+            } else if ((include_colon || escape) && c == ':') || META.contains(c) {
+                // meta
+                escape = false;
+                last_index = i;
+            } else {
+                // alphanumeric
+                break;
+            }
+        }
+        let (word, trailing) = rest.split_at(last_index);
+
+        SplittedString {
+            preceding: preceding.into(),
+            word,
+            trailing: trailing.into(),
+        }
+    }
+
+    /// Takes a closure to transform preceding and trailing parts. 
+    pub(crate) fn map(&mut self, func: impl Fn(&str, &str) -> (String, String)) {
+        let (p, t) = (func)(self.preceding.deref(), self.trailing.deref());
+        self.preceding = Cow::Owned(p);
+        self.trailing = Cow::Owned(t);
+    }
+
+    /// Returns trailing meta characters. 
+    pub(crate) fn preceding(&self) -> &str {
+        self.preceding.deref()
+    }
+
+    /// Returns word without any preceding and trailing meta characters.
+    pub(crate) fn word(&self) -> &str {
+        self.word
+    }
+
+    /// Returns trailing meta characters.
+    pub(crate) fn trailing(&self) -> &str {
+        self.trailing.deref()
+    }
+
+    /// Returns splitted string as a tuple in `(preceding, word, trailing)` order.
+    pub(crate) fn as_tuple(&self) -> (&str, &str, &str) {
+        (self.preceding(), self.word(), self.trailing())
+    }
+}
+
+impl PartialEq<(&str, &str, &str)> for SplittedString<'_> {
+    fn eq(&self, other: &(&str, &str, &str)) -> bool {
+        self.preceding == other.0 && self.word == other.1 && self.trailing == other.2
+    }
+}
+
+/// Convert preceding and trailing quotation marks(', ") into their curved form(‘, ’, “, ”) aka Smart Quote.
+pub(crate) fn smart_quoter(mut splitted: SplittedString) -> SplittedString {
+    // If the middle part is empty, there is no need to convert.
+    if splitted.word().is_empty() {
+        return splitted;
+    }
+
+    // Convert preceding quotation mark(', ") into its curved form(‘, “).
+    let mut preceding = String::with_capacity(splitted.preceding().len() + 3);
+    for ch in splitted.preceding().chars() {
+        match ch {
+            '\'' => {
+                preceding.push_str("‘");
+            }
+            '"' => {
+                preceding.push_str("“");
+            }
+            _ => preceding.push(ch),
+        }
+    }
+
+    // Convert trailing quotation mark(', ") into its curved form(’, ”).
+    let mut trailing = String::with_capacity(splitted.trailing().len() + 3);
+    for ch in splitted.trailing.chars() {
+        match ch {
+            '\'' => {
+                trailing.push_str("’");
+            }
+            '"' => {
+                trailing.push_str("”");
+            }
+            _ => trailing.push(ch),
+        }
+    }
+
+    splitted.preceding = Cow::Owned(preceding);
+    splitted.trailing = Cow::Owned(trailing);
+    return splitted;
+}
+
 #[cfg(test)]
 mod test {
-    use super::{get_modifiers, split_string, Utility};
+    use super::{get_modifiers, smart_quoter, SplittedString, Utility};
     use crate::context::{MODIFIER_ALT_GR, MODIFIER_SHIFT};
 
     #[test]
@@ -124,24 +218,42 @@ mod test {
     }
 
     #[test]
-    fn test_split_string() {
-        assert_eq!(split_string("[][][][]", false), ("[][][][]", "", ""));
-        assert_eq!(split_string("t*", false), ("", "t", "*"));
-        assert_eq!(split_string("1", false), ("", "1", ""));
+    fn test_splitted_string() {
+        assert_eq!(SplittedString::split("[][][][]", false), ("[][][][]", "", ""));
+        assert_eq!(SplittedString::split("t*", false), ("", "t", "*"));
+        assert_eq!(SplittedString::split("1", false), ("", "1", ""));
         assert_eq!(
-            split_string("#\"percent%sign\"#", false),
+            SplittedString::split("#\"percent%sign\"#", false),
             ("#\"", "percent%sign", "\"#")
         );
-        assert_eq!(split_string("*[মেটা]*", false), ("*[", "মেটা", "]*"));
-        assert_eq!(split_string("text", false), ("", "text", ""));
-        assert_eq!(split_string("kt:", false), ("", "kt:", ""));
-        assert_eq!(split_string("kt:", true), ("", "kt", ":"));
-        assert_eq!(split_string("kt:`", false), ("", "kt", ":`"));
-        assert_eq!(split_string("kt:`", true), ("", "kt", ":`"));
-        assert_eq!(split_string("kt::`", false), ("", "kt:", ":`"));
-        assert_eq!(split_string("kt::`", true), ("", "kt", "::`"));
-        assert_eq!(split_string("kt``", false), ("", "kt``", ""));
-        assert_eq!(split_string("kt:``", false), ("", "kt:``", ""));
-        assert_eq!(split_string("।ঃমেঃ।টাঃ।", false), ("।", "ঃমেঃ।টাঃ", "।"));
+        assert_eq!(SplittedString::split("*[মেটা]*", false), ("*[", "মেটা", "]*"));
+        assert_eq!(SplittedString::split("text", false), ("", "text", ""));
+        assert_eq!(SplittedString::split("kt:", false), ("", "kt:", ""));
+        assert_eq!(SplittedString::split("kt:", true), ("", "kt", ":"));
+        assert_eq!(SplittedString::split("kt:`", false), ("", "kt", ":`"));
+        assert_eq!(SplittedString::split("kt:`", true), ("", "kt", ":`"));
+        assert_eq!(SplittedString::split("kt::`", false), ("", "kt:", ":`"));
+        assert_eq!(SplittedString::split("kt::`", true), ("", "kt", "::`"));
+        assert_eq!(SplittedString::split("kt``", false), ("", "kt``", ""));
+        assert_eq!(SplittedString::split("kt:``", false), ("", "kt:``", ""));
+        assert_eq!(SplittedString::split("।ঃমেঃ।টাঃ।", false), ("।", "ঃমেঃ।টাঃ", "।"));
+    }
+
+    #[test]
+    fn test_smart_quoting() {
+        assert_eq!(smart_quoter(SplittedString::split("\"", true)), ("\"".into(), "", "".into()));
+
+        assert_eq!(smart_quoter(SplittedString::split("'Till", true)), ("‘".into(), "Till", "".into()));
+        assert_eq!(smart_quoter(SplittedString::split("\"Hey", true)), ("“".into(), "Hey", "".into()));
+        assert_eq!(smart_quoter(SplittedString::split("'\"Hey", true)), ("‘“".into(), "Hey", "".into()));
+
+        assert_eq!(smart_quoter(SplittedString::split("finished'", true)), ("".into(), "finished", "’".into()));
+        assert_eq!(smart_quoter(SplittedString::split("Hey\"", true)), ("".into(), "Hey", "”".into()));
+        assert_eq!(smart_quoter(SplittedString::split("Hey'\"", true)), ("".into(), "Hey", "’”".into()));
+
+        assert_eq!(smart_quoter(SplittedString::split("'Awkward'", true)), ("‘".into(), "Awkward", "’".into()));
+        assert_eq!(smart_quoter(SplittedString::split("\"Nevertheless\"", true)), ("“".into(), "Nevertheless", "”".into()));
+
+        assert_eq!(smart_quoter(SplittedString::split("\"'Quotation'\"", true)), ("“‘".into(), "Quotation", "’”".into()));
     }
 }

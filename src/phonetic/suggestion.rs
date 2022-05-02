@@ -9,7 +9,7 @@ use crate::config::Config;
 use crate::data::Data;
 use crate::phonetic::regex::parse;
 use crate::suggestion::Rank;
-use crate::utility::{push_checked, split_string, Utility};
+use crate::utility::{push_checked, Utility, smart_quoter, SplittedString};
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) suggestions: Vec<Rank>,
@@ -126,16 +126,16 @@ impl PhoneticSuggestion {
 
     /// Make suggestion from given `term` with only phonetic transliteration.
     pub(crate) fn suggest_only_phonetic(&mut self, term: &str) -> String {
-        let splitted_string = split_string(term, false);
+        let string = SplittedString::split(term, false);
 
         self.phonetic
-            .convert_into(splitted_string.1, &mut self.pbuffer);
+            .convert_into(string.word(), &mut self.pbuffer);
 
         format!(
             "{}{}{}",
-            self.phonetic.convert(splitted_string.0),
+            self.phonetic.convert(string.preceding()),
             self.pbuffer,
-            self.phonetic.convert(splitted_string.2)
+            self.phonetic.convert(string.trailing())
         )
     }
 
@@ -146,35 +146,36 @@ impl PhoneticSuggestion {
         selections: &mut HashMap<String, String, RandomState>,
         config: &Config,
     ) -> (Vec<Rank>, usize) {
-        let splitted_string = split_string(term, false);
+        let mut string = SplittedString::split(term, false);
         let mut typed_added = false;
 
         // Convert preceding and trailing meta characters into Bengali(phonetic representation).
-        let splitted_string: (&str, &str, &str) = (
-            &self.phonetic.convert(splitted_string.0),
-            splitted_string.1,
-            &self.phonetic.convert(splitted_string.2),
-        );
+        string.map(|p,t| (self.phonetic.convert(p), self.phonetic.convert(t)));
 
-        self.suggestion_with_dict(&splitted_string, data);
+        // Smart Quoting feature
+        if config.get_smart_quote() {
+            string = smart_quoter(string);
+        }
+
+        self.suggestion_with_dict(&string, data);
 
         // Emoji addition with corresponding emoticon (if ANSI mode is not enabled).
         if !config.get_ansi_encoding() {
             if let Some(emoji) = data.get_emoji_by_emoticon(term) {
                 // Add the emoticon
                 // Sometimes the emoticon is captured as preceding meta characters and already included.
-                if term != splitted_string.0 {
+                if term != string.preceding() {
                     self.suggestions.push(Rank::last_ranked(term.to_owned(), 1));
                 }
                 self.suggestions.push(Rank::emoji(emoji.to_owned()));
                 // Mark that we have added the typed text already (as the emoticon).
                 typed_added = true;
-            } else if let Some(emojis) = data.get_emoji_by_name(splitted_string.1) {
+            } else if let Some(emojis) = data.get_emoji_by_name(string.word()) {
                 // Emoji addition with it's name
                 // Add preceding and trailing meta characters.
                 let emojis = emojis.zip(1..).map(|(s, r)| {
                     Rank::emoji_ranked(
-                        format!("{}{}{}", splitted_string.0, s, splitted_string.2),
+                        format!("{}{}{}", string.preceding(), s, string.trailing()),
                         r,
                     )
                 });
@@ -191,7 +192,7 @@ impl PhoneticSuggestion {
         // Sort the suggestions.
         self.suggestions.sort();
 
-        let selection = self.get_prev_selection(&splitted_string, data, selections);
+        let selection = self.get_prev_selection(&string, data, selections);
 
         (self.suggestions.clone(), selection)
     }
@@ -199,34 +200,34 @@ impl PhoneticSuggestion {
     /// Make suggestions from the given `splitted_string`. This will include dictionary and auto-correct suggestion.
     pub(crate) fn suggestion_with_dict(
         &mut self,
-        splitted_string: &(&str, &str, &str),
+        string: &SplittedString,
         data: &Data,
     ) {
         self.suggestions.clear();
 
         self.phonetic
-            .convert_into(splitted_string.1, &mut self.pbuffer);
+            .convert_into(string.word(), &mut self.pbuffer);
 
         let phonetic = self.pbuffer.clone();
 
         // We always cache the suggestions for future reuse and for adding suffix to the suggestions.
-        if !self.cache.contains_key(splitted_string.1) {
+        if !self.cache.contains_key(string.word()) {
             let mut suggestions: Vec<Rank> = Vec::new();
 
             // Auto Correct item.
-            if let Some(correct) = self.search_corrected(splitted_string.1, data) {
+            if let Some(correct) = self.search_corrected(string.word(), data) {
                 let corrected = self.phonetic.convert(correct);
                 // Treat it as the first priority.
                 suggestions.push(Rank::first_ranked(corrected));
             }
 
-            self.include_from_dictionary(splitted_string.1, &phonetic, &mut suggestions, data);
+            self.include_from_dictionary(string.word(), &phonetic, &mut suggestions, data);
             // Add the suggestions into the cache.
             self.cache
-                .insert(splitted_string.1.to_string(), suggestions);
+                .insert(string.word().to_string(), suggestions);
         }
 
-        let suffixed_suggestions = self.add_suffix_to_suggestions(splitted_string.1, data);
+        let suffixed_suggestions = self.add_suffix_to_suggestions(string.word(), data);
 
         // Middle Items: Dictionary suggestions
         for suggestion in suffixed_suggestions {
@@ -237,13 +238,13 @@ impl PhoneticSuggestion {
         push_checked(&mut self.suggestions, Rank::last_ranked(phonetic, 2));
 
         // Add those preceding and trailing meta characters.
-        if !splitted_string.0.is_empty() || !splitted_string.2.is_empty() {
+        if !string.preceding().is_empty() || !string.trailing().is_empty() {
             for item in self.suggestions.iter_mut() {
                 *item.change_item() = format!(
                     "{}{}{}",
-                    splitted_string.0,
+                    string.preceding(),
                     item.to_string(),
-                    splitted_string.2
+                    string.trailing()
                 );
             }
         }
@@ -251,21 +252,21 @@ impl PhoneticSuggestion {
 
     pub(crate) fn get_prev_selection(
         &self,
-        splitted_string: &(&str, &str, &str),
+        string: &SplittedString,
         data: &Data,
         selections: &mut HashMap<String, String, RandomState>,
     ) -> usize {
-        let len = splitted_string.1.len();
+        let len = string.word().len();
         let mut selected = String::with_capacity(len * 3);
 
-        if let Some(item) = selections.get(splitted_string.1) {
+        if let Some(item) = selections.get(string.word()) {
             selected.push_str(item);
         } else if len >= 2 {
             for i in 1..len {
-                let test = &splitted_string.1[len - i..len];
+                let test = &string.word()[len - i..len];
 
                 if let Some(suffix) = data.find_suffix(test) {
-                    let key = &splitted_string.1[..len - test.len()];
+                    let key = &string.word()[..len - test.len()];
 
                     if let Some(base) = selections.get(key) {
                         let rmc = base.chars().last().unwrap();
@@ -292,13 +293,13 @@ impl PhoneticSuggestion {
                         selected.push_str(suffix);
 
                         // Save this for future reuse.
-                        selections.insert(splitted_string.1.to_string(), selected.to_string());
+                        selections.insert(string.word().to_string(), selected.to_string());
                     }
                 }
             }
         }
 
-        selected = format!("{}{}{}", splitted_string.0, selected, splitted_string.2);
+        selected = format!("{}{}{}", string.preceding(), selected, string.trailing());
 
         self.suggestions
             .iter()
@@ -359,7 +360,7 @@ mod tests {
     use crate::config::get_phonetic_method_defaults;
     use crate::data::Data;
     use crate::suggestion::Rank;
-    use crate::utility::split_string;
+    use crate::utility::SplittedString;
 
     #[test]
     fn test_suggestion_with_english() {
@@ -402,6 +403,24 @@ mod tests {
             suggestion.suggestions,
             ["{আ}", "{আঃ}", "{া}", "{এ}", "{অ্যা}", "{অ্যাঁ}"]
         );
+    }
+
+    #[test]
+    fn test_suggestion_smart_quotes() {
+        let mut suggestion = PhoneticSuggestion::default();
+        let mut selections = HashMap::with_hasher(RandomState::new());
+        let mut config = get_phonetic_method_defaults();
+        let data = Data::new(&config);
+        config.set_suggestion_include_english(true);
+        config.set_smart_quote(true);
+
+        suggestion.suggest("\"e\"", &data, &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["“এ”", "“ে”", "\"e\""]);
+
+        config.set_smart_quote(false);
+
+        suggestion.suggest("\"e\"", &data, &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["\"এ\"", "\"ে\"", "\"e\""]);
     }
 
     #[test]
@@ -618,7 +637,7 @@ mod tests {
             Rank::Other("*অন্য?!".to_string(), 0),
         ];
         assert_eq!(
-            suggestion.get_prev_selection(&split_string("*onno?!", false), &data, &mut selections),
+            suggestion.get_prev_selection(&SplittedString::split("*onno?!", false), &data, &mut selections),
             1
         );
 
@@ -628,7 +647,7 @@ mod tests {
             Rank::Other("ইয়েই".to_string(), 2),
         ];
         assert_eq!(
-            suggestion.get_prev_selection(&split_string("iei", false), &data, &mut selections),
+            suggestion.get_prev_selection(&SplittedString::split("iei", false), &data, &mut selections),
             1
         );
 
@@ -638,7 +657,7 @@ mod tests {
             Rank::Other("হঠাতে".to_string(), 0),
         ];
         assert_eq!(
-            suggestion.get_prev_selection(&split_string("hothate", false), &data, &mut selections),
+            suggestion.get_prev_selection(&SplittedString::split("hothate", false), &data, &mut selections),
             2
         );
 
@@ -648,7 +667,7 @@ mod tests {
         ];
         assert_eq!(
             suggestion.get_prev_selection(
-                &split_string("ebongmala", false),
+                &SplittedString::split("ebongmala", false),
                 &data,
                 &mut selections
             ),
@@ -662,7 +681,7 @@ mod tests {
         ];
         assert_eq!(
             suggestion.get_prev_selection(
-                &split_string("*onnogulo?!", false),
+                &SplittedString::split("*onnogulo?!", false),
                 &data,
                 &mut selections
             ),
@@ -719,7 +738,7 @@ mod benches {
     extern crate test;
 
     use super::PhoneticSuggestion;
-    use crate::{config::get_phonetic_method_defaults, data::Data, utility::split_string};
+    use crate::{config::get_phonetic_method_defaults, data::Data, utility::SplittedString};
     use test::{black_box, Bencher};
 
     #[bench]
@@ -727,7 +746,7 @@ mod benches {
         let mut suggestion = PhoneticSuggestion::default();
         let config = get_phonetic_method_defaults();
         let data = Data::new(&config);
-        let term = split_string("a", false);
+        let term = SplittedString::split("a", false);
 
         b.iter(|| {
             suggestion.cache.clear();
@@ -740,7 +759,7 @@ mod benches {
         let mut suggestion = PhoneticSuggestion::default();
         let config = get_phonetic_method_defaults();
         let data = Data::new(&config);
-        let term = split_string("kkhet", false);
+        let term = SplittedString::split("kkhet", false);
 
         b.iter(|| {
             suggestion.cache.clear();
@@ -753,7 +772,7 @@ mod benches {
         let mut suggestion = PhoneticSuggestion::default();
         let config = get_phonetic_method_defaults();
         let data = Data::new(&config);
-        let term = split_string("bistari", false);
+        let term = SplittedString::split("bistari", false);
 
         b.iter(|| {
             suggestion.cache.clear();
