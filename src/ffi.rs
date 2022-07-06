@@ -106,16 +106,19 @@ pub extern "C" fn riti_context_finish_input_session(ptr: *mut RitiContext) {
 ///
 /// Returns a new `suggestion` after applying the BackSpace event.
 ///
+/// If the `ctrl` parameter is true then it deletes the whole word
+/// in composition currently and ends the ongoing input session.
+/// 
 /// If the internal buffer becomes empty, this function will
 /// end the ongoing input session.
 #[no_mangle]
-pub extern "C" fn riti_context_backspace_event(ptr: *mut RitiContext) -> *mut Suggestion {
+pub extern "C" fn riti_context_backspace_event(ptr: *mut RitiContext, ctrl: bool) -> *mut Suggestion {
     let context = unsafe {
         assert!(!ptr.is_null());
         &*ptr
     };
 
-    let suggestion = context.backspace_event();
+    let suggestion = context.backspace_event(ctrl);
 
     Box::into_raw(Box::new(suggestion))
 }

@@ -314,10 +314,13 @@ void riti_context_finish_input_session(RitiContext *ptr);
 
  Returns a new `suggestion` after applying the BackSpace event.
 
+ If the `ctrl` parameter is true then it deletes the whole word
+ in composition currently and ends the ongoing input session.
+
  If the internal buffer becomes empty, this function will
  end the ongoing input session.
  */
-Suggestion *riti_context_backspace_event(RitiContext *ptr);
+Suggestion *riti_context_backspace_event(RitiContext *ptr, bool ctrl);
 
 void riti_suggestion_free(Suggestion *ptr);
 

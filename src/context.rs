@@ -61,11 +61,14 @@ impl RitiContext {
     /// A BackSpace event.
     ///
     /// Returns a new `suggestion` after applying the BackSpace event.
+    /// 
+    /// If the `ctrl` parameter is true then it deletes the whole word
+    /// in composition currently and ends the ongoing input session.
     ///
     /// If the internal buffer becomes empty, this function will
     /// end the ongoing input session.
-    pub fn backspace_event(&self) -> Suggestion {
-        self.method.borrow_mut().backspace_event(&self.data, &self.config)
+    pub fn backspace_event(&self, ctrl: bool) -> Suggestion {
+        self.method.borrow_mut().backspace_event(ctrl, &self.data, &self.config)
     }
 }
 
@@ -75,7 +78,7 @@ pub(crate) trait Method {
     fn update_engine(&mut self, config: &Config);
     fn ongoing_input_session(&self) -> bool;
     fn finish_input_session(&mut self);
-    fn backspace_event(&mut self, data: &Data, config: &Config) -> Suggestion;
+    fn backspace_event(&mut self, ctrl: bool, data: &Data, config: &Config) -> Suggestion;
 }
 
 impl dyn Method {
