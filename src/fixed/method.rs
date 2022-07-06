@@ -67,7 +67,14 @@ impl Method for FixedMethod {
         self.pending_kar = None;
     }
 
-    fn backspace_event(&mut self, data: &Data, config: &Config) -> Suggestion {
+    fn backspace_event(&mut self, ctrl: bool, data: &Data, config: &Config) -> Suggestion {
+        if ctrl && !self.buffer.is_empty() {
+            // Whole word deletion: Ctrl + Backspace combination
+            self.buffer.clear();
+            self.typed.clear();
+            self.pending_kar = None;
+            return Suggestion::empty();
+        }
         if self.pending_kar.is_some() {
             // Clear pending_kar.
             self.pending_kar = None;
@@ -697,11 +704,19 @@ mod tests {
         let data = Data::new(&config);
         config.set_fixed_suggestion(false);
 
-        assert!(!method.backspace_event(&data, &config).is_empty()); // আম
-        assert!(!method.backspace_event(&data, &config).is_empty()); // আ
-        assert!(method.backspace_event(&data, &config).is_empty()); // Empty
+        assert!(!method.backspace_event(false, &data, &config).is_empty()); // আম
+        assert!(!method.backspace_event(false, &data, &config).is_empty()); // আ
+        assert!(method.backspace_event(false, &data, &config).is_empty()); // Empty
         assert!(method.buffer.is_empty());
         assert!(method.typed.is_empty());
+
+        // Ctrl + Backspace
+        method = FixedMethod {
+            buffer: "আমি".to_string(),
+            typed: "ami".to_string(),
+            ..Default::default()
+        };
+        assert!(method.backspace_event(true, &data, &config).is_empty());
     }
 
     #[test]
@@ -920,17 +935,17 @@ mod tests {
         // Backspace
         method.buffer = "".to_string();
         method.process_key_value("ে", &config);
-        assert!(method.backspace_event(&data, &config).is_empty());
+        assert!(method.backspace_event(false, &data, &config).is_empty());
         assert!(method.buffer.is_empty());
         assert!(method.typed.is_empty());
 
         method.buffer = "ক".to_string();
         method.process_key_value("ি", &config);
-        assert!(!method.backspace_event(&data, &config).is_empty());
+        assert!(!method.backspace_event(false, &data, &config).is_empty());
         assert_eq!(method.buffer, "ক".to_string());
 
         method.buffer = "ক".to_string();
-        assert!(method.backspace_event(&data, &config).is_empty());
+        assert!(method.backspace_event(false, &data, &config).is_empty());
         assert!(method.buffer.is_empty());
         assert!(method.typed.is_empty());
 

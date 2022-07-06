@@ -126,8 +126,14 @@ impl Method for PhoneticMethod {
         self.buffer.clear();
     }
 
-    fn backspace_event(&mut self, data: &Data, config: &Config) -> Suggestion {
+    fn backspace_event(&mut self, ctrl: bool, data: &Data, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
+            // Whole word deletion: Ctrl + Backspace combination
+            if ctrl {
+                self.buffer.clear();
+                return Suggestion::empty();
+            }
+
             // Remove the last character.
             self.buffer.pop();
 
@@ -172,7 +178,14 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(!method.backspace_event(&data, &config).is_empty()); // a
-        assert!(method.backspace_event(&data, &config).is_empty()); // Empty
+        assert!(!method.backspace_event(false, &data, &config).is_empty()); // a
+        assert!(method.backspace_event(false, &data, &config).is_empty()); // Empty
+
+        // Ctrl + Backspace
+        method = PhoneticMethod {
+            buffer: "ab".to_string(),
+            ..Default::default()
+        };
+        assert!(method.backspace_event(true, &data, &config).is_empty());
     }
 }
