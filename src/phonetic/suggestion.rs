@@ -184,7 +184,9 @@ impl PhoneticSuggestion {
         }
 
         // Include written English word if the feature is enabled and it is not included already.
-        if config.get_suggestion_include_english() && !typed_added {
+        // Avoid including meta character suggestion twice, so check `term` is not equal to the
+        // captured preceding characters
+        if config.get_suggestion_include_english() && !typed_added && term != string.preceding() {
             self.suggestions
                 .push(Rank::last_ranked(term.to_string(), 3));
         }
@@ -381,6 +383,9 @@ mod tests {
             suggestion.suggestions,
             ["{আ}", "{🅰️}", "{আঃ}", "{া}", "{এ}", "{অ্যা}", "{অ্যাঁ}", "{a}"]
         );
+
+        suggestion.suggest("\"", &data, &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["\""]);
     }
 
     #[test]
