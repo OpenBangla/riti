@@ -36,7 +36,7 @@ impl Config {
     }
 
     pub(crate) fn get_database_path(&self) -> PathBuf {
-        self.database_dir.join("dictionary.json")
+        self.database_dir.join("dictionary.ron")
     }
 
     pub(crate) fn get_suffix_data_path(&self) -> PathBuf {

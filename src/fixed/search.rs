@@ -90,10 +90,11 @@ pub(crate) fn search_dictionary(
     );
     let rgx = Regex::new(&regex).unwrap();
 
-    let words = data.get_words_for(table).filter(|i| rgx.is_match(i));
+    let words = data.get_words_for(table).filter(|i| rgx.is_match(&i.0));
 
     if traditional_kar {
         suggestions.extend(words.map(|w| {
+            let w = &w.0;
             // Check if the word has any of the ligature making Kars.
             let word = if w.chars().any(is_ligature_making_kar) {
                 let mut temp = String::with_capacity(w.capacity());
@@ -111,7 +112,7 @@ pub(crate) fn search_dictionary(
             Rank::new_suggestion(word, base)
         }));
     } else {
-        suggestions.extend(words.map(|s| Rank::new_suggestion(s.clone(), base)));
+        suggestions.extend(words.map(|s| Rank::new_suggestion(s.0.clone(), base)));
     }
 }
 

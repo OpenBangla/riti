@@ -7,7 +7,7 @@ use crate::config::Config;
 
 /// Data which is shared between the methods.
 pub(crate) struct Data {
-    table: HashMap<String, Vec<String>, RandomState>,
+    table: HashMap<String, Vec<(String, Vec<String>)>, RandomState>,
     suffix: HashMap<String, String, RandomState>,
     autocorrect: HashMap<String, String, RandomState>,
     emojicon: Emojicon,
@@ -17,7 +17,7 @@ pub(crate) struct Data {
 impl Data {
     pub(crate) fn new(config: &Config) -> Data {
         Data {
-            table: serde_json::from_slice(&read(config.get_database_path()).unwrap()).unwrap(),
+            table: ron::de::from_bytes(&read(config.get_database_path()).unwrap()).unwrap(),
             suffix: serde_json::from_slice(&read(config.get_suffix_data_path()).unwrap()).unwrap(),
             autocorrect: serde_json::from_slice(&read(config.get_autocorrect_data()).unwrap()).unwrap(),
             emojicon: Emojicon::new(),
@@ -25,7 +25,7 @@ impl Data {
         }
     }
 
-    pub(crate) fn get_words_for(&self, table: &str) -> impl Iterator<Item = &String> {
+    pub(crate) fn get_words_for(&self, table: &str) -> impl Iterator<Item = &(String, Vec<String>)> {
         self.table[table].iter()
     }
 
