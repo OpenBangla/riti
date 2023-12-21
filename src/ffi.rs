@@ -247,7 +247,7 @@ pub extern "C" fn riti_suggestion_is_empty(ptr: *const Suggestion) -> bool {
 /// `riti_config_set_*` set of functions.
 #[no_mangle]
 pub extern "C" fn riti_config_new() -> *mut Config {
-    Box::into_raw(Box::new(Config::default()))
+    Box::into_raw(Box::default())
 }
 
 
