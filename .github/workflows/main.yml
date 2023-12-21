@@ -2,6 +2,10 @@ on: [push, pull_request]
 
 name: Continuous integration
 
+# Make sure CI fails on all warnings, including Clippy lints
+env:
+  RUSTFLAGS: "-Dwarnings"
+
 jobs:
   test:
     name: Test Suite
@@ -19,3 +23,13 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
       - run: cargo test
+
+  lint:
+    name: Clippy Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: "clippy"
+      - run: cargo clippy

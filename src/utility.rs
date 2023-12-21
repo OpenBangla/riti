@@ -165,10 +165,10 @@ pub(crate) fn smart_quoter(mut splitted: SplittedString) -> SplittedString {
     for ch in splitted.preceding().chars() {
         match ch {
             '\'' => {
-                preceding.push_str("‘");
+                preceding.push('‘');
             }
             '"' => {
-                preceding.push_str("“");
+                preceding.push('“');
             }
             _ => preceding.push(ch),
         }
@@ -179,10 +179,10 @@ pub(crate) fn smart_quoter(mut splitted: SplittedString) -> SplittedString {
     for ch in splitted.trailing.chars() {
         match ch {
             '\'' => {
-                trailing.push_str("’");
+                trailing.push('’');
             }
             '"' => {
-                trailing.push_str("”");
+                trailing.push('”');
             }
             _ => trailing.push(ch),
         }
@@ -190,7 +190,8 @@ pub(crate) fn smart_quoter(mut splitted: SplittedString) -> SplittedString {
 
     splitted.preceding = Cow::Owned(preceding);
     splitted.trailing = Cow::Owned(trailing);
-    return splitted;
+    
+    splitted
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
 mod patterns;
-mod regex;
+mod parser;
 
-pub(crate) use self::regex::parse;
+pub(crate) use self::parser::parse;

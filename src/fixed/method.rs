@@ -8,9 +8,9 @@ use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
 
 enum PendingKar {
-    IKar,
-    EKar,
-    OIKar,
+    I,
+    E,
+    OI,
 }
 
 pub(crate) struct FixedMethod {
@@ -238,9 +238,9 @@ impl FixedMethod {
                     // Capture left standing kar in pending_kar.
                     if rmc != B_HASANTA && is_left_standing_kar(character) {
                         self.pending_kar = match character {
-                            B_I_KAR => Some(PendingKar::IKar),
-                            B_E_KAR => Some(PendingKar::EKar),
-                            B_OI_KAR => Some(PendingKar::OIKar),
+                            B_I_KAR => Some(PendingKar::I),
+                            B_E_KAR => Some(PendingKar::E),
+                            B_OI_KAR => Some(PendingKar::OI),
                             _ => None,
                         };
                         return;
@@ -258,9 +258,9 @@ impl FixedMethod {
                         if rmc == B_HASANTA {
                             self.buffer.pop();
                             self.buffer.push(match left_standing_kar {
-                                PendingKar::EKar => B_E_KAR,
-                                PendingKar::IKar => B_I_KAR,
-                                PendingKar::OIKar => B_OI_KAR,
+                                PendingKar::E => B_E_KAR,
+                                PendingKar::I => B_I_KAR,
+                                PendingKar::OI => B_OI_KAR,
                             });
                             self.pending_kar = None;
                             self.buffer.push(B_HASANTA);
@@ -271,9 +271,9 @@ impl FixedMethod {
                                 && (self.buffer.is_empty() || rmc.is_vowel() || MARKS.contains(rmc))
                             {
                                 self.buffer.push(match left_standing_kar {
-                                    PendingKar::EKar => B_E,
-                                    PendingKar::IKar => B_I,
-                                    PendingKar::OIKar => B_OI,
+                                    PendingKar::E => B_E,
+                                    PendingKar::I => B_I,
+                                    PendingKar::OI => B_OI,
                                 });
                             }
                             self.pending_kar = None;
@@ -380,9 +380,9 @@ impl FixedMethod {
                 if character == B_HASANTA && is_left_standing_kar(rmc) {
                     if value.chars().count() == 1 {
                         self.pending_kar = match self.buffer.pop() {
-                            Some(B_I_KAR) => Some(PendingKar::IKar),
-                            Some(B_E_KAR) => Some(PendingKar::EKar),
-                            Some(B_OI_KAR) => Some(PendingKar::OIKar),
+                            Some(B_I_KAR) => Some(PendingKar::I),
+                            Some(B_E_KAR) => Some(PendingKar::E),
+                            Some(B_OI_KAR) => Some(PendingKar::OI),
                             _ => None,
                         };
                         self.buffer.push(character);
@@ -409,9 +409,9 @@ impl FixedMethod {
                     return;
                 }
                 self.buffer.push(match left_standing_kar {
-                    PendingKar::EKar => B_E_KAR,
-                    PendingKar::IKar => B_I_KAR,
-                    PendingKar::OIKar => B_OI_KAR,
+                    PendingKar::E => B_E_KAR,
+                    PendingKar::I => B_I_KAR,
+                    PendingKar::OI => B_OI_KAR,
                 });
                 self.pending_kar = None;
                 return;
