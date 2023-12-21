@@ -8,7 +8,7 @@ use crate::config::Config;
 fn riti_free<T>(ptr: *mut T) {
     if !ptr.is_null() {
         unsafe {
-            Box::from_raw(ptr);
+            drop(Box::from_raw(ptr));
         }
     }
 }

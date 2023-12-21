@@ -624,23 +624,6 @@ mod tests {
         assert_eq!(method.suggestions, [";)", "😉"]);
         method.finish_input_session();
 
-        method.buffer = "হাসি".to_owned();
-        method.create_dictionary_suggestion(&data, &config);
-        assert_eq!(
-            method.suggestions,
-            [
-                "হাসি",
-                "😁",
-                "😄",
-                "😃",
-                "😀",
-                "হাসিল",
-                "হাসিত",
-                "হাসিস",
-                "হাসিব"
-            ]
-        );
-
         method.buffer = "{লজ্জা}".to_owned();
         method.create_dictionary_suggestion(&data, &config);
         assert_eq!(
@@ -656,6 +639,24 @@ mod tests {
                 "{লজ্জাবোধ}",
                 "{লজ্জাবতী}"
             ]
+        );
+    }
+
+    // TODO: merge this into the `emojis_test` after we bump to the MSRV which 
+    // doesn't induce inconsistent sorting of suggestions.
+    #[rustversion::not(stable(1.63))]
+    #[test]
+    fn test_emojis_compiler_conditional_test() {
+        let mut method = FixedMethod::default();
+        let mut config = get_fixed_method_defaults();
+        let data = Data::new(&config);
+
+        config.set_fixed_traditional_kar(false);
+        method.buffer = "হাসি".to_owned();
+        method.create_dictionary_suggestion(&data, &config);
+        assert_eq!(
+            method.suggestions,
+            ["হাসি", "☺", "🙂", "😄", "😃", "😁", "😀", "হাসিব", "হাসিত"]
         );
     }
 

@@ -29,7 +29,7 @@ pub(crate) struct PhoneticSuggestion {
 
 impl PhoneticSuggestion {
     pub(crate) fn new(user_autocorrect: HashMap<String, String, RandomState>) -> Self {
-        let table: Vec<(&str, &[&str])> = vec![
+        let table: [(&str, &[&str]); 26] = [
             ("a", &["a", "aa", "e", "oi", "o", "nya", "y"]),
             ("b", &["b", "bh"]),
             ("c", &["c", "ch", "k"]),
