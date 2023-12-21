@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Muhammad Mominul Huque <mominul2082@gmail.com>"]
 license = "MPL-2.0"
 edition = "2018"
-rust-version = "1.44.1"
+rust-version = "1.63.0"
 
 [lib]
 crate-type = ["staticlib"]
@@ -16,10 +16,10 @@ bench = []
 codegen-units = 1
 
 [dependencies]
-ahash = { version = "0.7", default-features = false }
+ahash = { version = "0.8", features = ["serde"] }
 emojicon = "0.3"
 serde_json = "1.0"
-regex = "1.5"
+regex = "1.9.6" # For maintaining MSRV
 stringplus = "0.1"
 edit-distance = "2.1"
 okkhor = "0.5"
