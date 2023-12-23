@@ -89,14 +89,10 @@ impl Method for PhoneticMethod {
         let mut suggestion = self.create_suggestion(data, config);
 
         // Preserve user's selection if the keypress was a punctuation mark
-        match suggestion {
-            Suggestion::Full { selection: ref mut sel, .. } => {
-                if matches!(character, '.' | '?' | '!' | ',' | ':' | ';' | '-' | '_' | ')' | '}' | ']' | '\'' | '"') {
-                    *sel = selection.into();
-                }
+        if let Suggestion::Full { selection: ref mut sel, .. } = suggestion {
+            if matches!(character, '.' | '?' | '!' | ',' | ':' | ';' | '-' | '_' | ')' | '}' | ']' | '\'' | '"') {
+                *sel = selection.into();
             }
-
-            _ => (),
         }
 
         suggestion

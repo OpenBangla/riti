@@ -280,6 +280,13 @@ RitiContext *riti_context_new_with_config(const Config *ptr);
 
 void riti_context_free(RitiContext *ptr);
 
+/*
+ Generates suggestion for `key` press.
+
+ `modifier`: state of modifier keys
+ `selection`: previously selected user selection index if available otherwise `0`.
+ It is used to preserve user's candidate selection if the key is a punctuation character in Phonetic method.
+ */
 Suggestion *riti_get_suggestion_for_key(RitiContext *ptr,
                                         uint16_t key,
                                         uint8_t modifier,

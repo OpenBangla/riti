@@ -32,6 +32,11 @@ pub extern "C" fn riti_context_free(ptr: *mut RitiContext) {
     riti_free(ptr)
 }
 
+/// Generates suggestion for `key` press.
+/// 
+/// `modifier`: state of modifier keys
+/// `selection`: previously selected user selection index if available otherwise `0`.
+/// It is used to preserve user's candidate selection if the key is a punctuation character in Phonetic method.
 #[no_mangle]
 pub extern "C" fn riti_get_suggestion_for_key(
     ptr: *mut RitiContext,
