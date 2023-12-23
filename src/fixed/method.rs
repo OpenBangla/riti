@@ -26,6 +26,7 @@ impl Method for FixedMethod {
         &mut self,
         key: u16,
         modifier: u8,
+        _selection: u8,
         data: &Data,
         config: &Config,
     ) -> Suggestion {
@@ -579,15 +580,15 @@ mod tests {
         let data = Data::new(&config);
         config.set_suggestion_include_english(true);
 
-        method.get_suggestion(VC_A, 0, &data, &config);
-        method.get_suggestion(VC_M, 0, &data, &config);
-        method.get_suggestion(VC_I, 0, &data, &config);
+        method.get_suggestion(VC_A, 0, 0, &data, &config);
+        method.get_suggestion(VC_M, 0, 0, &data, &config);
+        method.get_suggestion(VC_I, 0, 0, &data, &config);
         assert_eq!(method.typed, "ami");
         assert_eq!(method.suggestions, ["আমি", "আমিন", "আমির", "আমিষ", "ami"]);
         method.finish_input_session();
 
-        method.get_suggestion(VC_PAREN_LEFT, 0, &data, &config);
-        method.get_suggestion(VC_PAREN_RIGHT, 0, &data, &config);
+        method.get_suggestion(VC_PAREN_LEFT, 0, 0, &data, &config);
+        method.get_suggestion(VC_PAREN_RIGHT, 0, 0, &data, &config);
         assert_eq!(method.suggestions, ["()"]);
     }
 
@@ -599,16 +600,16 @@ mod tests {
         config.set_suggestion_include_english(true);
         
         config.set_smart_quote(true);
-        method.get_suggestion(VC_QUOTE, 0, &data, &config);
-        method.get_suggestion(VC_K, 0, &data, &config);
-        method.get_suggestion(VC_QUOTE, 0, &data, &config);
+        method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
+        method.get_suggestion(VC_K, 0, 0, &data, &config);
+        method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
         assert_eq!(method.suggestions, ["“ক”", "\"k\""]);
         method.finish_input_session();
 
         config.set_smart_quote(false);
-        method.get_suggestion(VC_QUOTE, 0, &data, &config);
-        method.get_suggestion(VC_K, 0, &data, &config);
-        method.get_suggestion(VC_QUOTE, 0, &data, &config);
+        method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
+        method.get_suggestion(VC_K, 0, 0, &data, &config);
+        method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
         assert_eq!(method.suggestions, ["\"ক\"", "\"k\""]);
     }
 
@@ -619,8 +620,8 @@ mod tests {
         let data = Data::new(&config);
         config.set_fixed_traditional_kar(false);
 
-        method.get_suggestion(VC_SEMICOLON, 0, &data, &config);
-        method.get_suggestion(VC_PAREN_RIGHT, 0, &data, &config);
+        method.get_suggestion(VC_SEMICOLON, 0, 0, &data, &config);
+        method.get_suggestion(VC_PAREN_RIGHT, 0, 0, &data, &config);
         assert_eq!(method.suggestions, [";)", "😉"]);
         method.finish_input_session();
 
@@ -668,9 +669,9 @@ mod tests {
         config.set_suggestion_include_english(true);
         config.set_ansi_encoding(true);
 
-        method.get_suggestion(VC_A, 0, &data, &config);
-        method.get_suggestion(VC_M, 0, &data, &config);
-        method.get_suggestion(VC_I, 0, &data, &config);
+        method.get_suggestion(VC_A, 0, 0, &data, &config);
+        method.get_suggestion(VC_M, 0, 0, &data, &config);
+        method.get_suggestion(VC_I, 0, 0, &data, &config);
         assert_eq!(method.typed, "ami");
         assert_eq!(method.suggestions, ["আমি", "আমিন", "আমির", "আমিষ"]);
         method.finish_input_session();

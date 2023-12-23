@@ -21,8 +21,8 @@ impl RitiContext {
     }
 
     /// Get suggestion for key.
-    pub fn get_suggestion_for_key(&self, key: u16, modifier: u8) -> Suggestion {
-        self.method.borrow_mut().get_suggestion(key, modifier, &self.data, &self.config)
+    pub fn get_suggestion_for_key(&self, key: u16, modifier: u8, selection: u8) -> Suggestion {
+        self.method.borrow_mut().get_suggestion(key, modifier, selection, &self.data, &self.config)
     }
 
     /// A candidate of the suggestion list was committed.
@@ -73,7 +73,7 @@ impl RitiContext {
 }
 
 pub(crate) trait Method {
-    fn get_suggestion(&mut self, key: u16, modifier: u8, data: &Data, config: &Config) -> Suggestion;
+    fn get_suggestion(&mut self, key: u16, modifier: u8, selection: u8, data: &Data, config: &Config) -> Suggestion;
     fn candidate_committed(&mut self, index: usize, config: &Config);
     fn update_engine(&mut self, config: &Config);
     fn ongoing_input_session(&self) -> bool;
@@ -111,10 +111,10 @@ mod tests {
         let config = get_phonetic_method_defaults();
         let mut context = RitiContext::new_with_config(&config);
 
-        context.get_suggestion_for_key(VC_H, 0);
-        context.get_suggestion_for_key(VC_E, 0);
-        context.get_suggestion_for_key(VC_L, 0);
-        let suggestion = context.get_suggestion_for_key(VC_P, 0);
+        context.get_suggestion_for_key(VC_H, 0, 0);
+        context.get_suggestion_for_key(VC_E, 0, 0);
+        context.get_suggestion_for_key(VC_L, 0, 0);
+        let suggestion = context.get_suggestion_for_key(VC_P, 0, 0);
         context.finish_input_session();
         assert_eq!(suggestion.get_suggestions(), ["হেল্প", "🆘"]);
 
@@ -122,10 +122,10 @@ mod tests {
         let config = get_fixed_method_defaults();
         context.update_engine(&config);
 
-        context.get_suggestion_for_key(VC_H, 0);
-        context.get_suggestion_for_key(VC_E, 0);
-        context.get_suggestion_for_key(VC_L, 0);
-        let suggestion = context.get_suggestion_for_key(VC_P, 0);
+        context.get_suggestion_for_key(VC_H, 0, 0);
+        context.get_suggestion_for_key(VC_E, 0, 0);
+        context.get_suggestion_for_key(VC_L, 0, 0);
+        let suggestion = context.get_suggestion_for_key(VC_P, 0, 0);
         context.finish_input_session();
         assert_eq!(suggestion.get_suggestions(), ["হীলপ"]);
     }
