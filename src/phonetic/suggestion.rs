@@ -458,6 +458,12 @@ mod tests {
             ["চুল", "😎", "🆒", "চোল", "চল", "চূল", "ছুল", "ছোল", "ছল", "ছুঁল"]
         );
 
+        suggestion.suggest("chup", &data, &mut selections, &config);
+        assert_eq!(
+            suggestion.suggestions,
+            ["ছুপ", "🫢", "চুপ"]
+        );
+
         suggestion.suggest(".", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["।"]);
     }
