@@ -1,7 +1,7 @@
 #![cfg_attr(feature = "bench", feature(test))]
 
-pub mod context;
 pub mod config;
+pub mod context;
 pub(crate) mod data;
 mod ffi;
 mod fixed;

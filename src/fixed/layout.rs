@@ -15,7 +15,7 @@ pub(crate) enum LayoutModifiers {
 }
 
 /// A Fixed Layout
-/// 
+///
 /// Provides the character for a specific input key combination.
 /// Initiated by parsing a fixed method layout file(JSON formatted)
 pub(crate) struct Layout {
@@ -43,7 +43,12 @@ impl Layout {
             .cloned()
     }
 
-    pub(crate) fn get_char_for_key(&self, key: u16, modifier: LayoutModifiers, fixed_numpad: bool) -> Option<String> {
+    pub(crate) fn get_char_for_key(
+        &self,
+        key: u16,
+        modifier: LayoutModifiers,
+        fixed_numpad: bool,
+    ) -> Option<String> {
         match (key, modifier) {
             // Numerics
             (VC_0, modifier) => self.layout_get_value("0", modifier),

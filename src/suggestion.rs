@@ -1,6 +1,6 @@
 use edit_distance::edit_distance;
-use std::cmp::Ordering;
 use poriborton::bijoy2000::unicode_to_bijoy;
+use std::cmp::Ordering;
 
 /// Suggestions which are intended to be shown by the IM's candidate window.
 /// Suggestion is of two variants, the 'Full' one includes a list of suggestion and
@@ -30,12 +30,15 @@ impl Suggestion {
     /// `suggestions`: Vector of suggestions.
     ///
     /// `selection`: Index of the last selected suggestion.
-    /// 
+    ///
     /// `ansi`: Enable ANSI encoding conversion.
     pub fn new(auxiliary: String, suggestions: &[Rank], selection: usize, ansi: bool) -> Self {
         Self::Full {
             auxiliary,
-            suggestions: suggestions.iter().map(|r| r.to_string().to_owned()).collect(),
+            suggestions: suggestions
+                .iter()
+                .map(|r| r.to_string().to_owned())
+                .collect(),
             selection,
             ansi,
         }
@@ -46,7 +49,7 @@ impl Suggestion {
     /// *A lonely suggestion.* 😁
     ///
     /// `suggestion`: The suggestion.
-    /// 
+    ///
     /// `ansi`: Enable ANSI encoding conversion.
     pub fn new_lonely(suggestion: String, ansi: bool) -> Self {
         Self::Single { suggestion, ansi }
@@ -71,7 +74,7 @@ impl Suggestion {
     pub fn is_empty(&self) -> bool {
         match &self {
             Self::Full { suggestions, .. } => suggestions.is_empty(),
-            Self::Single { suggestion, ..} => suggestion.is_empty(),
+            Self::Single { suggestion, .. } => suggestion.is_empty(),
         }
     }
 
@@ -108,7 +111,9 @@ impl Suggestion {
     /// was created.
     pub fn get_pre_edit_text(&self, index: usize) -> String {
         match self {
-            Self::Full { suggestions, ansi, .. } if *ansi => unicode_to_bijoy(&suggestions[index]),
+            Self::Full {
+                suggestions, ansi, ..
+            } if *ansi => unicode_to_bijoy(&suggestions[index]),
             Self::Full { suggestions, .. } => suggestions[index].to_owned(),
             Self::Single { suggestion, ansi } if *ansi => unicode_to_bijoy(suggestion),
             Self::Single { suggestion, .. } => suggestion.clone(),
@@ -137,7 +142,7 @@ pub enum Rank {
     First(String),
     Emoji(String, u8),
     Other(String, u8),
-    Last(String, u8)
+    Last(String, u8),
 }
 
 impl Rank {
@@ -158,7 +163,7 @@ impl Rank {
 
     /// A suggestion with a ranking calculated according to the `base` word.
     ///
-    /// Uses edit distance to rank the `item`. 
+    /// Uses edit distance to rank the `item`.
     pub(crate) fn new_suggestion(item: String, base: &str) -> Self {
         let distance = edit_distance(base, &item) * 10;
         Rank::Other(item, distance as u8)
@@ -174,7 +179,7 @@ impl Rank {
         Rank::Emoji(item, rank)
     }
 
-    /// A suggestion with a low `rank` ranking. 
+    /// A suggestion with a low `rank` ranking.
     pub(crate) fn last_ranked(item: String, rank: u8) -> Self {
         Rank::Last(item, rank)
     }
@@ -247,10 +252,20 @@ mod tests {
 
     #[test]
     fn test_ansi_encoding() {
-        let suggestion = Suggestion::new("test".to_owned(), &[Rank::first_ranked("হাই".to_owned())], 0, true);
+        let suggestion = Suggestion::new(
+            "test".to_owned(),
+            &[Rank::first_ranked("হাই".to_owned())],
+            0,
+            true,
+        );
         assert_eq!(suggestion.get_pre_edit_text(0), "nvB");
 
-        let suggestion = Suggestion::new("test".to_owned(), &[Rank::first_ranked("হাই".to_owned())], 0, false);
+        let suggestion = Suggestion::new(
+            "test".to_owned(),
+            &[Rank::first_ranked("হাই".to_owned())],
+            0,
+            false,
+        );
         assert_eq!(suggestion.get_pre_edit_text(0), "হাই");
 
         let suggestion = Suggestion::new_lonely("হাই".to_owned(), true);
@@ -265,20 +280,43 @@ mod tests {
         let r = Rank::Emoji("Happy".to_owned(), 1);
         assert_eq!(r, "Happy");
 
-        let mut vr1 = vec![Rank::Last(":)".to_owned(), 2), Rank::Last("Thanks!".to_owned(), 1), Rank::Other("my".to_owned(), 10), Rank::Other("friend!".to_owned(), 20), Rank::First("Hello".to_owned()), Rank::Emoji("✋".to_owned(), 1)];
+        let mut vr1 = vec![
+            Rank::Last(":)".to_owned(), 2),
+            Rank::Last("Thanks!".to_owned(), 1),
+            Rank::Other("my".to_owned(), 10),
+            Rank::Other("friend!".to_owned(), 20),
+            Rank::First("Hello".to_owned()),
+            Rank::Emoji("✋".to_owned(), 1),
+        ];
         vr1.sort_unstable();
-        assert_eq!(vr1, vec![Rank::First("Hello".to_owned()), Rank::Emoji("✋".to_owned(), 1), Rank::Other("my".to_owned(), 10), Rank::Other("friend!".to_owned(), 20), Rank::Last("Thanks!".to_owned(), 1), Rank::Last(":)".to_owned(), 2)]);
+        assert_eq!(
+            vr1,
+            vec![
+                Rank::First("Hello".to_owned()),
+                Rank::Emoji("✋".to_owned(), 1),
+                Rank::Other("my".to_owned(), 10),
+                Rank::Other("friend!".to_owned(), 20),
+                Rank::Last("Thanks!".to_owned(), 1),
+                Rank::Last(":)".to_owned(), 2)
+            ]
+        );
         assert_eq!(vr1, ["Hello", "✋", "my", "friend!", "Thanks!", ":)"]);
     }
 
     #[test]
     fn test_ranked_sort() {
-        let mut suggestion: Vec<Rank> = ["ফইড়ে", "ফীরে", "ফিরে"].iter().map(|&s| Rank::new_suggestion(s.to_owned(), "ফিরে")).collect();
+        let mut suggestion: Vec<Rank> = ["ফইড়ে", "ফীরে", "ফিরে"]
+            .iter()
+            .map(|&s| Rank::new_suggestion(s.to_owned(), "ফিরে"))
+            .collect();
         suggestion.push(Rank::emoji("🔥".to_owned()));
         suggestion.sort_unstable();
         assert_eq!(suggestion, ["ফিরে", "🔥", "ফীরে", "ফইড়ে"]);
 
-        suggestion = ["অ্যা", "অ্যাঁ", "আ", "আঃ", "া", "এ"].iter().map(|&s| Rank::new_suggestion(s.to_owned(), "আ")).collect();
+        suggestion = ["অ্যা", "অ্যাঁ", "আ", "আঃ", "া", "এ"]
+            .iter()
+            .map(|&s| Rank::new_suggestion(s.to_owned(), "আ"))
+            .collect();
         suggestion.push(Rank::emoji("🅰️".to_owned()));
         suggestion.sort_unstable();
         assert_eq!(suggestion, ["আ", "🅰️", "আঃ", "া", "এ", "অ্যা", "অ্যাঁ"]);

@@ -1,7 +1,7 @@
 use ahash::RandomState;
+use emojicon::{BengaliEmoji, Emojicon};
 use std::collections::HashMap;
 use std::fs::read;
-use emojicon::{Emojicon, BengaliEmoji};
 
 use crate::config::Config;
 
@@ -19,7 +19,8 @@ impl Data {
         Data {
             table: serde_json::from_slice(&read(config.get_database_path()).unwrap()).unwrap(),
             suffix: serde_json::from_slice(&read(config.get_suffix_data_path()).unwrap()).unwrap(),
-            autocorrect: serde_json::from_slice(&read(config.get_autocorrect_data()).unwrap()).unwrap(),
+            autocorrect: serde_json::from_slice(&read(config.get_autocorrect_data()).unwrap())
+                .unwrap(),
             emojicon: Emojicon::new(),
             bengali_emoji: BengaliEmoji::new(),
         }
@@ -35,9 +36,7 @@ impl Data {
 
     /// Search for a `term` in the AutoCorrect dictionary.
     pub(crate) fn search_corrected(&self, term: &str) -> Option<&str> {
-        self.autocorrect
-            .get(term)
-            .map(String::as_str)
+        self.autocorrect.get(term).map(String::as_str)
     }
 
     pub(crate) fn get_emoji_by_emoticon(&self, emoticon: &str) -> Option<&str> {

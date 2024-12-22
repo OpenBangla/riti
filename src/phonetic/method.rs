@@ -66,7 +66,12 @@ impl PhoneticMethod {
 
             self.prev_selection = selection;
 
-            Suggestion::new(self.buffer.clone(), &suggestions, self.prev_selection, config.get_ansi_encoding())
+            Suggestion::new(
+                self.buffer.clone(),
+                &suggestions,
+                self.prev_selection,
+                config.get_ansi_encoding(),
+            )
         } else {
             let suggestion = self.suggestion.suggest_only_phonetic(&self.buffer);
 
@@ -89,8 +94,15 @@ impl Method for PhoneticMethod {
         let mut suggestion = self.create_suggestion(data, config);
 
         // Preserve user's selection if the keypress was a punctuation mark
-        if let Suggestion::Full { selection: ref mut sel, .. } = suggestion {
-            if matches!(character, '.' | '?' | '!' | ',' | ':' | ';' | '-' | '_' | ')' | '}' | ']' | '\'' | '"') {
+        if let Suggestion::Full {
+            selection: ref mut sel,
+            ..
+        } = suggestion
+        {
+            if matches!(
+                character,
+                '.' | '?' | '!' | ',' | ':' | ';' | '-' | '_' | ')' | '}' | ']' | '\'' | '"'
+            ) {
                 *sel = selection.into();
             }
         }
@@ -101,11 +113,16 @@ impl Method for PhoneticMethod {
     fn candidate_committed(&mut self, index: usize, config: &Config) {
         // Check if user has selected a different suggestion
         if self.prev_selection != index && config.get_phonetic_suggestion() {
-            let suggestion = SplittedString::split(self.suggestion.suggestions[index].to_string(), true)
-                .word()
-                .to_string();
-            self.selections
-                .insert(SplittedString::split(&self.buffer, false).word().to_string(), suggestion);
+            let suggestion =
+                SplittedString::split(self.suggestion.suggestions[index].to_string(), true)
+                    .word()
+                    .to_string();
+            self.selections.insert(
+                SplittedString::split(&self.buffer, false)
+                    .word()
+                    .to_string(),
+                suggestion,
+            );
             write(
                 config.get_user_phonetic_selection_data(),
                 serde_json::to_string(&self.selections).unwrap(),

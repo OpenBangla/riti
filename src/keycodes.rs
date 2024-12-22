@@ -106,6 +106,7 @@ pub const VC_QUOTE: u16 = 0x0064; // '"'
 pub const VC_LESS: u16 = 0x0065; // '<'
 pub const VC_GREATER: u16 = 0x0066; // '>'
 pub const VC_QUESTION: u16 = 0x0067; // '?'
+
 // End Alphanumeric Zone
 
 // Begin Numeric Zone

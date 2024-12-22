@@ -9,7 +9,7 @@ use crate::config::Config;
 use crate::data::Data;
 use crate::phonetic::regex::parse;
 use crate::suggestion::Rank;
-use crate::utility::{push_checked, Utility, smart_quoter, SplittedString};
+use crate::utility::{push_checked, smart_quoter, SplittedString, Utility};
 
 pub(crate) struct PhoneticSuggestion {
     pub(crate) suggestions: Vec<Rank>,
@@ -128,8 +128,7 @@ impl PhoneticSuggestion {
     pub(crate) fn suggest_only_phonetic(&mut self, term: &str) -> String {
         let string = SplittedString::split(term, false);
 
-        self.phonetic
-            .convert_into(string.word(), &mut self.pbuffer);
+        self.phonetic.convert_into(string.word(), &mut self.pbuffer);
 
         format!(
             "{}{}{}",
@@ -150,7 +149,7 @@ impl PhoneticSuggestion {
         let mut typed_added = false;
 
         // Convert preceding and trailing meta characters into Bengali(phonetic representation).
-        string.map(|p,t| (self.phonetic.convert(p), self.phonetic.convert(t)));
+        string.map(|p, t| (self.phonetic.convert(p), self.phonetic.convert(t)));
 
         // Smart Quoting feature
         if config.get_smart_quote() {
@@ -200,15 +199,10 @@ impl PhoneticSuggestion {
     }
 
     /// Make suggestions from the given `splitted_string`. This will include dictionary and auto-correct suggestion.
-    pub(crate) fn suggestion_with_dict(
-        &mut self,
-        string: &SplittedString,
-        data: &Data,
-    ) {
+    pub(crate) fn suggestion_with_dict(&mut self, string: &SplittedString, data: &Data) {
         self.suggestions.clear();
 
-        self.phonetic
-            .convert_into(string.word(), &mut self.pbuffer);
+        self.phonetic.convert_into(string.word(), &mut self.pbuffer);
 
         let phonetic = self.pbuffer.clone();
 
@@ -225,8 +219,7 @@ impl PhoneticSuggestion {
 
             self.include_from_dictionary(string.word(), &phonetic, &mut suggestions, data);
             // Add the suggestions into the cache.
-            self.cache
-                .insert(string.word().to_string(), suggestions);
+            self.cache.insert(string.word().to_string(), suggestions);
         }
 
         let suffixed_suggestions = self.add_suffix_to_suggestions(string.word(), data);
@@ -459,10 +452,7 @@ mod tests {
         );
 
         suggestion.suggest("chup", &data, &mut selections, &config);
-        assert_eq!(
-            suggestion.suggestions,
-            ["ছুপ", "🫢", "চুপ"]
-        );
+        assert_eq!(suggestion.suggestions, ["ছুপ", "🫢", "চুপ"]);
 
         suggestion.suggest(".", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["।"]);
@@ -648,7 +638,11 @@ mod tests {
             Rank::Other("*অন্য?!".to_string(), 0),
         ];
         assert_eq!(
-            suggestion.get_prev_selection(&SplittedString::split("*onno?!", false), &data, &mut selections),
+            suggestion.get_prev_selection(
+                &SplittedString::split("*onno?!", false),
+                &data,
+                &mut selections
+            ),
             1
         );
 
@@ -658,7 +652,11 @@ mod tests {
             Rank::Other("ইয়েই".to_string(), 2),
         ];
         assert_eq!(
-            suggestion.get_prev_selection(&SplittedString::split("iei", false), &data, &mut selections),
+            suggestion.get_prev_selection(
+                &SplittedString::split("iei", false),
+                &data,
+                &mut selections
+            ),
             1
         );
 
@@ -668,7 +666,11 @@ mod tests {
             Rank::Other("হঠাতে".to_string(), 0),
         ];
         assert_eq!(
-            suggestion.get_prev_selection(&SplittedString::split("hothate", false), &data, &mut selections),
+            suggestion.get_prev_selection(
+                &SplittedString::split("hothate", false),
+                &data,
+                &mut selections
+            ),
             2
         );
 
