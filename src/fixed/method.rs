@@ -549,7 +549,7 @@ mod tests {
     use crate::{
         context::Method,
         data::Data,
-        keycodes::{VC_A, VC_I, VC_K, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_QUOTE, VC_SEMICOLON},
+        keycodes::{VC_A, VC_I, VC_K, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_QUOTE},
     };
 
     #[test]
@@ -628,6 +628,8 @@ mod tests {
     #[rustversion::not(stable(1.63))]
     #[test]
     fn test_emojis() {
+        use crate::keycodes::VC_SEMICOLON; // Don't know why Rust 1.63 errors on unused import in CI.
+
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
         let data = Data::new(&config);
