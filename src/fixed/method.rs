@@ -2,7 +2,7 @@ use super::search::search_dictionary;
 use super::{chars::*, layout::Layout};
 use crate::config::Config;
 use crate::suggestion::{Rank, Suggestion};
-use crate::utility::{get_modifiers, Utility, SplittedString, smart_quoter};
+use crate::utility::{get_modifiers, smart_quoter, SplittedString, Utility};
 use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
@@ -187,13 +187,23 @@ impl FixedMethod {
             self.suggestions.truncate(9);
         }
 
-        Suggestion::new(self.buffer.clone(), &self.suggestions, 0, config.get_ansi_encoding())
+        Suggestion::new(
+            self.buffer.clone(),
+            &self.suggestions,
+            0,
+            config.get_ansi_encoding(),
+        )
     }
 
     fn current_suggestion(&self, config: &Config) -> Suggestion {
         if !self.buffer.is_empty() {
             if config.get_fixed_suggestion() {
-                Suggestion::new(self.buffer.clone(), &self.suggestions, 0, config.get_ansi_encoding())
+                Suggestion::new(
+                    self.buffer.clone(),
+                    &self.suggestions,
+                    0,
+                    config.get_ansi_encoding(),
+                )
             } else {
                 Suggestion::new_lonely(self.buffer.clone(), config.get_ansi_encoding())
             }
@@ -369,7 +379,7 @@ impl FixedMethod {
                 return;
             }
 
-            // ঔ making with Hasanta + AU Length Mark 
+            // ঔ making with Hasanta + AU Length Mark
             if character == B_LENGTH_MARK && rmc == B_HASANTA {
                 self.buffer.pop();
                 self.buffer.push(B_OU);
@@ -539,7 +549,7 @@ mod tests {
     use crate::{
         context::Method,
         data::Data,
-        keycodes::{VC_A, VC_I, VC_M, VC_K, VC_QUOTE, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_SEMICOLON},
+        keycodes::{VC_A, VC_I, VC_K, VC_M, VC_PAREN_LEFT, VC_PAREN_RIGHT, VC_QUOTE, VC_SEMICOLON},
     };
 
     #[test]
@@ -598,7 +608,7 @@ mod tests {
         let mut config = get_fixed_method_defaults();
         let data = Data::new(&config);
         config.set_suggestion_include_english(true);
-        
+
         config.set_smart_quote(true);
         method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
         method.get_suggestion(VC_K, 0, 0, &data, &config);
@@ -613,6 +623,9 @@ mod tests {
         assert_eq!(method.suggestions, ["\"ক\"", "\"k\""]);
     }
 
+    // The latest Rust version has incompatibility with the sorting order of the suggestions.
+    // So, this sensitive test are disabled for the MSRV.
+    #[rustversion::not(stable(1.63))]
     #[test]
     fn test_emojis() {
         let mut method = FixedMethod::default();
@@ -633,34 +646,26 @@ mod tests {
                 "{লজ্জা}",
                 "{😳}",
                 "{লজ্জাকর}",
-                "{লজ্জালু}",
                 "{লজ্জানত}",
-                "{লজ্জাবশত}",
+                "{লজ্জালু}",
+                "{লজ্জাজনক}",
                 "{লজ্জাবান}",
                 "{লজ্জাবোধ}",
                 "{লজ্জাবতী}"
             ]
         );
-    }
 
-    // TODO: merge this into the `emojis_test` after we bump to the MSRV which 
-    // doesn't induce inconsistent sorting of suggestions.
-    #[rustversion::not(stable(1.63))]
-    #[test]
-    fn test_emojis_compiler_conditional_test() {
-        let mut method = FixedMethod::default();
-        let mut config = get_fixed_method_defaults();
-        let data = Data::new(&config);
-
-        config.set_fixed_traditional_kar(false);
         method.buffer = "হাসি".to_owned();
         method.create_dictionary_suggestion(&data, &config);
         assert_eq!(
             method.suggestions,
-            ["হাসি", "☺", "🙂", "😄", "😃", "😁", "😀", "হাসিব", "হাসিত"]
+            ["হাসি", "☺", "😀", "😁", "😃", "😄", "🙂", "হাসিত", "হাসিব"]
         );
     }
 
+    // The latest Rust version has incompatibility with the sorting order of the suggestions.
+    // So, this sensitive test are disabled for the MSRV.
+    #[rustversion::not(stable(1.63))]
     #[test]
     fn test_suggestion_ansi() {
         let mut method = FixedMethod::default();
@@ -682,14 +687,14 @@ mod tests {
             method.suggestions,
             [
                 "হাসি",
-                "হাসিস",
                 "হাসিত",
-                "হাসিল",
                 "হাসিব",
-                "হাসিনী",
+                "হাসিল",
+                "হাসিস",
                 "হাসিকা",
-                "হাসিয়া",
-                "হাসিয়ো"
+                "হাসিছে",
+                "হাসিতে",
+                "হাসিনা"
             ]
         );
     }

@@ -7,7 +7,7 @@ edition = "2021"
 rust-version = "1.63.0"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["lib", "staticlib"]
 
 [features]
 bench = []
