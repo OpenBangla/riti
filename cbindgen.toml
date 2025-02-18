@@ -1,4 +1,4 @@
-language = "C++"
+language = "C"
 header = "/* Text to put at the beginning of the generated file. Probably a license. */"
 include_guard = "RITI_H"
 autogen_warning = """
