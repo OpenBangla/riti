@@ -392,9 +392,20 @@ struct Config *riti_config_new(void);
  */
 void riti_config_free(struct Config *ptr);
 
-void riti_config_set_layout_file(struct Config *ptr, const char *path);
+/*
+ Sets the layout file path.
+ For Avro Phonetic, it accepts the name `avro_phonetic`.
 
-void riti_config_set_database_dir(struct Config *ptr, const char *path);
+ Returns `true` if the layout file path or name is valid.
+ */
+bool riti_config_set_layout_file(struct Config *ptr, const char *path);
+
+/*
+ Sets the database directory path.
+
+ Returns `true` if the path exists.
+ */
+bool riti_config_set_database_dir(struct Config *ptr, const char *path);
 
 void riti_config_set_suggestion_include_english(struct Config *ptr,
                                                 bool option);
