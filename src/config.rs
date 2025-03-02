@@ -31,6 +31,10 @@ impl Config {
         &self.layout
     }
 
+    pub(crate) fn get_database_dir(&self) -> &PathBuf {
+        &self.database_dir
+    }
+
     pub(crate) fn set_database_dir(&mut self, path: &str) {
         self.database_dir = path.into();
     }
