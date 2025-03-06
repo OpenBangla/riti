@@ -271,8 +271,12 @@ pub extern "C" fn riti_config_free(ptr: *mut Config) {
     riti_free(ptr)
 }
 
+/// Sets the layout file path.
+/// For Avro Phonetic, it accepts the name `avro_phonetic`.
+/// 
+/// Returns `true` if the layout file path or name is valid.
 #[no_mangle]
-pub extern "C" fn riti_config_set_layout_file(ptr: *mut Config, path: *const c_char) {
+pub extern "C" fn riti_config_set_layout_file(ptr: *mut Config, path: *const c_char) -> bool {
     let config = unsafe {
         assert!(!ptr.is_null());
         &mut *ptr
@@ -280,12 +284,15 @@ pub extern "C" fn riti_config_set_layout_file(ptr: *mut Config, path: *const c_c
 
     unsafe {
         let layout = CStr::from_ptr(path).to_str().unwrap();
-        config.set_layout_file_path(layout);
+        config.set_layout_file_path(layout)
     }
 }
 
+/// Sets the database directory path.
+/// 
+/// Returns `true` if the path exists.
 #[no_mangle]
-pub extern "C" fn riti_config_set_database_dir(ptr: *mut Config, path: *const c_char) {
+pub extern "C" fn riti_config_set_database_dir(ptr: *mut Config, path: *const c_char) -> bool {
     let config = unsafe {
         assert!(!ptr.is_null());
         &mut *ptr
@@ -293,7 +300,7 @@ pub extern "C" fn riti_config_set_database_dir(ptr: *mut Config, path: *const c_
 
     unsafe {
         let path = CStr::from_ptr(path).to_str().unwrap();
-        config.set_database_dir(path);
+        config.set_database_dir(path)
     }
 }
 
