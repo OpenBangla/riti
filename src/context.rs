@@ -149,4 +149,16 @@ mod tests {
         context.finish_input_session();
         assert_eq!(suggestion.get_suggestions(), ["হীলপ"]);
     }
+
+    #[test]
+    fn test_without_database_path() {
+        let mut config = Config::default();
+        config.set_layout_file_path("avro_phonetic");
+        config.set_phonetic_suggestion(true);
+
+        let context = RitiContext::new_with_config(&config);
+
+        let suggestion = context.get_suggestion_for_key(VC_H, 0, 0);
+        assert_eq!(suggestion.get_suggestions(), ["হ"]);
+    }
 }

@@ -1,7 +1,7 @@
+use std::{collections::HashMap, fs::read, path::PathBuf};
+
 use ahash::RandomState;
 use emojicon::{BengaliEmoji, Emojicon};
-use std::collections::HashMap;
-use std::fs::read;
 
 use crate::config::Config;
 
@@ -16,18 +16,30 @@ pub(crate) struct Data {
 
 impl Data {
     pub(crate) fn new(config: &Config) -> Data {
-        Data {
-            table: serde_json::from_slice(&read(config.get_database_path()).unwrap()).unwrap(),
-            suffix: serde_json::from_slice(&read(config.get_suffix_data_path()).unwrap()).unwrap(),
-            autocorrect: serde_json::from_slice(&read(config.get_autocorrect_data()).unwrap())
-                .unwrap(),
-            emojicon: Emojicon::new(),
-            bengali_emoji: BengaliEmoji::new(),
+        // If the database directory is not set, initialize with empty values.
+        if *config.get_database_dir() == PathBuf::default() {
+            Data {
+                table: HashMap::default(),
+                suffix: HashMap::default(),
+                autocorrect: HashMap::default(),
+                emojicon: Emojicon::new(),
+                bengali_emoji: BengaliEmoji::new(),
+            }
+        } else {
+            Data {
+                table: serde_json::from_slice(&read(config.get_database_path()).unwrap()).unwrap(),
+                suffix: serde_json::from_slice(&read(config.get_suffix_data_path()).unwrap())
+                    .unwrap(),
+                autocorrect: serde_json::from_slice(&read(config.get_autocorrect_data()).unwrap())
+                    .unwrap(),
+                emojicon: Emojicon::new(),
+                bengali_emoji: BengaliEmoji::new(),
+            }
         }
     }
 
     pub(crate) fn get_words_for(&self, table: &str) -> impl Iterator<Item = &String> {
-        self.table[table].iter()
+        self.table.get(table).map(|i| i.iter()).unwrap_or_default()
     }
 
     pub(crate) fn find_suffix(&self, string: &str) -> Option<&str> {
