@@ -50,6 +50,7 @@ impl Config {
         } else {
             false
         }
+    }
 
     pub(crate) fn get_database_dir(&self) -> &PathBuf {
         &self.database_dir
