@@ -7,7 +7,6 @@ use std::collections::HashMap;
 
 use crate::config::Config;
 use crate::data::Data;
-use crate::phonetic::regex::parse;
 use crate::suggestion::Rank;
 use crate::utility::{push_checked, smart_quoter, SplittedString, Utility};
 
@@ -22,6 +21,7 @@ pub(crate) struct PhoneticSuggestion {
     // Cache for storing dictionary searches.
     cache: HashMap<String, Vec<Rank>, RandomState>,
     phonetic: Parser,
+    regex_parser: Parser,
     table: HashMap<&'static str, &'static [&'static str], RandomState>,
     // The user's auto-correct entries.
     pub(crate) user_autocorrect: HashMap<String, String, RandomState>,
@@ -65,6 +65,7 @@ impl PhoneticSuggestion {
             regex: String::with_capacity(1024),
             cache: HashMap::with_capacity_and_hasher(20, RandomState::new()),
             phonetic: Parser::new_phonetic(),
+            regex_parser: Parser::new_regex(),
             table,
             user_autocorrect,
         }
@@ -311,7 +312,7 @@ impl PhoneticSuggestion {
         data: &Data,
     ) {
         // Build the Regex string.
-        parse(word, &mut self.regex);
+        self.regex_parser.convert_regex_into(word, &mut self.regex);
         let rgx = Regex::new(&self.regex).unwrap();
 
         suggestions.extend(
