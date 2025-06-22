@@ -14,7 +14,7 @@ jobs:
         rust:
           - stable
           - 1.63.0 # MSRV for linux distributions (>= Debian 12)
-          - nightly
+          # - nightly  # To keep the MSRV, we can't test with nightly as some downgraded crates fails to compile
         platform: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:

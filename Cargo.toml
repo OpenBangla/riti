@@ -24,6 +24,7 @@ stringplus = "0.1"
 edit-distance = "2.1"
 okkhor = { version = "0.7", features = ["regex"] }
 poriborton = "0.2"
+upodesh = "0.2"
 
 [dev-dependencies]
 rustversion = "1.0"
