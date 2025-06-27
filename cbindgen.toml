@@ -12,3 +12,4 @@ line_length = 80
 tab_width = 4
 documentation_style = "c"
 style = "both"
+cpp_compat = true
