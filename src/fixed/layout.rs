@@ -31,7 +31,7 @@ impl Layout {
 
     fn layout_get_value(&self, key: &str, modifier: LayoutModifiers) -> Option<String> {
         self.map
-            .get(&format!("Key_{}_{}", key, modifier))
+            .get(&format!("Key_{key}_{modifier}"))
             .filter(|s| !s.is_empty())
             .cloned()
     }

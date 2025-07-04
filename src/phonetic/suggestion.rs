@@ -127,25 +127,54 @@ impl PhoneticSuggestion {
         if !config.get_ansi_encoding() {
             if let Some(emoji) = data.get_emoji_by_emoticon(term) {
                 // Add the emoticon
-                // Sometimes the emoticon is captured as preceding meta characters and already included.
-                if term != string.preceding() {
-                    self.suggestions.push(Rank::last_ranked(term.to_owned(), 1));
-                }
                 self.suggestions.push(Rank::emoji(emoji.to_owned()));
+                // Add the full term as the last ranked suggestion.
+                self.suggestions.push(Rank::last_ranked(term.to_owned(), 1));
                 // Mark that we have added the typed text already (as the emoticon).
                 typed_added = true;
-            } else if let Some(emojis) = data.get_emoji_by_name(string.word()) {
-                // Emoji addition with it's name
-                // Add preceding and trailing meta characters.
-                let emojis = emojis.zip(1..).map(|(s, r)| {
-                    Rank::emoji_ranked(
-                        format!("{}{}{}", string.preceding(), s, string.trailing()),
-                        r,
-                    )
-                });
-                self.suggestions.extend(emojis);
+            } else {
+                // Emoji addition with it's English name
+                if let Some(emojis) = data.get_emoji_by_name(string.word()) {
+                    let emojis = emojis
+                        .zip(1..)
+                        .map(|(s, r)| Rank::emoji_ranked(s.to_owned(), r));
+                    self.suggestions.extend(emojis);
+                }
+
+                // Emoji addition with Bengali name
+                let mut bn_emojis = Vec::with_capacity(10);
+
+                for word in self.suggestions.iter() {
+                    if let Some(emojis) = data.get_emoji_by_bengali(word.to_string()) {
+                        let emojis = emojis
+                            .zip(1..)
+                            .map(|(s, r)| Rank::emoji_ranked(s.to_owned(), r));
+                        bn_emojis.extend(emojis);
+                    }
+                }
+
+                if !bn_emojis.is_empty() {
+                    for emoji in bn_emojis {
+                        push_checked(&mut self.suggestions, emoji);
+                    }
+                }
             }
         }
+
+        // Add those preceding and trailing meta characters.
+        if !typed_added && (!string.preceding().is_empty() || !string.trailing().is_empty()){
+            for item in self.suggestions.iter_mut() {
+                *item.change_item() = format!(
+                    "{}{}{}",
+                    string.preceding(),
+                    item.to_string(),
+                    string.trailing()
+                );
+            }
+        }
+
+        // Phonetic transliteration of the typed text (including preceding and trailing meta characters).
+        push_checked(&mut self.suggestions, Rank::last_ranked(format!("{}{}{}", string.preceding(), self.pbuffer, string.trailing()), 2));
 
         // Include written English word if the feature is enabled and it is not included already.
         // Avoid including meta character suggestion twice, so check `term` is not equal to the
@@ -166,6 +195,12 @@ impl PhoneticSuggestion {
     /// Make suggestions from the given `splitted_string`. This will include dictionary and auto-correct suggestion.
     pub(crate) fn suggestion_with_dict(&mut self, string: &SplittedString, data: &Data) {
         self.suggestions.clear();
+        self.pbuffer.clear();
+
+        if string.word().is_empty() {
+            // If the word is empty, return early.
+            return;
+        }
 
         self.phonetic.convert_into(string.word(), &mut self.pbuffer);
 
@@ -196,18 +231,6 @@ impl PhoneticSuggestion {
 
         // Last Item: Phonetic
         push_checked(&mut self.suggestions, Rank::last_ranked(phonetic, 2));
-
-        // Add those preceding and trailing meta characters.
-        if !string.preceding().is_empty() || !string.trailing().is_empty() {
-            for item in self.suggestions.iter_mut() {
-                *item.change_item() = format!(
-                    "{}{}{}",
-                    string.preceding(),
-                    item.to_string(),
-                    string.trailing()
-                );
-            }
-        }
     }
 
     pub(crate) fn get_prev_selection(
@@ -318,7 +341,7 @@ mod tests {
         config.set_suggestion_include_english(true);
 
         suggestion.suggest(":)", &data, &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ)"]);
+        assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ", "ঃ)"]);
 
         suggestion.suggest(";)", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["😉", ";)"]);
@@ -375,12 +398,12 @@ mod tests {
         config.set_smart_quote(true);
 
         suggestion.suggest("\"e\"", &data, &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["“এ”", "“ে”", "\"e\""]);
+        assert_eq!(suggestion.suggestions, ["“এ”", "“🅰\u{fe0f}”", "“ে”", "\"e\""]);
 
         config.set_smart_quote(false);
 
         suggestion.suggest("\"e\"", &data, &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["\"এ\"", "\"ে\"", "\"e\""]);
+        assert_eq!(suggestion.suggestions, ["\"এ\"", "\"🅰\u{fe0f}\"", "\"ে\"", "\"e\""]);
     }
 
     #[test]
@@ -399,7 +422,9 @@ mod tests {
         let data = Data::new(&config);
 
         suggestion.suggest(":)", &data, &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ)"]);
+        assert_eq!(suggestion.suggestions, 
+            ["😃", ":)", "ঃ", "ঃ)"]
+        );
 
         suggestion.suggest(";)", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["😉", ";)"]);
@@ -414,7 +439,10 @@ mod tests {
         );
 
         suggestion.suggest("chup", &data, &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["ছুপ", "🫢", "চুপ"]);
+        assert_eq!(suggestion.suggestions, ["ছুপ", "🫢", "🙊", "🤐", "চুপ"]);
+
+        suggestion.suggest("hasi", &data, &mut selections, &config);
+        assert_eq!(suggestion.suggestions, ["হাসি","☺\u{fe0f}", "😀", "😁", "😃", "😄","🙂", "হাঁসি"]);
 
         suggestion.suggest(".", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["।"]);
@@ -533,13 +561,13 @@ mod tests {
         assert_eq!(suggestion.suggestions, ["ফরম্যাটতে", "ফরম্যাটে", "ফরমাত্তে"]);
 
         suggestion.suggest("atm", &data, &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["এটিএম", "আত্ম", "🏧", "অ্যাটম"]);
+        assert_eq!(suggestion.suggestions, ["এটিএম", "আত্ম", "🏧", "⚛\u{fe0f}", "অ্যাটম"]);
 
         suggestion.suggest("atme", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["এটিএমে", "আত্মে", "অ্যাটমে"]);
         // Cache check
         suggestion.suggest("atm", &data, &mut selections, &config);
-        assert_eq!(suggestion.suggestions, ["এটিএম", "আত্ম", "🏧", "অ্যাটম"]);
+        assert_eq!(suggestion.suggestions, ["এটিএম", "আত্ম", "🏧", "⚛\u{fe0f}", "অ্যাটম"]);
     }
 
     #[test]
@@ -687,20 +715,20 @@ mod tests {
         selections.insert("sesh".to_string(), "শেষ".to_string());
 
         let (suggestions, selection) = suggestion.suggest("sesh", &data, &mut selections, &config);
-        assert_eq!(suggestions, ["সেস", "শেষ", "সেশ"]);
-        assert_eq!(selection, 1);
+        assert_eq!(suggestions, ["🏁", "🔚","সেস", "শেষ", "সেশ"]);
+        assert_eq!(selection, 3);
 
         let (suggestions, selection) = suggestion.suggest("sesh.", &data, &mut selections, &config);
-        assert_eq!(suggestions, ["সেস।", "শেষ।", "সেশ।"]);
-        assert_eq!(selection, 1);
+        assert_eq!(suggestions, ["🏁।","🔚।","সেস।", "শেষ।", "সেশ।"]);
+        assert_eq!(selection, 3);
 
         let (suggestions, _) = suggestion.suggest("sesh:", &data, &mut selections, &config);
-        assert_eq!(suggestions, ["সেস", "শেষ", "সেশঃ"]);
+        assert_eq!(suggestions, ["🏁", "🔚","সেস", "শেষ", "সেশঃ"]);
 
         let (suggestions, selection) =
             suggestion.suggest("sesh:`", &data, &mut selections, &config);
-        assert_eq!(suggestions, ["সেস:", "শেষ:", "সেশ:"]);
-        assert_eq!(selection, 1);
+        assert_eq!(suggestions, ["🏁:", "🔚:","সেস:", "শেষ:", "সেশ:"]);
+        assert_eq!(selection, 3);
 
         let (suggestions, _) = suggestion.suggest("6t``", &data, &mut selections, &config);
         assert_eq!(suggestions, ["৬ৎ"]);

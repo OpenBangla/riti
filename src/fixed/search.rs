@@ -85,8 +85,7 @@ pub(crate) fn search_dictionary(
     };
 
     let regex = format!(
-        "^{}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{}}}$",
-        word, need_chars_upto
+        "^{word}[অআইঈউঊঋএঐওঔঌৡািীুূৃেৈোৌকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহৎড়ঢ়য়ংঃঁ\u{09CD}]{{0,{need_chars_upto}}}$"
     );
     let rgx = Regex::new(&regex).unwrap();
 
