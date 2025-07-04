@@ -1,4 +1,8 @@
-use std::{env::var, fs::read_to_string, path::{Path, PathBuf}};
+use std::{
+    env::var,
+    fs::read_to_string,
+    path::{Path, PathBuf},
+};
 
 use serde_json::Value;
 
@@ -25,7 +29,7 @@ pub struct Config {
 impl Config {
     /// Sets the layout file path.
     /// For Avro Phonetic, it accepts the name `avro_phonetic`.
-    /// 
+    ///
     /// Returns `true` if the layout file path or name is valid.
     pub(crate) fn set_layout_file_path(&mut self, layout: &str) -> bool {
         if layout == "avro_phonetic" || Path::new(layout).exists() {
@@ -41,7 +45,7 @@ impl Config {
     }
 
     /// Sets the database directory path.
-    /// 
+    ///
     /// Returns `true` if the path exists.
     pub(crate) fn set_database_dir(&mut self, path: &str) -> bool {
         if Path::new(path).exists() {
@@ -319,7 +323,11 @@ mod tests {
         assert!(config.set_layout_file_path("avro_phonetic"));
 
         assert!(!config.set_layout_file_path("/non_existent/Probhat.json"));
-        assert!(config.set_layout_file_path(&format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json")));
+        assert!(config.set_layout_file_path(&format!(
+            "{}{}",
+            env!("CARGO_MANIFEST_DIR"),
+            "/data/Probhat.json"
+        )));
 
         assert!(!config.set_database_dir("/non_existent"));
         assert!(config.set_database_dir(&format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data")));

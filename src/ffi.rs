@@ -273,7 +273,7 @@ pub extern "C" fn riti_config_free(ptr: *mut Config) {
 
 /// Sets the layout file path.
 /// For Avro Phonetic, it accepts the name `avro_phonetic`.
-/// 
+///
 /// Returns `true` if the layout file path or name is valid.
 #[no_mangle]
 pub extern "C" fn riti_config_set_layout_file(ptr: *mut Config, path: *const c_char) -> bool {
@@ -289,7 +289,7 @@ pub extern "C" fn riti_config_set_layout_file(ptr: *mut Config, path: *const c_c
 }
 
 /// Sets the database directory path.
-/// 
+///
 /// Returns `true` if the path exists.
 #[no_mangle]
 pub extern "C" fn riti_config_set_database_dir(ptr: *mut Config, path: *const c_char) -> bool {

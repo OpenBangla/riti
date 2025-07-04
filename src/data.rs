@@ -40,7 +40,10 @@ impl Data {
 
     pub(crate) fn get_words_for(&self, table: &str) -> impl Iterator<Item = &String> {
         // TODO: use `unwrap_or_default` when it's supported by the MSRV.
-        self.table.get(table).map(|i| i.iter()).unwrap_or_else(|| [].iter())
+        self.table
+            .get(table)
+            .map(|i| i.iter())
+            .unwrap_or_else(|| [].iter())
     }
 
     pub(crate) fn find_suffix(&self, string: &str) -> Option<&str> {

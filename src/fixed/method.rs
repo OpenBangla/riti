@@ -166,9 +166,9 @@ impl FixedMethod {
             } else if let Some(emojis) = data.get_emoji_by_bengali(word) {
                 // Emoji addition with it's Bengali name.
                 // Add preceding and trailing meta characters.
-                let emojis = emojis.zip(1..).map(|(s, r)| {
-                    Rank::emoji_ranked(format!("{first_part}{s}{last_part}"), r)
-                });
+                let emojis = emojis
+                    .zip(1..)
+                    .map(|(s, r)| Rank::emoji_ranked(format!("{first_part}{s}{last_part}"), r));
                 self.suggestions.extend(emojis);
             }
         }
@@ -661,7 +661,17 @@ mod tests {
         method.create_dictionary_suggestion(&data, &config);
         assert_eq!(
             method.suggestions,
-            ["হাসি", "☺\u{fe0f}", "😀", "😁", "😃", "😄", "🙂", "হাসিত", "হাসিব"]
+            [
+                "হাসি",
+                "☺\u{fe0f}",
+                "😀",
+                "😁",
+                "😃",
+                "😄",
+                "🙂",
+                "হাসিত",
+                "হাসিব"
+            ]
         );
     }
 
