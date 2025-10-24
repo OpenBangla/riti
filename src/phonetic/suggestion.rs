@@ -3,7 +3,7 @@
 use ahash::RandomState;
 use okkhor::parser::Parser;
 use std::collections::HashMap;
-use upodesh::suggest::Suggest;
+use upodesh::avro::Suggest;
 
 use crate::config::Config;
 use crate::data::Data;

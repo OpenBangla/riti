@@ -78,7 +78,7 @@ impl SplittedString<'_> {
     /// This function splits preceding and trailing meta characters.
     ///
     /// `include_colon` argument controls the inclusion of colon as a trailing meta character.
-    pub(crate) fn split(input: &str, include_colon: bool) -> SplittedString {
+    pub(crate) fn split(input: &str, include_colon: bool) -> SplittedString<'_> {
         const META: &str = "-]~!@#%&*()_=+[{}'\";<>/?|.,।";
 
         let first_index = match input.find(|c| !META.contains(c)) {
@@ -192,6 +192,14 @@ pub(crate) fn smart_quoter(mut splitted: SplittedString) -> SplittedString {
     splitted.trailing = Cow::Owned(trailing);
 
     splitted
+}
+
+/// Clean a string by removing special characters.
+pub(crate) fn clean_string(string: &str) -> String {
+    string
+        .chars()
+        .filter(|&c| !"|()[]{}^$*+?.~!@#%&-_='\";<>/\\,:`।\u{200C}".contains(c))
+        .collect()
 }
 
 #[cfg(test)]

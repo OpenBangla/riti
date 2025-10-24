@@ -1,8 +1,9 @@
-use super::search::search_dictionary;
+use upodesh::bangla::suggest;
+
 use super::{chars::*, layout::Layout};
 use crate::config::Config;
 use crate::suggestion::{Rank, Suggestion};
-use crate::utility::{get_modifiers, smart_quoter, SplittedString, Utility};
+use crate::utility::{clean_string, get_modifiers, smart_quoter, SplittedString, Utility};
 use crate::{context::Method, data::Data, keycodes::keycode_to_char};
 
 const MARKS: &str = "`~!@#$%^+*-_=+\\|\"/;:,./?><()[]{}";
@@ -140,13 +141,30 @@ impl FixedMethod {
         self.suggestions.push(Rank::first_ranked(word.to_string()));
 
         // Add suggestions from the dictionary while changing the Kar joinings if Traditional Kar Joining is set.
-        search_dictionary(
-            word,
-            word,
-            &mut self.suggestions,
-            config.get_fixed_traditional_kar(),
-            data,
-        );
+        let mut words = suggest(&clean_string(word));
+        words.sort_unstable();
+        
+        if config.get_fixed_traditional_kar() {
+            self.suggestions.extend(words.into_iter().map(|w| {
+                // Check if the word has any of the ligature making Kars.
+                let new = if w.chars().any(is_ligature_making_kar) {
+                    let mut temp = String::with_capacity(w.capacity());
+                    for ch in w.chars() {
+                        if is_ligature_making_kar(ch) {
+                            temp.push(ZWNJ);
+                        }
+                        temp.push(ch);
+                    }
+                    temp
+                } else {
+                    w.clone()
+                };
+    
+                Rank::new_suggestion(new, word)
+            }));
+        } else {
+            self.suggestions.extend(words.into_iter().map(|s| Rank::new_suggestion(s.clone(), word)));
+        }
 
         // Remove the duplicates if present.
         self.suggestions.dedup();
@@ -506,7 +524,7 @@ impl FixedMethod {
         }
     }
 
-    /// Removes the last `n` character from the buffer.
+    /// Removes the last `n` characters from the buffer.
     fn internal_backspace_step(&mut self, n: usize) {
         let len = self
             .buffer
@@ -543,6 +561,8 @@ fn is_left_standing_kar(c: char) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+    
     use super::FixedMethod;
     use crate::config::get_fixed_method_defaults;
     use crate::fixed::chars::*;
@@ -613,14 +633,14 @@ mod tests {
         method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
         method.get_suggestion(VC_K, 0, 0, &data, &config);
         method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
-        assert_eq!(method.suggestions, ["“ক”", "\"k\""]);
+        assert_eq!(method.suggestions, ["“ক”","“কই”","“কও”","“কচ”","“কট”", "“কড”", "“কণ”", "“কত”", "\"k\""]);
         method.finish_input_session();
 
         config.set_smart_quote(false);
         method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
         method.get_suggestion(VC_K, 0, 0, &data, &config);
         method.get_suggestion(VC_QUOTE, 0, 0, &data, &config);
-        assert_eq!(method.suggestions, ["\"ক\"", "\"k\""]);
+        assert_eq!(method.suggestions, ["\"ক\"","\"কই\"", "\"কও\"","\"কচ\"","\"কট\"","\"কড\"","\"কণ\"","\"কত\"", "\"k\""]);
     }
 
     // The latest Rust version has incompatibility with the sorting order of the suggestions.
@@ -651,9 +671,9 @@ mod tests {
                 "{লজ্জানত}",
                 "{লজ্জালু}",
                 "{লজ্জাজনক}",
-                "{লজ্জাবান}",
-                "{লজ্জাবোধ}",
-                "{লজ্জাবতী}"
+                "{লজ্জাবতী}",
+                "{লজ্জাবনত}",
+                "{লজ্জাবশত}",
             ]
         );
 

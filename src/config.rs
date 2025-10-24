@@ -60,10 +60,6 @@ impl Config {
         &self.database_dir
     }
 
-    pub(crate) fn get_database_path(&self) -> PathBuf {
-        self.database_dir.join("dictionary.json")
-    }
-
     pub(crate) fn get_suffix_data_path(&self) -> PathBuf {
         self.database_dir.join("suffix.json")
     }
