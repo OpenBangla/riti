@@ -304,6 +304,22 @@ pub extern "C" fn riti_config_set_database_dir(ptr: *mut Config, path: *const c_
     }
 }
 
+/// Sets the user specific writable directory path.
+/// 
+/// Returns `true` if the path exists.
+#[no_mangle]
+pub extern "C" fn riti_config_set_user_dir(ptr: *mut Config, path: *const c_char) -> bool {
+    let config = unsafe {
+        assert!(!ptr.is_null());
+        &mut *ptr
+    };
+
+    unsafe {
+        let path = CStr::from_ptr(path).to_str().unwrap();
+        config.set_user_dir(path)
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn riti_config_set_suggestion_include_english(ptr: *mut Config, option: bool) {
     let config = unsafe {

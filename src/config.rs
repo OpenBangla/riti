@@ -56,6 +56,18 @@ impl Config {
         }
     }
 
+    /// Sets the user specific writable directory path.
+    ///
+    /// Returns `true` if the path exists.
+    pub fn set_user_dir(&mut self, path: &str) -> bool {
+        if Path::new(path).exists() {
+            self.user_dir = path.into();
+            true
+        } else {
+            false
+        }
+    }
+
     pub(crate) fn get_database_dir(&self) -> &PathBuf {
         &self.database_dir
     }
