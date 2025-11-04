@@ -15,3 +15,14 @@ Cargo.lock
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+### XCode
+*~
+*.DS_Store
+.*.swp
+*mode1v3
+*pbxuser
+*perspectivev3
+*xcuserdata*
+*xcworkspace*
+
