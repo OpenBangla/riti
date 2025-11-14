@@ -1,6 +1,5 @@
 // !$*UTF8*$!
 {
-	/* generated with cargo-xcode 1.11.0 */
 	archiveVersion = 1;
 	classes = {
 	};
@@ -32,7 +31,7 @@
 
 /* Begin PBXFileReference section */
 		CA00B9937C4654FCDE10A9EB /* libriti.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libriti.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		CAF95239D67F3EF4668187A5 /* Cargo.toml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Cargo.toml; path = Cargo.toml; sourceTree = "<group>"; };
+		CAF95239D67F3EF4668187A5 /* Cargo.toml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Cargo.toml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -124,20 +123,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		CA00A0F7F57D1056C3DE07A2 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CARGO_XCODE_CARGO_DEP_FILE_NAME = libriti.d;
-				CARGO_XCODE_CARGO_FILE_NAME = libriti.a;
-				INSTALL_GROUP = "";
-				INSTALL_MODE_FLAG = "";
-				INSTALL_OWNER = "";
-				PRODUCT_NAME = riti;
-				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "xrsimulator xros watchsimulator watchos macosx iphonesimulator iphoneos driverkit appletvsimulator appletvos";
-			};
-			name = Release;
-		};
 		CA004EBF41001056C3DE07A2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -146,19 +131,35 @@
 				INSTALL_GROUP = "";
 				INSTALL_MODE_FLAG = "";
 				INSTALL_OWNER = "";
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
 				PRODUCT_NAME = riti;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "xrsimulator xros watchsimulator watchos macosx iphonesimulator iphoneos driverkit appletvsimulator appletvos";
 			};
 			name = Debug;
 		};
+		CA00A0F7F57D1056C3DE07A2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CARGO_XCODE_CARGO_DEP_FILE_NAME = libriti.d;
+				CARGO_XCODE_CARGO_FILE_NAME = libriti.a;
+				INSTALL_GROUP = "";
+				INSTALL_MODE_FLAG = "";
+				INSTALL_OWNER = "";
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				PRODUCT_NAME = riti;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "xrsimulator xros watchsimulator watchos macosx iphonesimulator iphoneos driverkit appletvsimulator appletvos";
+			};
+			name = Release;
+		};
 		CAF7FE07D4CF3CC16B37690B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ADDITIONAL_SDKS[sdk=a*]" = macosx;
 				"ADDITIONAL_SDKS[sdk=i*]" = macosx;
 				"ADDITIONAL_SDKS[sdk=w*]" = macosx;
 				"ADDITIONAL_SDKS[sdk=x*]" = macosx;
-				"ADDITIONAL_SDKS[sdk=a*]" = macosx;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CARGO_TARGET_DIR = "$(PROJECT_TEMP_DIR)/cargo_target";
 				CARGO_XCODE_BUILD_PROFILE = release;
@@ -176,10 +177,10 @@
 		CAF8FE07D4CF228BE02872F8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ADDITIONAL_SDKS[sdk=a*]" = macosx;
 				"ADDITIONAL_SDKS[sdk=i*]" = macosx;
 				"ADDITIONAL_SDKS[sdk=w*]" = macosx;
 				"ADDITIONAL_SDKS[sdk=x*]" = macosx;
-				"ADDITIONAL_SDKS[sdk=a*]" = macosx;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CARGO_TARGET_DIR = "$(PROJECT_TEMP_DIR)/cargo_target";
 				CARGO_XCODE_BUILD_PROFILE = debug;
