@@ -31,7 +31,7 @@ impl Config {
     /// For Avro Phonetic, it accepts the name `avro_phonetic`.
     ///
     /// Returns `true` if the layout file path or name is valid.
-    pub(crate) fn set_layout_file_path(&mut self, layout: &str) -> bool {
+    pub fn set_layout_file_path(&mut self, layout: &str) -> bool {
         if layout == "avro_phonetic" || Path::new(layout).exists() {
             self.layout = layout.into();
             true
@@ -40,14 +40,14 @@ impl Config {
         }
     }
 
-    pub(crate) fn get_layout_file_path(&self) -> &str {
+    pub fn get_layout_file_path(&self) -> &str {
         &self.layout
     }
 
     /// Sets the database directory path.
     ///
     /// Returns `true` if the path exists.
-    pub(crate) fn set_database_dir(&mut self, path: &str) -> bool {
+    pub fn set_database_dir(&mut self, path: &str) -> bool {
         if Path::new(path).exists() {
             self.database_dir = path.into();
             true
@@ -68,43 +68,43 @@ impl Config {
         }
     }
 
-    pub(crate) fn get_database_dir(&self) -> &PathBuf {
+    pub fn get_database_dir(&self) -> &PathBuf {
         &self.database_dir
     }
 
-    pub(crate) fn get_suffix_data_path(&self) -> PathBuf {
+    pub fn get_suffix_data_path(&self) -> PathBuf {
         self.database_dir.join("suffix.json")
     }
 
-    pub(crate) fn get_autocorrect_data(&self) -> PathBuf {
+    pub fn get_autocorrect_data(&self) -> PathBuf {
         self.database_dir.join("autocorrect.json")
     }
 
     /// Get file path of user defined Auto Correct file.
-    pub(crate) fn get_user_phonetic_autocorrect(&self) -> PathBuf {
+    pub fn get_user_phonetic_autocorrect(&self) -> PathBuf {
         self.user_dir.join("autocorrect.json")
     }
 
     /// Get file path of user defined phonetic candidate selection file.
-    pub(crate) fn get_user_phonetic_selection_data(&self) -> PathBuf {
+    pub fn get_user_phonetic_selection_data(&self) -> PathBuf {
         self.user_dir.join("phonetic-candidate-selection.json")
     }
 
-    pub(crate) fn get_suggestion_include_english(&self) -> bool {
+    pub fn get_suggestion_include_english(&self) -> bool {
         // Mutually exclusive
         self.include_english && !self.ansi
     }
 
-    pub(crate) fn set_suggestion_include_english(&mut self, include: bool) {
+    pub fn set_suggestion_include_english(&mut self, include: bool) {
         self.include_english = include;
     }
 
-    pub(crate) fn get_phonetic_suggestion(&self) -> bool {
+    pub fn get_phonetic_suggestion(&self) -> bool {
         self.phonetic_suggestion
     }
 
     /// Set the config's phonetic database.
-    pub(crate) fn set_phonetic_suggestion(&mut self, phonetic_suggestion: bool) {
+    pub fn set_phonetic_suggestion(&mut self, phonetic_suggestion: bool) {
         self.phonetic_suggestion = phonetic_suggestion;
     }
 
@@ -179,17 +179,17 @@ impl Config {
     }
 
     /// Checks if the layout path had changed.
-    pub(crate) fn layout_changed(&self, new_config: &Self) -> bool {
+    pub fn layout_changed(&self, new_config: &Self) -> bool {
         self.layout != new_config.layout
     }
 
     /// Checks if the layout is phonetic
-    pub(crate) fn is_phonetic(&self) -> bool {
+    pub fn is_phonetic(&self) -> bool {
         self.get_layout_file_path() == "avro_phonetic"
     }
 
     /// Give layout's `layout` json object, which contains the layout data.
-    pub(crate) fn get_layout(&self) -> Option<Value> {
+    pub fn get_layout(&self) -> Option<Value> {
         if self.is_phonetic() {
             None
         } else {
@@ -222,7 +222,7 @@ impl Config {
     }
 }
 
-pub(crate) fn get_user_data_dir() -> PathBuf {
+pub fn get_user_data_dir() -> PathBuf {
     var("XDG_DATA_HOME")
         .ok()
         .or_else(|| var("HOME").ok().map(|path| path + "/.local/share"))
@@ -238,7 +238,7 @@ pub(crate) fn get_user_data_dir() -> PathBuf {
 }
 
 #[cfg(test)]
-pub(crate) fn get_phonetic_method_defaults() -> Config {
+pub fn get_phonetic_method_defaults() -> Config {
     Config {
         layout: "avro_phonetic".to_owned(),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
@@ -248,7 +248,7 @@ pub(crate) fn get_phonetic_method_defaults() -> Config {
 }
 
 #[cfg(test)]
-pub(crate) fn get_fixed_method_defaults() -> Config {
+pub fn get_fixed_method_defaults() -> Config {
     Config {
         layout: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
