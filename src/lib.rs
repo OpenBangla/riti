@@ -5,7 +5,7 @@ pub mod context;
 pub(crate) mod data;
 mod ffi;
 mod fixed;
-mod keycodes;
+pub mod keycodes;
 mod phonetic;
 pub mod suggestion;
 mod utility;
