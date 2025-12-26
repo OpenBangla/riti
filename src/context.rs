@@ -15,7 +15,7 @@ impl RitiContext {
     /// A new `RitiContext` instance.
     pub fn new_with_config(config: &Config) -> Self {
         let config = config.to_owned();
-        let data = Data::new(&config);
+        let data = Data::new();
         let method = RefCell::new(<dyn Method>::new(&config));
         RitiContext {
             method,

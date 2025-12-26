@@ -1,9 +1,7 @@
-use std::{collections::HashMap, fs::read, path::PathBuf};
+use std::collections::HashMap;
 
 use ahash::RandomState;
 use emojicon::{BengaliEmoji, Emojicon};
-
-use crate::config::Config;
 
 /// Data which is shared between the methods.
 pub(crate) struct Data {
@@ -14,24 +12,12 @@ pub(crate) struct Data {
 }
 
 impl Data {
-    pub(crate) fn new(config: &Config) -> Data {
-        // If the database directory is not set, initialize with empty values.
-        if *config.get_database_dir() == PathBuf::default() {
-            Data {
-                suffix: HashMap::default(),
-                autocorrect: HashMap::default(),
-                emojicon: Emojicon::new(),
-                bengali_emoji: BengaliEmoji::new(),
-            }
-        } else {
-            Data {
-                suffix: serde_json::from_slice(&read(config.get_suffix_data_path()).unwrap())
-                    .unwrap(),
-                autocorrect: serde_json::from_slice(&read(config.get_autocorrect_data()).unwrap())
-                    .unwrap(),
-                emojicon: Emojicon::new(),
-                bengali_emoji: BengaliEmoji::new(),
-            }
+    pub(crate) fn new() -> Data {
+        Data {
+            suffix: serde_json::from_slice(include_bytes!("../data/suffix.json")).unwrap(),
+            autocorrect: serde_json::from_slice(include_bytes!("../data/autocorrect.json")).unwrap(),
+            emojicon: Emojicon::new(),
+            bengali_emoji: BengaliEmoji::new(),
         }
     }
 
@@ -64,9 +50,6 @@ mod tests {
 
     #[test]
     fn test_suffix() {
-        let config = get_phonetic_method_defaults();
-        let db = Data::new(&config);
-
         assert_eq!(db.find_suffix("gulo"), Some("গুলো"));
         assert_eq!(db.find_suffix("er"), Some("ের"));
         assert_eq!(db.find_suffix("h"), None);
@@ -74,9 +57,6 @@ mod tests {
 
     #[test]
     fn test_autocorrect() {
-        let config = get_phonetic_method_defaults();
-        let db = Data::new(&config);
-
         assert_eq!(db.search_corrected("academy"), Some("oZakaDemi"));
         assert_eq!(db.search_corrected("\\nai\\"), None);
     }
