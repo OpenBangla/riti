@@ -201,7 +201,7 @@ mod tests {
     #[test]
     fn test_backspace() {
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         let mut method = PhoneticMethod {
             buffer: "ab".to_string(),
             ..Default::default()
@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn test_preserve_selection() {
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         let mut method = PhoneticMethod {
             buffer: "coffee".to_string(),
             ..Default::default()

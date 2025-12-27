@@ -46,10 +46,11 @@ impl Data {
 #[cfg(test)]
 mod tests {
     use super::Data;
-    use crate::config::get_phonetic_method_defaults;
 
     #[test]
     fn test_suffix() {
+        let db = Data::new();
+
         assert_eq!(db.find_suffix("gulo"), Some("গুলো"));
         assert_eq!(db.find_suffix("er"), Some("ের"));
         assert_eq!(db.find_suffix("h"), None);
@@ -57,6 +58,8 @@ mod tests {
 
     #[test]
     fn test_autocorrect() {
+        let db = Data::new();
+
         assert_eq!(db.search_corrected("academy"), Some("oZakaDemi"));
         assert_eq!(db.search_corrected("\\nai\\"), None);
     }

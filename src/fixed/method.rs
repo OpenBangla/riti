@@ -576,7 +576,7 @@ mod tests {
     fn test_suggestions() {
         let mut method = FixedMethod::default();
         let config = get_fixed_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
 
         method.buffer = "[".to_string();
         method.create_dictionary_suggestion(&data, &config);
@@ -607,7 +607,7 @@ mod tests {
     fn test_suggestions_with_english_word() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_suggestion_include_english(true);
 
         method.get_suggestion(VC_A, 0, 0, &data, &config);
@@ -626,7 +626,7 @@ mod tests {
     fn test_suggestion_smart_quote() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_suggestion_include_english(true);
 
         config.set_smart_quote(true);
@@ -652,7 +652,7 @@ mod tests {
 
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_fixed_traditional_kar(false);
 
         method.get_suggestion(VC_SEMICOLON, 0, 0, &data, &config);
@@ -702,7 +702,7 @@ mod tests {
     fn test_suggestion_ansi() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_suggestion_include_english(true);
         config.set_ansi_encoding(true);
 
@@ -740,7 +740,7 @@ mod tests {
         };
 
         let mut config = get_fixed_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_fixed_suggestion(false);
 
         assert!(!method.backspace_event(false, &data, &config).is_empty()); // আম
@@ -878,7 +878,7 @@ mod tests {
     fn test_suggestion_traditional_kar() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
 
         /* With Traditional Kar Joining */
         method.process_key_value("হ", &config);
@@ -931,7 +931,7 @@ mod tests {
     fn test_old_kar_order() {
         let mut method = FixedMethod::default();
         let mut config = get_fixed_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_fixed_old_kar_order(true);
 
         method.buffer = "".to_string();

@@ -348,7 +348,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let mut config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_suggestion_include_english(true);
 
         suggestion.suggest(":)", &data, &mut selections, &config);
@@ -382,7 +382,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let mut config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_suggestion_include_english(true);
         config.set_ansi_encoding(true);
 
@@ -404,7 +404,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let mut config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         config.set_suggestion_include_english(true);
         config.set_smart_quote(true);
 
@@ -436,7 +436,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
 
         suggestion.suggest(":)", &data, &mut selections, &config);
         assert_eq!(suggestion.suggestions, ["😃", ":)", "ঃ", "ঃ)"]);
@@ -471,7 +471,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
 
         suggestion.suggest("a", &data, &mut selections, &config);
         assert_eq!(
@@ -511,7 +511,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
 
         suggestion.suggest("a", &data, &mut selections, &config);
         suggestion.suggest("ap", &data, &mut selections, &config);
@@ -597,8 +597,7 @@ mod tests {
     #[test]
     fn test_suffix() {
         let mut cache = HashMap::with_hasher(RandomState::new());
-        let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
 
         cache.insert(
             "computer".to_string(),
@@ -652,8 +651,7 @@ mod tests {
     fn test_prev_selected() {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
-        let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
 
         selections.insert("onno".to_string(), "অন্য".to_string());
         selections.insert("i".to_string(), "ই".to_string());
@@ -735,7 +733,7 @@ mod tests {
         let mut suggestion = PhoneticSuggestion::default();
         let mut selections = HashMap::with_hasher(RandomState::new());
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         selections.insert("sesh".to_string(), "শেষ".to_string());
 
         let (suggestions, selection) = suggestion.suggest("sesh", &data, &mut selections, &config);
@@ -784,7 +782,7 @@ mod benches {
     fn bench_phonetic_a(b: &mut Bencher) {
         let mut suggestion = PhoneticSuggestion::default();
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         let term = SplittedString::split("a", false);
 
         b.iter(|| {
@@ -797,7 +795,7 @@ mod benches {
     fn bench_phonetic_kkhet(b: &mut Bencher) {
         let mut suggestion = PhoneticSuggestion::default();
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         let term = SplittedString::split("kkhet", false);
 
         b.iter(|| {
@@ -810,7 +808,7 @@ mod benches {
     fn bench_phonetic_bistari(b: &mut Bencher) {
         let mut suggestion = PhoneticSuggestion::default();
         let config = get_phonetic_method_defaults();
-        let data = Data::new(&config);
+        let data = Data::new();
         let term = SplittedString::split("bistari", false);
 
         b.iter(|| {
@@ -823,7 +821,7 @@ mod benches {
     fn bench_phonetic_database_a(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
         let mut suggestion = PhoneticSuggestion::default();
-        let data = Data::new(&config);
+        let data = Data::new();
         b.iter(|| {
             let mut suggestions = Vec::new();
             suggestion.include_from_dictionary("a", "", &mut suggestions);
@@ -835,7 +833,7 @@ mod benches {
     fn bench_phonetic_database_aro(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
         let mut suggestion = PhoneticSuggestion::default();
-        let data = Data::new(&config);
+        let data = Data::new();
         b.iter(|| {
             let mut suggestions = Vec::new();
             suggestion.include_from_dictionary("arO", "", &mut suggestions);
@@ -847,7 +845,7 @@ mod benches {
     fn bench_phonetic_database_bistari(b: &mut Bencher) {
         let config = get_phonetic_method_defaults();
         let mut suggestion = PhoneticSuggestion::default();
-        let data = Data::new(&config);
+        let data = Data::new();
         b.iter(|| {
             let mut suggestions = Vec::new();
             suggestion.include_from_dictionary("bistari", "", &mut suggestions);

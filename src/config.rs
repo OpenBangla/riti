@@ -7,7 +7,7 @@ use std::{
 use serde_json::Value;
 
 /// Config struct for configuring RitiContext.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Config {
     layout: String,
     database_dir: PathBuf,
@@ -231,7 +231,7 @@ pub fn get_user_data_dir() -> PathBuf {
             // Windows
             var("localappdata")
                 .ok()
-                .map(|path| path + "/OpenBangla Keyboard")
+                .map(|path| path + "\\OpenBangla")
         })
         .unwrap()
         .into()
@@ -307,7 +307,7 @@ mod tests {
     fn test_data_dir_windows() {
         assert_eq!(
             get_user_data_dir(),
-            PathBuf::from(var("localappdata").unwrap() + "/OpenBangla Keyboard")
+            PathBuf::from(var("localappdata").unwrap() + "\\OpenBangla")
         )
     }
 
