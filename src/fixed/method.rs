@@ -560,6 +560,7 @@ fn is_left_standing_kar(c: char) -> bool {
 }
 
 #[cfg(test)]
+#[allow(unused_imports)]
 mod tests {
     use pretty_assertions::assert_eq;
     
