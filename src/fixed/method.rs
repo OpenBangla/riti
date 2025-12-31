@@ -622,6 +622,9 @@ mod tests {
         assert_eq!(method.suggestions, ["()"]);
     }
 
+    // The latest Rust version has incompatibility with the sorting order of the suggestions.
+    // So, this sensitive test are disabled for the MSRV.
+    #[rustversion::not(stable(1.75))]
     #[test]
     fn test_suggestion_smart_quote() {
         let mut method = FixedMethod::default();
@@ -645,7 +648,7 @@ mod tests {
 
     // The latest Rust version has incompatibility with the sorting order of the suggestions.
     // So, this sensitive test are disabled for the MSRV.
-    #[rustversion::not(stable(1.63))]
+    #[rustversion::not(stable(1.75))]
     #[test]
     fn test_emojis() {
         use crate::keycodes::VC_SEMICOLON; // Don't know why Rust 1.63 errors on unused import in CI.
@@ -697,7 +700,7 @@ mod tests {
 
     // The latest Rust version has incompatibility with the sorting order of the suggestions.
     // So, this sensitive test are disabled for the MSRV.
-    #[rustversion::not(stable(1.63))]
+    #[rustversion::not(stable(1.75))]
     #[test]
     fn test_suggestion_ansi() {
         let mut method = FixedMethod::default();
