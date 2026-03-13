@@ -35,21 +35,33 @@ pub extern "C" fn riti_context_free(ptr: *mut RitiContext) {
 /// Generates suggestion for `key` press.
 ///
 /// `modifier`: state of modifier keys
+/// 
 /// `selection`: previously selected user selection index if available otherwise `0`.
 /// It is used to preserve user's candidate selection if the key is a punctuation character in Phonetic method.
+/// 
+/// `eaten`: set to `true` if the key event is consumed by the method, otherwise set to `false`.
 #[no_mangle]
 pub extern "C" fn riti_get_suggestion_for_key(
     ptr: *mut RitiContext,
     key: u16,
     modifier: u8,
     selection: u8,
+    eaten: *mut bool,
 ) -> *mut Suggestion {
     let context = unsafe {
         assert!(!ptr.is_null());
         &*ptr
     };
+    
+    if eaten.is_null() {
+        panic!("eaten pointer is null");
+    }
 
-    let suggestion = context.get_suggestion_for_key(key, modifier, selection);
+    let (suggestion, status) = context.get_suggestion_for_key(key, modifier, selection);
+    
+    unsafe {
+        *eaten = status;
+    }
 
     Box::into_raw(Box::new(suggestion))
 }

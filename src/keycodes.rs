@@ -101,6 +101,8 @@ pub const VC_COMMA: u16 = 0x0033; // ','
 pub const VC_PERIOD: u16 = 0x0034; // '.'
 pub const VC_SLASH: u16 = 0x0035; // '/'
 
+pub const VC_SPACE: u16 = 0x0039; // ' '
+
 pub const VC_COLON: u16 = 0x0063; // ':'
 pub const VC_QUOTE: u16 = 0x0064; // '"'
 pub const VC_LESS: u16 = 0x0065; // '<'
@@ -251,6 +253,8 @@ pub(crate) fn keycode_to_char(key: u16) -> char {
         VC_KP_SUBTRACT => '-',
         VC_KP_ADD => '+',
         VC_KP_DECIMAL => '.',
+        
+        VC_SPACE => ' ',
 
         _ => panic!("Got unknown key!"),
     }

@@ -25,7 +25,17 @@ impl RitiContext {
     }
 
     /// Get suggestion for key.
-    pub fn get_suggestion_for_key(&self, key: u16, modifier: u8, selection: u8) -> Suggestion {
+    /// 
+    /// `key`: the keycode of the key event.
+    /// `modifier`: the modifier keys pressed during the key event. It is a bitmask of the following values:
+    /// - `MODIFIER_SHIFT`: Shift key is pressed.
+    /// - `MODIFIER_ALT_GR`: AltGr key is pressed.
+    /// 
+    /// `selection`: the index of the selected candidate in the suggestion list.
+    /// 
+    /// Returns a tuple of the `Suggestion` struct and a boolean indicating whether the key event was handled by the method. 
+    /// If the key event was not handled, the caller should process the key event as usual.
+    pub fn get_suggestion_for_key(&self, key: u16, modifier: u8, selection: u8) -> (Suggestion, bool) {
         self.method
             .borrow_mut()
             .get_suggestion(key, modifier, selection, &self.data, &self.config)
@@ -90,7 +100,7 @@ pub(crate) trait Method {
         selection: u8,
         data: &Data,
         config: &Config,
-    ) -> Suggestion;
+    ) -> (Suggestion, bool);
     fn candidate_committed(&mut self, index: usize, config: &Config);
     fn update_engine(&mut self, config: &Config);
     fn ongoing_input_session(&self) -> bool;
@@ -134,7 +144,7 @@ mod tests {
         context.get_suggestion_for_key(VC_H, 0, 0);
         context.get_suggestion_for_key(VC_E, 0, 0);
         context.get_suggestion_for_key(VC_L, 0, 0);
-        let suggestion = context.get_suggestion_for_key(VC_P, 0, 0);
+        let (suggestion, _) = context.get_suggestion_for_key(VC_P, 0, 0);
         context.finish_input_session();
         assert_eq!(suggestion.get_suggestions(), ["হেল্প", "🆘"]);
 
@@ -145,7 +155,7 @@ mod tests {
         context.get_suggestion_for_key(VC_H, 0, 0);
         context.get_suggestion_for_key(VC_E, 0, 0);
         context.get_suggestion_for_key(VC_L, 0, 0);
-        let suggestion = context.get_suggestion_for_key(VC_P, 0, 0);
+        let (suggestion, _) = context.get_suggestion_for_key(VC_P, 0, 0);
         context.finish_input_session();
         assert_eq!(suggestion.get_suggestions(), ["হীলপ"]);
     }
@@ -158,7 +168,7 @@ mod tests {
 
         let context = RitiContext::new_with_config(&config);
 
-        let suggestion = context.get_suggestion_for_key(VC_H, 0, 0);
+        let (suggestion, _) = context.get_suggestion_for_key(VC_H, 0, 0);
         assert_eq!(suggestion.get_suggestions(), ["হ"]);
     }
 }

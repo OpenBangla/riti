@@ -25,6 +25,9 @@ edit-distance = "2.1"
 okkhor = "0.8"
 poriborton = "0.2"
 upodesh = "0.4"
+ort = { version = "=2.0.0-rc.11", features = ["ndarray"] }
+ndarray = "0.17"
+sentencepiece = "0.12"
 
 [dev-dependencies]
 rustversion = "1.0"

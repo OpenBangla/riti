@@ -9,3 +9,5 @@ pub mod keycodes;
 mod phonetic;
 pub mod suggestion;
 mod utility;
+pub mod predictor;
+mod predictive;

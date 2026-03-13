@@ -30,7 +30,7 @@ impl Method for FixedMethod {
         _selection: u8,
         data: &Data,
         config: &Config,
-    ) -> Suggestion {
+    ) -> (Suggestion, bool) {
         let modifier = get_modifiers(modifier);
 
         if let Some(value) =
@@ -39,14 +39,14 @@ impl Method for FixedMethod {
         {
             self.process_key_value(&value, config);
         } else {
-            return self.current_suggestion(config);
+            return (self.current_suggestion(config), true);
         }
 
         if config.get_fixed_suggestion() {
             self.typed.push(keycode_to_char(key));
         }
 
-        self.create_suggestion(data, config)
+        (self.create_suggestion(data, config), true)
     }
 
     fn candidate_committed(&mut self, _index: usize, _: &Config) {

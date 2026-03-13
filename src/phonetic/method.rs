@@ -88,7 +88,7 @@ impl Method for PhoneticMethod {
         selection: u8,
         data: &Data,
         config: &Config,
-    ) -> Suggestion {
+    ) -> (Suggestion, bool) {
         let character = keycode_to_char(key);
         self.buffer.push(character);
         let mut suggestion = self.create_suggestion(data, config);
@@ -107,7 +107,7 @@ impl Method for PhoneticMethod {
             }
         }
 
-        suggestion
+        (suggestion, true)
     }
 
     fn candidate_committed(&mut self, index: usize, config: &Config) {
@@ -227,12 +227,12 @@ mod tests {
             ..Default::default()
         };
 
-        let suggestion = method.get_suggestion(VC_COMMA, 0, 3, &data, &config);
+        let (suggestion, _) = method.get_suggestion(VC_COMMA, 0, 3, &data, &config);
         assert_eq!(suggestion.previously_selected_index(), 3);
 
         method.backspace_event(false, &data, &config);
 
-        let suggestion = method.get_suggestion(VC_R, 0, 3, &data, &config);
+        let (suggestion, _) = method.get_suggestion(VC_R, 0, 3, &data, &config);
         assert_eq!(suggestion.previously_selected_index(), 0);
     }
 }
