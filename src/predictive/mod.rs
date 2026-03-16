@@ -1,1 +1,1 @@
-mod method;
+pub(crate) mod method;

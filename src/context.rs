@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 
 use crate::phonetic::method::PhoneticMethod;
+use crate::predictive::method::PredictivePhoneticMethod;
 use crate::suggestion::Suggestion;
 use crate::{config::Config, data::Data, fixed::method::FixedMethod};
 
@@ -110,7 +111,9 @@ pub(crate) trait Method {
 
 impl dyn Method {
     fn new(config: &Config) -> Box<dyn Method> {
-        if config.is_phonetic() {
+        if config.is_phonetic() && config.get_predictive_phonetic() {
+            Box::new(PredictivePhoneticMethod::new(config))
+        } else if config.is_phonetic() {
             Box::new(PhoneticMethod::new(config))
         } else {
             Box::new(FixedMethod::new(config))

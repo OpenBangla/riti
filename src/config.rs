@@ -24,6 +24,7 @@ pub struct Config {
     // Output in ANSI encoding
     ansi: bool,
     smart_quote: bool,
+    predictive_phonetic: bool,
 }
 
 impl Config {
@@ -220,6 +221,16 @@ impl Config {
     pub fn set_smart_quote(&mut self, smart_quote: bool) {
         self.smart_quote = smart_quote;
     }
+
+    /// Get the config's predictive phonetic setting.
+    pub fn get_predictive_phonetic(&self) -> bool {
+        self.predictive_phonetic
+    }
+
+    /// Set the config's predictive phonetic setting.
+    pub fn set_predictive_phonetic(&mut self, predictive_phonetic: bool) {
+        self.predictive_phonetic = predictive_phonetic;
+    }
 }
 
 pub fn get_user_data_dir() -> PathBuf {
@@ -243,6 +254,16 @@ pub fn get_phonetic_method_defaults() -> Config {
         layout: "avro_phonetic".to_owned(),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
         phonetic_suggestion: true,
+        ..Default::default()
+    }
+}
+
+#[cfg(test)]
+pub fn get_predictive_method_defaults() -> Config {
+    Config {
+        layout: "avro_phonetic".to_owned(),
+        database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
+        predictive_phonetic: true,
         ..Default::default()
     }
 }
@@ -280,6 +301,7 @@ impl Default for Config {
             phonetic_suggestion: false,
             ansi: false,
             smart_quote: true,
+            predictive_phonetic: false,
         }
     }
 }
