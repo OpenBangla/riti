@@ -1,5 +1,7 @@
 use std::cell::RefCell;
 
+use crate::compositional::method::CompositionalMethod;
+use crate::config::LayoutMethod;
 use crate::phonetic::method::PhoneticMethod;
 use crate::suggestion::Suggestion;
 use crate::{config::Config, data::Data, fixed::method::FixedMethod};
@@ -100,10 +102,10 @@ pub(crate) trait Method {
 
 impl dyn Method {
     fn new(config: &Config) -> Box<dyn Method> {
-        if config.is_phonetic() {
-            Box::new(PhoneticMethod::new(config))
-        } else {
-            Box::new(FixedMethod::new(config))
+        match config.layout_method() {
+            LayoutMethod::Phonetic => Box::new(PhoneticMethod::new(config)),
+            LayoutMethod::Fixed => Box::new(FixedMethod::new(config)),
+            LayoutMethod::Compositional => Box::new(CompositionalMethod::new(config)),
         }
     }
 }

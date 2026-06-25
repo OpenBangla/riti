@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "bench", feature(test))]
 
+mod compositional;
 pub mod config;
 pub mod context;
 pub(crate) mod data;

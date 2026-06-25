@@ -425,6 +425,8 @@ void riti_config_set_phonetic_suggestion(struct Config *ptr, bool option);
 
 void riti_config_set_fixed_suggestion(struct Config *ptr, bool option);
 
+void riti_config_set_compositional_suggestion(struct Config *ptr, bool option);
+
 void riti_config_set_fixed_auto_vowel(struct Config *ptr, bool option);
 
 void riti_config_set_fixed_auto_chandra(struct Config *ptr, bool option);

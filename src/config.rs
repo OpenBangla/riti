@@ -6,6 +6,16 @@ use std::{
 
 use serde_json::Value;
 
+use crate::compositional::is_compositional_layout;
+
+/// The input method category selected by the configured layout.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum LayoutMethod {
+    Phonetic,
+    Fixed,
+    Compositional,
+}
+
 /// Config struct for configuring RitiContext.
 #[derive(Clone, Debug)]
 pub struct Config {
@@ -15,6 +25,7 @@ pub struct Config {
     include_english: bool,
     phonetic_suggestion: bool,
     fixed_suggestion: bool,
+    compositional_suggestion: bool,
     fixed_vowel: bool,
     fixed_chandra: bool,
     fixed_kar: bool,
@@ -32,7 +43,8 @@ impl Config {
     ///
     /// Returns `true` if the layout file path or name is valid.
     pub fn set_layout_file_path(&mut self, layout: &str) -> bool {
-        if layout == "avro_phonetic" || Path::new(layout).exists() {
+        if layout == "avro_phonetic" || is_compositional_layout(layout) || Path::new(layout).exists()
+        {
             self.layout = layout.into();
             true
         } else {
@@ -118,6 +130,16 @@ impl Config {
         self.fixed_suggestion = fixed_suggestion;
     }
 
+    /// Get the config's compositional suggestion setting.
+    pub fn get_compositional_suggestion(&self) -> bool {
+        self.compositional_suggestion
+    }
+
+    /// Set the config's compositional suggestion setting.
+    pub fn set_compositional_suggestion(&mut self, compositional_suggestion: bool) {
+        self.compositional_suggestion = compositional_suggestion;
+    }
+
     /// Get the config's fixed vowel.
     pub fn get_fixed_automatic_vowel(&self) -> bool {
         self.fixed_vowel
@@ -188,6 +210,18 @@ impl Config {
         self.get_layout_file_path() == "avro_phonetic"
     }
 
+    /// Returns the input method category selected by the current layout.
+    pub(crate) fn layout_method(&self) -> LayoutMethod {
+        let layout = self.get_layout_file_path();
+        if layout == "avro_phonetic" {
+            LayoutMethod::Phonetic
+        } else if is_compositional_layout(layout) {
+            LayoutMethod::Compositional
+        } else {
+            LayoutMethod::Fixed
+        }
+    }
+
     /// Give layout's `layout` json object, which contains the layout data.
     pub fn get_layout(&self) -> Option<Value> {
         if self.is_phonetic() {
@@ -248,6 +282,16 @@ pub fn get_phonetic_method_defaults() -> Config {
 }
 
 #[cfg(test)]
+pub fn get_khipro_method_defaults() -> Config {
+    Config {
+        layout: crate::compositional::KHIPRO_LAYOUT.to_owned(),
+        database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
+        compositional_suggestion: true,
+        ..Default::default()
+    }
+}
+
+#[cfg(test)]
 pub fn get_fixed_method_defaults() -> Config {
     Config {
         layout: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data/Probhat.json"),
@@ -271,6 +315,7 @@ impl Default for Config {
             user_dir: get_user_data_dir(),
             include_english: false,
             fixed_suggestion: false,
+            compositional_suggestion: false,
             fixed_vowel: false,
             fixed_chandra: false,
             fixed_kar: false,
