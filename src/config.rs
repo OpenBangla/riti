@@ -32,7 +32,7 @@ impl Config {
     ///
     /// Returns `true` if the layout file path or name is valid.
     pub fn set_layout_file_path(&mut self, layout: &str) -> bool {
-        if layout == "avro_phonetic" || Path::new(layout).exists() {
+        if layout == "avro_phonetic" || layout == "khipro" || Path::new(layout).exists() {
             self.layout = layout.into();
             true
         } else {
@@ -188,9 +188,14 @@ impl Config {
         self.get_layout_file_path() == "avro_phonetic"
     }
 
+    /// Checks if the layout is the Khipro phonetic method.
+    pub fn is_khipro(&self) -> bool {
+        self.get_layout_file_path() == "khipro"
+    }
+
     /// Give layout's `layout` json object, which contains the layout data.
     pub fn get_layout(&self) -> Option<Value> {
-        if self.is_phonetic() {
+        if self.is_phonetic() || self.is_khipro() {
             None
         } else {
             read_to_string(self.get_layout_file_path())
@@ -243,6 +248,15 @@ pub fn get_phonetic_method_defaults() -> Config {
         layout: "avro_phonetic".to_owned(),
         database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
         phonetic_suggestion: true,
+        ..Default::default()
+    }
+}
+
+#[cfg(test)]
+pub fn get_khipro_method_defaults() -> Config {
+    Config {
+        layout: "khipro".to_owned(),
+        database_dir: format!("{}{}", env!("CARGO_MANIFEST_DIR"), "/data").into(),
         ..Default::default()
     }
 }
