@@ -6,6 +6,7 @@ pub(crate) mod data;
 mod ffi;
 mod fixed;
 pub mod keycodes;
+mod khipro;
 mod phonetic;
 pub mod suggestion;
 mod utility;

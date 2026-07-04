@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 
+use crate::khipro::method::KhiproMethod;
 use crate::phonetic::method::PhoneticMethod;
 use crate::suggestion::Suggestion;
 use crate::{config::Config, data::Data, fixed::method::FixedMethod};
@@ -102,6 +103,8 @@ impl dyn Method {
     fn new(config: &Config) -> Box<dyn Method> {
         if config.is_phonetic() {
             Box::new(PhoneticMethod::new(config))
+        } else if config.is_khipro() {
+            Box::new(KhiproMethod::new(config))
         } else {
             Box::new(FixedMethod::new(config))
         }
@@ -121,8 +124,10 @@ pub const MODIFIER_ALT_GR: u8 = 1 << 1;
 mod tests {
     use super::*;
     use crate::{
-        config::{get_fixed_method_defaults, get_phonetic_method_defaults},
-        keycodes::{VC_E, VC_H, VC_L, VC_P},
+        config::{
+            get_fixed_method_defaults, get_khipro_method_defaults, get_phonetic_method_defaults,
+        },
+        keycodes::{VC_A, VC_E, VC_H, VC_L, VC_M, VC_P, VC_R},
     };
 
     #[test]
@@ -148,6 +153,31 @@ mod tests {
         let suggestion = context.get_suggestion_for_key(VC_P, 0, 0);
         context.finish_input_session();
         assert_eq!(suggestion.get_suggestions(), ["হীলপ"]);
+    }
+
+    #[test]
+    fn test_khipro_layout() {
+        // Load the context with the Khipro layout and type "amar".
+        let config = get_khipro_method_defaults();
+        let mut context = RitiContext::new_with_config(&config);
+
+        context.get_suggestion_for_key(VC_A, 0, 0);
+        context.get_suggestion_for_key(VC_M, 0, 0);
+        context.get_suggestion_for_key(VC_A, 0, 0);
+        let suggestion = context.get_suggestion_for_key(VC_R, 0, 0);
+        context.finish_input_session();
+
+        // Khipro is deterministic, so it yields a single (lonely) suggestion.
+        assert!(suggestion.is_lonely());
+        assert_eq!(suggestion.get_lonely_suggestion(), "আমার");
+
+        // Switching away to a Fixed layout should swap the method cleanly.
+        let config = get_fixed_method_defaults();
+        context.update_engine(&config);
+        context.get_suggestion_for_key(VC_H, 0, 0);
+        let suggestion = context.get_suggestion_for_key(VC_E, 0, 0);
+        context.finish_input_session();
+        assert!(!suggestion.is_lonely());
     }
 
     #[test]
