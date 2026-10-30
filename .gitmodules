@@ -1,0 +1,3 @@
+[submodule "data/khipro-classic"]
+	path = data/khipro-classic
+	url = https://github.com/rank-coder/khipro-m17n.git

@@ -5,7 +5,10 @@
 // of roman keystrokes maps to exactly one Bangla output. Therefore there is no
 // dictionary based candidate list — we emit a single "lonely" suggestion built
 // directly by the `okkhor` Khipro transliterator.
-use okkhor::khipro::KhiproPhonetic;
+
+use std::cell::RefCell;
+
+use super::classic::{instantiate_engine, Engine};
 
 use crate::config::Config;
 use crate::context::Method;
@@ -15,7 +18,7 @@ use crate::suggestion::Suggestion;
 
 pub(crate) struct KhiproMethod {
     buffer: String,
-    parser: KhiproPhonetic,
+    parser: RefCell<Engine>,
 }
 
 impl KhiproMethod {
@@ -23,13 +26,13 @@ impl KhiproMethod {
     pub(crate) fn new(_config: &Config) -> Self {
         KhiproMethod {
             buffer: String::with_capacity(20),
-            parser: KhiproPhonetic::new(),
+            parser: RefCell::new(instantiate_engine()),
         }
     }
 
     /// Transliterate the current buffer into a single (lonely) `Suggestion`.
     fn create_suggestion(&self, config: &Config) -> Suggestion {
-        let converted = self.parser.convert(&self.buffer);
+        let converted = self.parser.borrow_mut().convert(&self.buffer);
         Suggestion::new_lonely(converted, config.get_ansi_encoding())
     }
 }
@@ -93,7 +96,7 @@ impl Default for KhiproMethod {
     fn default() -> Self {
         KhiproMethod {
             buffer: String::new(),
-            parser: KhiproPhonetic::new(),
+            parser: RefCell::new(instantiate_engine()),
         }
     }
 }
